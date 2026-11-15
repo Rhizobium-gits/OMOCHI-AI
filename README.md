@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/github/downloads/Rhizobium-gits/jellyfish-ai/JellyfishAI.dmg?label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E6%95%B0" alt="ダウンロード数"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E6%95%B0&color=brightgreen" alt="ダウンロード数"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-lightgrey" alt="macOS 14+">
 </p>
@@ -449,7 +449,7 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
 - 更新は `scripts/update.sh --source`。ビルドだけなら `scripts/build.sh`（→ `dist/JellyfishAI.app`、この Mac の CPU 用）、テストは `scripts/test.sh`（swift test）
 - アプリのアイコンは `Resources/AppIcon.png`（1024px の正方形）を macOS のアイコンの角丸の枠に収めて作ります
 - 配布物は `scripts/release.sh` で `dist/release/` に作ります（universal の `JellyfishAI.dmg`・`JellyfishAI-<版>.zip`・`SHA256SUMS.txt`）。`VERSION` と `CHANGELOG.md` を更新してコミット・push し、`scripts/release.sh --publish` で GitHub Releases に公開します
-- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のバッジは `JellyfishAI.dmg` のダウンロード数の合計です。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
+- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のバッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラー・CI の clone も入ります）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
 
 ## データの保存場所
 

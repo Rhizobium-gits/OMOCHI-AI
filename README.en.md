@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/github/downloads/Rhizobium-gits/jellyfish-ai/JellyfishAI.dmg?label=dmg%20downloads" alt="dmg downloads"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=downloads&color=brightgreen" alt="downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-lightgrey" alt="macOS 14+">
 </p>
@@ -449,7 +449,7 @@ scripts/install.sh          # build, install to the Applications folder, and lau
 - To update, use `scripts/update.sh --source`. To build only, use `scripts/build.sh` (→ `dist/JellyfishAI.app`, for this Mac's CPU); to run the tests, use `scripts/test.sh` (swift test)
 - The app icon is made by fitting `Resources/AppIcon.png` (a 1024px square) into the rounded frame of macOS icons
 - Distribution files are made in `dist/release/` with `scripts/release.sh` (universal `JellyfishAI.dmg`, `JellyfishAI-<version>.zip`, `SHA256SUMS.txt`). Update `VERSION` and `CHANGELOG.md`, commit and push, then publish to GitHub Releases with `scripts/release.sh --publish`
-- **Download counts**: `scripts/downloads.sh` reads per-release counts from GitHub (`.dmg` = times it was downloaded to install, `.zip` = the app's “Update” and manual .zip downloads; `--traffic` adds page views and clones for the last 14 days, `--json` prints JSON). The badge at the top of the README is the total download count of `JellyfishAI.dmg`. Every version's .dmg has the same name, so `releases/latest/download/JellyfishAI.dmg` always points at the latest version
+- **Download counts**: `scripts/downloads.sh` reads per-release counts from GitHub (`.dmg` = times it was downloaded to install, `.zip` = the app's “Update” and manual .zip downloads; `--traffic` adds page views and clones for the last 14 days, `--json` prints JSON). The badge at the top of the README is the total of `.dmg` and `.zip` downloads and git clones (the number of people who cloned, as counted by GitHub per day, added up; clones by bots, mirrors and CI are included). `scripts/download-stats.sh` recounts it and writes `stats.json` on the `stats` branch (with the breakdown), and GitHub Actions (`.github/workflows/stats.yml`) runs it every day. GitHub keeps clone counts for only the last 14 days, so they're accumulated per day. To read clone counts in Actions, the `TRAFFIC_TOKEN` secret (a fine-grained token for this repository only, with read-only Administration) is needed. Without it, only release downloads are recounted, and clones are added when `scripts/release.sh --publish` or `scripts/download-stats.sh` runs locally. Every version's .dmg has the same name, so `releases/latest/download/JellyfishAI.dmg` always points at the latest version
 
 ## Where data is stored
 

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 変更
+
+- README のダウンロード数のバッジを、`.dmg` だけから `.dmg`・`.zip`（アプリやターミナルからのアップデート）・git clone の合計にした。`scripts/download-stats.sh` が数えて `stats` ブランチの `stats.json` に書き、GitHub Actions（`.github/workflows/stats.yml`）が毎日数え直す。clone 数は GitHub が 14 日しか残さないので日ごとに貯める
+
 ## [1.2.2] - 2026-11-14
 
 ### 修正

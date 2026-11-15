@@ -8,6 +8,7 @@
 #   .zip  = アプリの「アップデートする」と、手での .zip のダウンロード
 #   SHA256SUMS.txt はアップデートのたびと、チェックサムを確かめる人が取るので、人数には数えない
 # GitHub は同じ人の 2 回目も数え、開発中の確認で取った分も入る。clone・ソースの zip（Source code）は数えない
+# README のバッジ（.dmg・.zip・clone の合計）は scripts/download-stats.sh が数える
 set -euo pipefail
 REPO="${JELLYFISH_REPO:-Rhizobium-gits/jellyfish-ai}"
 TRAFFIC=0

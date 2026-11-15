@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/github/downloads/Rhizobium-gits/jellyfish-ai/JellyfishAI.dmg?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0" alt="下载次数"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&color=brightgreen" alt="下载次数"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-lightgrey" alt="macOS 14+">
 </p>
@@ -449,7 +449,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
 - 更新用 `scripts/update.sh --source`。只构建用 `scripts/build.sh`（→ `dist/JellyfishAI.app`，适用于这台 Mac 的 CPU），测试用 `scripts/test.sh`（swift test）
 - 应用图标由 `Resources/AppIcon.png`（1024px 的正方形）放入 macOS 图标的圆角框中生成
 - 分发包用 `scripts/release.sh` 生成到 `dist/release/`（universal 的 `JellyfishAI.dmg`、`JellyfishAI-<版本>.zip`、`SHA256SUMS.txt`）。更新 `VERSION` 和 `CHANGELOG.md` 并提交、push 后，用 `scripts/release.sh --publish` 发布到 GitHub Releases
-- **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的徽章是 `JellyfishAI.dmg` 的下载总数。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/JellyfishAI.dmg` 始终指向最新版本
+- **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的徽章是 `.dmg`、`.zip` 的下载次数与 git clone 次数（GitHub 统计的每天 clone 人数之和，包括机器人、镜像和 CI 的 clone）的总和。`scripts/download-stats.sh` 重新统计后写入 `stats` 分支的 `stats.json`（明细也在这里），GitHub Actions（`.github/workflows/stats.yml`）每天运行一次。GitHub 只保留最近 14 天的 clone 次数，因此按天累积。要在 Actions 中读取 clone 次数，需要密钥 `TRAFFIC_TOKEN`（仅限本仓库、仅有 Administration 只读权限的 fine-grained 令牌）。没有它时只重新统计发布的下载次数，clone 会在本地运行 `scripts/release.sh --publish` 或 `scripts/download-stats.sh` 时加上。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/JellyfishAI.dmg` 始终指向最新版本
 
 ## 数据存储位置
 

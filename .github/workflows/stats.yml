@@ -1,0 +1,32 @@
+name: Download stats
+
+# README のダウンロード数のバッジ（stats ブランチの stats.json）を毎日数え直す。
+# clone 数を読むにはシークレット TRAFFIC_TOKEN（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要る。
+# 無くても、リリースのダウンロード数は数え直す（clone は前に貯めた分のまま）
+on:
+  schedule:
+    - cron: "23 21 * * *" # 毎日 21:23 UTC（日本時間 6:23）
+  workflow_dispatch:
+
+# stats ブランチの stats.json を書くだけ
+permissions:
+  contents: write
+
+concurrency:
+  group: download-stats
+  cancel-in-progress: false
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      # 自分の clone を数に入れないよう、checkout せずに API でこのコミットのスクリプトだけ取る
+      - name: Count downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+          JELLYFISH_REPO: ${{ github.repository }}
+        run: |
+          gh api -H "Accept: application/vnd.github.raw" \
+            "repos/$GITHUB_REPOSITORY/contents/scripts/download-stats.sh?ref=$GITHUB_SHA" > "$RUNNER_TEMP/download-stats.sh"
+          bash "$RUNNER_TEMP/download-stats.sh"

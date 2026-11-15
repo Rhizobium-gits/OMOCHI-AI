@@ -99,4 +99,6 @@ cat "$OUT/SHA256SUMS.txt"
 if [[ $PUBLISH == 1 ]]; then
   gh release create "$TAG" "$DMG" "$ZIP" "$OUT/SHA256SUMS.txt" \
     --target "$(git rev-parse HEAD)" --title "Jellyfish AI $VERSION" --notes-file "$NOTES"
+  # README のダウンロード数のバッジを数え直す（clone 数は GitHub が 14 日しか残さないので、ここでも貯める）。失敗しても公開は済んでいる
+  scripts/download-stats.sh || echo "（ダウンロード数のバッジを数え直せませんでした。あとで scripts/download-stats.sh を動かしてください）" >&2
 fi
