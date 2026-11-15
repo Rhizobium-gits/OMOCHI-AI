@@ -41,11 +41,13 @@ if gh api "repos/$REPO/branches/$BRANCH" --silent 2>/dev/null; then
 fi
 
 # clone 数（直近 14 日、日ごと）。読めなければ null（貯めてある分のまま）
+# 読めないとき gh api はエラーの JSON を出してから失敗するので、出たものは使わない
 if [[ -n "${TRAFFIC_TOKEN:-}" ]]; then
-  CLONES="$(GH_TOKEN="$TRAFFIC_TOKEN" gh api "repos/$REPO/traffic/clones" 2>/dev/null || echo null)"
+  CLONES="$(GH_TOKEN="$TRAFFIC_TOKEN" gh api "repos/$REPO/traffic/clones" 2>/dev/null)" || CLONES=null
 else
-  CLONES="$(gh api "repos/$REPO/traffic/clones" 2>/dev/null || echo null)"
+  CLONES="$(gh api "repos/$REPO/traffic/clones" 2>/dev/null)" || CLONES=null
 fi
+printf '%s' "$CLONES" | jq -e 'type == "object" and (.clones | type == "array")' >/dev/null 2>&1 || CLONES=null
 [[ "$CLONES" == null ]] && echo "clone 数を読めませんでした（Administration の読み取りの権限が要ります）。clone は貯めてある分のままにします" >&2
 
 # リリースのファイルごとのダウンロード数（下書きは除く）
