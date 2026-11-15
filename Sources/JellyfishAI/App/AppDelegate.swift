@@ -1,6 +1,6 @@
 import AppKit
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var manager: JellyManager!
     private var shortcuts: Shortcuts!
     private var statusBar: StatusBarController!
@@ -41,6 +41,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let store = Store()
         // 表示の言語は、メニューやウィンドウを作る前に決める
         L10n.setting = store.loadSettings().language
+        // チャットはクラゲごとの窓なので、タブにまとめない（ウインドウ・表示のメニューにタブの項目を足させない）
+        NSWindow.allowsAutomaticWindowTabbing = false
         installMainMenu()
         // 表示の言語を変えたら、メインメニュー（編集・ウインドウ）も作り直す
         NotificationCenter.default.addObserver(forName: JellyManager.languageChanged, object: nil, queue: .main) { [weak self] _ in
@@ -75,15 +77,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// チャット欄で ⌘C / ⌘V / ⌘A / ⌘Z、ウィンドウの ⌘M / ⌘W / フルスクリーンが効くようにメインメニューを用意する
-    private func installMainMenu() {
+    /// チャット欄で ⌘C / ⌘V / ⌘A / ⌘Z、ウィンドウの ⌘W / ⌘M / ⌃⌘F が効くようにメインメニューを用意する。
+    /// 並びと名前は Apple の HIG（The menu bar）と macOS のアプリに合わせる：
+    /// 閉じるは「ファイル」、フルスクリーンは「表示」、しまう・拡大／縮小・すべてを手前に移動と窓の一覧は「ウインドウ」
+    func installMainMenu() {
         let main = NSMenu()
-        func sub(_ title: String, _ items: [NSMenuItem]) {
+        @discardableResult
+        func sub(_ title: String, _ items: [NSMenuItem]) -> NSMenu {
             let m = NSMenu(title: title)
             items.forEach { m.addItem($0) }
             let it = NSMenuItem(title: title, action: nil, keyEquivalent: "")
             it.submenu = m
             main.addItem(it)
+            return m
         }
         func item(_ t: String, _ sel: Selector, _ key: String, _ mods: NSEvent.ModifierFlags = [.command]) -> NSMenuItem {
             let i = NSMenuItem(title: t, action: sel, keyEquivalent: key)
@@ -96,8 +102,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             about,
             .separator(),
             item(L("Jellyfish AI を隠す"), #selector(NSApplication.hide(_:)), "h"),
+            item(L("ほかを隠す"), #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
+            item(L("すべてを表示"), #selector(NSApplication.unhideAllApplications(_:)), ""),
             .separator(),
             item(L("Jellyfish AI を終了"), #selector(NSApplication.terminate(_:)), "q"),
+        ])
+        sub(L("ファイル"), [
+            item(L("閉じる"), #selector(NSWindow.performClose(_:)), "w"),
         ])
         sub(L("編集"), [
             item(L("取り消す"), Selector(("undo:")), "z"),
@@ -111,17 +122,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Mac の音声入力（入力欄で話すと文字になる）
             item(L("音声入力を開始"), Selector(("startDictation:")), ""),
         ])
-        sub(L("ウインドウ"), [
+        // AppKit の toggleFullScreen: のままだと、題名が開発言語（日本語）の「フルスクリーンにする」などに書き換わるので、
+        // アプリの言語で「フルスクリーンにする／解除」と出すために自分で受けて前面の窓に渡す
+        let fullScreen = item(L("フルスクリーンにする"), #selector(toggleFullScreenOfFrontWindow(_:)), "f", [.command, .control])
+        fullScreen.target = self
+        sub(L("表示"), [fullScreen])
+        let windowMenu = sub(L("ウインドウ"), [
             item(L("しまう"), #selector(NSWindow.performMiniaturize(_:)), "m"),
             item(L("拡大／縮小"), #selector(NSWindow.performZoom(_:)), ""),
-            item(L("フルスクリーンにする"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
             .separator(),
-            item(L("閉じる"), #selector(NSWindow.performClose(_:)), "w"),
+            item(L("すべてを手前に移動"), #selector(NSApplication.arrangeInFront(_:)), ""),
         ])
         NSApp.mainMenu = main
+        // 開いているチャットの一覧を AppKit がここに足す（しまったチャットもここから戻せる）
+        NSApp.windowsMenu = windowMenu
     }
 
     @objc private func showAbout() { AppInfo.showAbout() }
+
+    /// 表示 › フルスクリーンにする／解除（⌃⌘F）
+    @objc func toggleFullScreenOfFrontWindow(_ sender: Any?) {
+        (NSApp.keyWindow ?? NSApp.mainWindow)?.toggleFullScreen(sender)
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        guard menuItem.action == #selector(toggleFullScreenOfFrontWindow(_:)) else { return true }
+        guard let w = NSApp.keyWindow ?? NSApp.mainWindow, w.collectionBehavior.contains(.fullScreenPrimary) else {
+            menuItem.title = L("フルスクリーンにする")
+            return false
+        }
+        menuItem.title = w.styleMask.contains(.fullScreen) ? L("フルスクリーンを解除") : L("フルスクリーンにする")
+        return true
+    }
 
     func applicationWillTerminate(_ notification: Notification) {
         manager?.shutdown()
@@ -129,11 +161,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// 動いている最中に、アプリのアイコン（アプリケーションフォルダ・Spotlight・Dock・Launchpad）からもう一度開いたとき。
     /// 隠していたクラゲを出す。1 体もいなければ新しいクラゲを出して入力欄を開く
+    /// しまったチャットがあれば戻す（Dock のアイコンを押すと、しまった窓が戻る Apple のアプリと同じ）
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         guard let manager else { return false }
+        let reopened = manager.reopenChats()
         if manager.settings.allHidden {
             manager.setAllHidden(false)
-        } else if manager.controllers.isEmpty {
+        } else if manager.controllers.isEmpty && !reopened {
             _ = manager.spawn()
         }
         return false
@@ -158,7 +192,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ///   jellyfish://scale?v=1.25              大きさ
     ///   jellyfish://style?v=pixel|realistic   見た目
     ///   jellyfish://login?on=1|0              ログイン時の自動起動
-    ///   jellyfish://debug                     各エージェントの状態を app.log へ
+    ///   jellyfish://debug                     各エージェント・アプリ（Dock に出ているか・メニュー）・チャットの窓の状態を app.log へ
+    ///   jellyfish://window?agent=2&do=minimize|fullscreen|esc|close  チャットの窓の操作（テスト用）
     func application(_ application: NSApplication, open urls: [URL]) {
         if manager == nil { pendingURLs.append(contentsOf: urls); return }
         urls.forEach(handle)
@@ -253,11 +288,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case "accounts":
             // 自動化（合言葉つき）のときだけ：アカウントと AI の画面
             manager.showAccounts()
+        case "window":
+            // テスト用（合言葉つきの自動化のときだけ）：チャットの窓を操作する（minimize / fullscreen / esc / close）
+            if let c = agent { manager.debugChatWindow(c, param("do") ?? "") }
         case "debug":
             for c in manager.controllers {
                 let r = c.record
                 AppLog.write("agent \(r.number) \(r.color.key) state=\(r.state.rawValue) visible=\(c.isVisible) animating=\(c.isAnimating) frame=\(NSStringFromRect(c.panel.frame))")
             }
+            // アプリの状態とメニュー（Dock に出ているか・メニューバーの中身）、チャットの窓の状態
+            let policy: String
+            switch NSApp.activationPolicy() {
+            case .regular: policy = "regular"
+            case .accessory: policy = "accessory"
+            default: policy = "prohibited"
+            }
+            let menus = (NSApp.mainMenu?.items ?? []).map { m in
+                m.title + ": " + (m.submenu?.items.map { i in
+                    i.isSeparatorItem ? "-" : i.title + (i.isHidden ? "(hidden)" : "") + (i.isAlternate ? "(alt)" : "")
+                        + (i.action.map { "<\(NSStringFromSelector($0))>" } ?? "")
+                }.joined(separator: ", ") ?? "")
+            }
+            AppLog.write("app policy=\(policy) active=\(NSApp.isActive) hidden=\(NSApp.isHidden) menus=[\(menus.joined(separator: " | "))]")
+            for line in manager.debugChatLines() { AppLog.write(line) }
         case "style":
             if let st = param("v").flatMap(AvatarStyle.init(rawValue:)) { manager.setStyle(st) }
         case "login":

@@ -143,7 +143,7 @@ Below that are New jellyfish, Hide / Show all, past sessions and the list of age
 
 ## Chat
 
-The chat window that opens when you tap a jellyfish is a normal Mac window (minimize, full screen, resize freely).
+The chat window that opens when you tap a jellyfish is a normal Mac window (minimize, full screen, resize freely). While it's open the app appears in the Dock, ⌘Tab and the menu bar, so ⌘W (Close), ⌘M (Minimize) and ⌃⌘F (Full Screen) work, and a minimized chat comes back from the Dock icon or the menu bar's **Window** menu. Pressing Esc in full screen takes you back to the previous app and leaves the chat in full screen (to leave full screen, use ⌃⌘F or the green button).
 
 - **Top row**: AI (Claude / ChatGPT / Gemini), model, thinking effort, name, retry
 - **Bottom row**: screen attachment (Auto-detect / Attach every time / Don't attach), 📎 files, 🎙 dictation, 🖱 PC control, 🎧 listening, 📁 working folder, “Open in Claude Code” (Claude; the same conversation in Terminal) / “Open Gemini in this folder” (Gemini)

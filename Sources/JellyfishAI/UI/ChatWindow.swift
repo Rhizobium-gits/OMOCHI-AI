@@ -219,6 +219,8 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 380, height: 240)
         window.collectionBehavior = [.fullScreenPrimary, .moveToActiveSpace]
+        // チャットはクラゲごとの窓なので、ほかのチャットとタブにまとめない
+        window.tabbingMode = .disallowed
         window.isMovableByWindowBackground = true
         window.delegate = self
         window.setFrameAutosaveName("JellyfishChat-\(jelly.record.id.uuidString)")
@@ -228,6 +230,9 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     var isVisible: Bool { window.isVisible || window.isMiniaturized }
+    /// 最後に前面で使った時刻（Dock のアイコンを押したとき、しまったチャットのどれを戻すか）
+    private(set) var lastActive = Date.distantPast
+    var isFullScreen: Bool { window.styleMask.contains(.fullScreen) }
 
     // MARK: 構築
 
@@ -436,8 +441,11 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         let front = NSWorkspace.shared.frontmostApplication
         if front?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = front; contextApp = front }
         if window.isMiniaturized { window.deminiaturize(nil) }
-        if !window.isVisible { placeIfNeeded(near: jelly) }
-        manager?.chatWindowVisibilityChanged()
+        if !window.isVisible && !isFullScreen { placeIfNeeded(near: jelly) }
+        // 窓を出す前に普通のアプリ（Dock・⌘Tab・メニューバーあり）にしておく。出したあとでは、
+        // まだ窓が無いと数えて Dock に出ないアプリのままになり、閉じる・しまう・フル画面の操作や戻る道が無くなっていた
+        manager?.chatWindowVisibilityChanged(showing: true)
+        lastActive = Date()
         guard activate else {
             window.orderFrontRegardless()
             if focusInput { window.makeFirstResponder(input) }
@@ -480,6 +488,15 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     func closeAndReturn() {
+        // フル画面のときは窓をしまわない。しまうと中身の無いフル画面のスペースだけが残り、Dock からも消えて戻れなくなる。
+        // フル画面をやめるかは本人が決める（Apple の HIG「Let people choose when to exit full-screen mode」）ので、
+        // 前のアプリに戻るだけにして、チャットはフル画面のまま残す（Dock・⌘Tab・ウインドウメニューから戻れる）
+        if isFullScreen {
+            AppLog.write("chat \(jelly?.record.number ?? -1): back to previous app (stays full screen)")
+            previousApp?.activate()
+            previousApp = nil
+            return
+        }
         AppLog.write("chat \(jelly?.record.number ?? -1): hide (esc / sent)")
         window.orderOut(nil)
         manager?.chatWindowVisibilityChanged()
@@ -1109,12 +1126,36 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         if !window.styleMask.contains(.fullScreen) { manager?.rememberChatSize(window.frame.size) }
     }
 
+    /// クラゲを消したとき・言語を変えたときに閉じる。フル画面なら先に画面から外さず閉じる
+    /// （外すだけだと中身の無いフル画面のスペースが残る。閉じればスペースごと終わる）
+    func dismiss() {
+        if !isFullScreen { window.orderOut(nil) }
+        window.close()
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) { lastActive = Date() }
+
+    // フル画面の窓は自分のスペースにいる。「前に出すと今のスペースへ移る」（moveToActiveSpace）はフル画面のあいだ外し、
+    // クラゲを押したときなどは、ほかのアプリのフル画面と同じくそのスペースへ切り替える
+    func windowWillEnterFullScreen(_ notification: Notification) {
+        window.collectionBehavior.remove(.moveToActiveSpace)
+        AppLog.write("chat \(jelly?.record.number ?? -1): full screen on")
+    }
+    func windowDidFailToEnterFullScreen(_ window: NSWindow) { window.collectionBehavior.insert(.moveToActiveSpace) }
+    func windowDidExitFullScreen(_ notification: Notification) {
+        window.collectionBehavior.insert(.moveToActiveSpace)
+        AppLog.write("chat \(jelly?.record.number ?? -1): full screen off")
+    }
+
     func windowWillClose(_ notification: Notification) {
         AppLog.write("chat \(jelly?.record.number ?? -1): window closed")
         DispatchQueue.main.async { [weak self] in self?.manager?.chatWindowVisibilityChanged() }
     }
 
-    func windowDidMiniaturize(_ notification: Notification) { manager?.chatWindowVisibilityChanged() }
+    func windowDidMiniaturize(_ notification: Notification) {
+        AppLog.write("chat \(jelly?.record.number ?? -1): minimized")
+        manager?.chatWindowVisibilityChanged()
+    }
     func windowDidDeminiaturize(_ notification: Notification) { manager?.chatWindowVisibilityChanged() }
 }
 

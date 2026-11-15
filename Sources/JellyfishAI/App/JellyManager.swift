@@ -209,7 +209,7 @@ final class JellyManager {
         L10n.setting = lang
         store.save(settings)
         let open = chats.filter { $0.value.isVisible }.map(\.key)
-        for (_, chat) in chats { chat.window.orderOut(nil); chat.window.close() }
+        for (_, chat) in chats { chat.dismiss() }
         chats.removeAll()
         for id in open { if let c = controllers.first(where: { $0.record.id == id }) { openChat(for: c, activate: false) } }
         chatWindowVisibilityChanged()
@@ -713,11 +713,53 @@ final class JellyManager {
         scheduleSave()
     }
 
-    /// チャットウィンドウが 1 つでも出て（またはしまわれて）いる間は普通のアプリとして Dock・⌘Tab に出す
-    func chatWindowVisibilityChanged() {
-        let any = chats.values.contains { $0.isVisible }
+    /// チャットウィンドウが 1 つでも出て（またはしまわれて）いる間は普通のアプリとして Dock・⌘Tab・メニューバーに出す。
+    /// showing：これから出す（まだ画面に無い）。Dock に出ないアプリ（accessory）は「Dock に出ず、メニューバーも持たない」ので、
+    /// そのまま窓を出すと ⌘W・⌘M・⌃⌘F が効かず、隠れたりしまったりしたチャットに戻る道が無くなる。必ず出す前に普通のアプリにする
+    func chatWindowVisibilityChanged(showing: Bool = false) {
+        // アプリごと隠しているあいだ（⌘H）は窓が見えないだけなので、Dock から戻せるように普通のアプリのままにする
+        if NSApp.isHidden && NSApp.activationPolicy() == .regular { return }
+        let any = showing || chats.values.contains { $0.isVisible }
         let want: NSApplication.ActivationPolicy = any ? .regular : .accessory
         if NSApp.activationPolicy() != want { NSApp.setActivationPolicy(want) }
+    }
+
+    /// jellyfish://debug 用：チャットの窓ごとの状態（出ている・しまった・フル画面・前面）
+    func debugChatLines() -> [String] {
+        controllers.compactMap { c in
+            guard let chat = chats[c.record.id] else { return nil }
+            let w = chat.window
+            return "chat \(c.record.number) visible=\(w.isVisible) minimized=\(w.isMiniaturized) fullScreen=\(chat.isFullScreen) key=\(w.isKeyWindow) inWindowsMenu=\(!w.isExcludedFromWindowsMenu)"
+        }
+    }
+
+    /// jellyfish://window 用（自動化のときだけ）：ボタンやキーを押したのと同じ操作
+    func debugChatWindow(_ c: JellyController, _ action: String) {
+        guard let chat = chats[c.record.id] else { return }
+        switch action {
+        case "minimize": chat.window.miniaturize(nil)
+        case "fullscreen": chat.window.toggleFullScreen(nil)
+        case "esc": chat.closeAndReturn()
+        case "close": chat.window.performClose(nil)
+        default: break
+        }
+    }
+
+    /// Dock のアイコンを押したとき：しまったチャットしか無ければ、最後に使ったものを戻す。出ているチャットがあれば前に出す。
+    /// チャットが 1 つも無ければ false
+    @discardableResult
+    func reopenChats() -> Bool {
+        let open = chats.values.filter { $0.isVisible }
+        guard !open.isEmpty else { return false }
+        chatWindowVisibilityChanged(showing: true)
+        NSApp.activate(ignoringOtherApps: true)
+        if let front = open.filter({ $0.window.isVisible }).max(by: { $0.lastActive < $1.lastActive }) {
+            front.window.makeKeyAndOrderFront(nil)
+        } else if let last = open.max(by: { $0.lastActive < $1.lastActive }) {
+            last.window.deminiaturize(nil)
+            last.window.makeKeyAndOrderFront(nil)
+        }
+        return true
     }
 
     /// 過去の Claude Code セッション（プロジェクト）をクラゲで呼び出す
@@ -858,8 +900,7 @@ final class JellyManager {
     func remove(_ c: JellyController) {
         team?.removeAgent(c.record.id)
         if let chat = chats.removeValue(forKey: c.record.id) {
-            chat.window.orderOut(nil)
-            chat.window.close()
+            chat.dismiss()
             chatWindowVisibilityChanged()
         }
         if let rt = runtimes.removeValue(forKey: c.record.id) {
