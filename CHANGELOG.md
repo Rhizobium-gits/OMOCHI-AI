@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-11-15
+
 ### 修正
 
 - **クラゲを消したあとメニューバーからチャットを開くと、閉じる・しまう・フルスクリーンの操作ができず戻れなくなることがあった**：ほかにチャットが開いていないときにチャットを開くと、アプリが「Dock に出ないアプリ」（accessory。Dock に出ず、メニューバーも持たない）のまま窓を出していた（窓を出す前に「チャットが出ているか」を数えていた）。そのため ⌘W・⌘M・⌃⌘F が効かず、⌘Tab にも Dock にも出ないので、後ろに隠れたりしまったりしたチャットに戻れなかった。窓を出す前に普通のアプリにする
@@ -257,6 +259,7 @@
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[1.2.3]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.0
