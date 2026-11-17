@@ -1,15 +1,13 @@
 <p align="center">
-  <img src="docs/media/icon.png" width="160" alt="Jellyfish AI icon (a translucent jellyfish)">
+  <img src="docs/media/banner.jpg" width="100%" alt="A translucent glass jellyfish floating on black, with the Jellyfish AI wordmark">
 </p>
 
-<h1 align="center">Jellyfish AI</h1>
-
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=downloads&color=brightgreen" alt="downloads"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/macOS-14%2B-lightgrey" alt="macOS 14+">
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=downloads&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="downloads"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-26262c?style=for-the-badge&labelColor=0d0d10&logo=apple&logoColor=white" alt="macOS 14+">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-26262c?style=for-the-badge&labelColor=0d0d10" alt="License: MIT"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/jellyfish-ai/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -17,13 +15,17 @@
 </p>
 
 <p align="center">
-  A macOS app where AI agents live on your desktop, each one running as an independent AI agent（Claude Code・Codex・Gemini）.<br>
-  Press ⌘L, type, and watch it think, work and finish.
+  <b>A macOS app where AI agents live on your desktop, each one running as an independent AI agent（Claude Code・Codex・Gemini）.</b><br>
+  <sub>Press ⌘L, type, and watch it think, work and finish.</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><b>⬇︎ Download (.dmg)</b></a>
-  &nbsp;·&nbsp; <a href="#key-features">Key features</a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><img src="docs/media/download.png" width="291" alt="Download (.dmg)"></a>
+</p>
+
+<p align="center">
+  <a href="#key-features">Key features</a>
+  &nbsp;·&nbsp; <a href="#teams-across-ais">Teams across AIs</a>
   &nbsp;·&nbsp; <a href="#download-and-install">Install</a>
   &nbsp;·&nbsp; <a href="#getting-started">Getting started</a>
   &nbsp;·&nbsp; <a href="#ai-engines-and-accounts">AI engines</a>
@@ -55,6 +57,17 @@
 | **No surprise charges** | Doesn't handle API keys, and doesn't use AIs signed in on pay-as-you-go (Claude included) |
 | **Updates** | From the app, from Terminal, or with a single command. Checks the checksum, contents and signature before replacing the app |
 | **日本語, English, 简体中文** | Menus and the guidance given to agents are in the language you choose |
+
+## Teams across AIs
+
+<p align="center">
+  <img src="docs/media/demo-crossai.gif" width="820" alt="A Claude leader creates a ChatGPT (Codex) teammate that computes a sum in Python, has a Claude reviewer check the code, and wraps up the results">
+</p>
+
+Ask a Claude jellyfish to “bring out two teammates and split the work: a ChatGPT (Codex) teammate computes the sum of the primes from 1 to 100 in Python, and a Claude teammate checks the code”. The leader brings out **teammates on different AIs**, links them, and requests and results travel along the lines until it wraps up (a real recording; only the waits for replies are sped up 3×, and the captions are in Japanese).
+
+- Each teammate runs its own AI's official CLI with your own sign-in. The chat title and the reply headings show that teammate's AI (here, ChatGPT (Codex))
+- Choose the AI, model and thinking effort per teammate. See [Split work by each AI's strengths](#split-work-by-each-ais-strengths)
 
 <p align="center">
   <img src="docs/media/demo-parallel.gif" width="820" alt="Several jellyfish working in parallel, stopping one by one as they finish, and being removed with a long press">
@@ -235,6 +248,8 @@ Up to 8 jellyfish per team. Teammates created by an agent can create teammates o
 ### Split work by each AI's strengths
 
 **Jellyfish on any AI can lead**. A Claude jellyfish can bring out ChatGPT teammates and a ChatGPT jellyfish can bring out Claude teammates, to split the work or build together. Link jellyfish whose AI you picked yourself (say, Claude and ChatGPT), and they ask each other for work and send back results.
+
+See it in action in the [Teams across AIs](#teams-across-ais) demo.
 
 | AI | Good roles | Can't |
 |---|---|---|
@@ -472,8 +487,12 @@ Each AI's CLI and its records belong to that CLI, so they remain even after you 
   - Only when launched with the environment variable `JELLYFISH_AUTOMATION=1` and the passphrase from `automation.token` in the data folder is added as `token=…` (for automated tests and demo recording; `scripts/demo/recorder.swift` adds it automatically): `renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - `.build/debug/JellyfishAI --pixel-sheet out.png` renders a sheet of the pixel-art frames, `--settle-test` verifies that it comes to rest when done, and `--account-menu out.png` renders the account and usage section of the menu
 - Display text is written in Japanese in the source and wrapped in `L("…")`, with translations in `l10n/en.json` and `l10n/zh.json`. `scripts/l10n.py missing en` lists missing translations, `scripts/l10n.py gen` generates the Swift tables, and `scripts/l10n.py check` checks for missing translations and the number of `%@` (also checked in CI). Launch with the environment variable `JELLYFISH_LANGUAGE=en` to fix the language
-- The README GIFs can be re-recorded with `scripts/demo/record.sh` (it doesn't touch your everyday data; it actually runs Claude Code with empty demo data and records it. Requires Pillow and ffmpeg)
+- The README GIFs can be re-recorded with `scripts/demo/record.sh` (it doesn't touch your everyday data; it actually runs Claude Code — and Codex CLI for `crossai` — with empty demo data and records it on a black background. Your home path (`/Users/<name>`) showing on screen is found with macOS text recognition and blurred (`scripts/demo/redact.sh`, processed only on this Mac). Requires Pillow and ffmpeg)
 
 ## License
 
 [MIT](LICENSE). See [CHANGELOG.md](CHANGELOG.md) for the change history. The licenses of the libraries used to display the chat (marked, KaTeX, Mermaid, DOMPurify, highlight.js) are in [Resources/chat/vendor/licenses](Resources/chat/vendor/licenses), and their versions in [VERSIONS.txt](Resources/chat/vendor/VERSIONS.txt).
+
+<p align="center">
+  <img src="docs/media/icon.png" width="72" alt="">
+</p>

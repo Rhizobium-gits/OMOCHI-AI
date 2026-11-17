@@ -1,9 +1,10 @@
 """recorder の出力（frame-*.png + timeline.json）から README 用の GIF を作る。
 
-    python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link]
+    python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link crossai]
 
 - 字幕・タップの輪は録画時の events（手順の時刻・クラゲの位置・状態の変化）から付ける
-- 再生速度は実時間のまま（早送りはしない）
+- 再生速度は実時間のまま。AI の返事を待つだけの長い間だけ早送りし、右上に「早送り ×3」を出す
+- フレームに写ったホームのパス（/Users/<名前>）は、scripts/demo/redact.sh が書いた redact.json の位置をぼかす
 - GIF の書き出しは ffmpeg（palettegen / paletteuse）
 """
 import json
@@ -14,7 +15,7 @@ import subprocess
 import sys
 import tempfile
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 SRC, OUT = sys.argv[1], sys.argv[2]
 ONLY = set(sys.argv[3:])
@@ -61,7 +62,9 @@ def caption(draw, img, text, scale):
     h = 15 * scale + pad_y * 2
     x0 = (W - tw) / 2 - pad_x
     y0 = H - h - 16 * scale
-    draw.rounded_rectangle([x0, y0, x0 + tw + pad_x * 2, y0 + h], radius=h / 2, fill=(14, 18, 32, 210))
+    # 黒い背景に合わせた、細い縁のガラスっぽい字幕
+    draw.rounded_rectangle([x0, y0, x0 + tw + pad_x * 2, y0 + h], radius=h / 2, fill=(22, 22, 26, 228),
+                           outline=(255, 255, 255, 52), width=max(1, int(1 * scale)))
     draw.text((x0 + pad_x, y0 + pad_y - 1 * scale), text, font=font, fill=(255, 255, 255, 255))
 
 
@@ -81,15 +84,57 @@ def ring(draw, cx, cy, p, scale, kind):
         draw.ellipse([cx - r2, cy - r2, cx + r2, cy + r2], fill=(255, 255, 255, 140))
 
 
-def render(name, out, t0, t1, captions, marks=(), labels=None, loop_only=False):
-    """captions: [(開始時刻, 文字)]、marks: [(時刻, 種類, (cx, cy) 録画座標[pt])]"""
+def load_redact(d):
+    """redact.json：{"frame-00001.png": [[x, y, w, h], …]}。無ければ何も隠さない"""
+    p = os.path.join(d, "redact.json")
+    if not os.path.exists(p):
+        return {}
+    return {int(k[6:11]): v for k, v in json.load(open(p)).items() if v}
+
+
+def redact(img, n, boxes, scale):
+    """フレーム n と前後 2 枚で見つかった箇所をぼかす（文字認識が取りこぼしたフレームの分も隠す）"""
+    pad = 5 * scale
+    for m in range(n - 2, n + 3):
+        for (x, y, w, h) in boxes.get(m, []):
+            r = (int(max(0, x - pad)), int(max(0, y - pad)), int(min(img.width, x + w + pad)), int(min(img.height, y + h + pad)))
+            if r[2] <= r[0] or r[3] <= r[1]:
+                continue
+            region = img.crop(r)
+            small = region.resize((max(1, region.width // 12), max(1, region.height // 12)), Image.BILINEAR)
+            img.paste(small.resize(region.size, Image.BILINEAR).filter(ImageFilter.GaussianBlur(4 * scale)), r)
+    return img
+
+
+def badge(draw, img, text, scale):
+    font = ImageFont.truetype(FONT, int(12 * scale))
+    tw = draw.textlength(text, font=font)
+    h = 12 * scale + 12 * scale
+    x1 = img.width - 14 * scale
+    x0 = x1 - tw - 22 * scale
+    y0 = 14 * scale
+    draw.rounded_rectangle([x0, y0, x1, y0 + h], radius=h / 2, fill=(22, 22, 26, 228),
+                           outline=(255, 255, 255, 52), width=max(1, int(1 * scale)))
+    draw.text((x0 + 11 * scale, y0 + 5 * scale), text, font=font, fill=(255, 255, 255, 235))
+
+
+def render(name, out, t0, t1, captions, marks=(), labels=None, loop_only=False, fast=()):
+    """captions: [(開始時刻, 文字)]、marks: [(時刻, 種類, (cx, cy) 録画座標[pt])]、
+    fast: [(開始, 終わり, 倍率)]（その間だけ早送り）"""
     d, tl, ev = load(name)
     scale = tl["scale"]
+    boxes = load_redact(d)
     tmp = tempfile.mkdtemp()
-    n = int((t1 - t0) * FPS)
-    for i in range(n):
-        t = t0 + i / FPS
-        img = Image.open(os.path.join(d, "frame-%05d.png" % frame_at(tl, t))).convert("RGBA")
+    times = []
+    t = t0
+    while t < t1:
+        k = next((f for (a, b, f) in fast if a <= t < b), 1)
+        times.append((t, k))
+        t += k / FPS
+    n = len(times)
+    for i, (t, k) in enumerate(times):
+        fn = frame_at(tl, t)
+        img = redact(Image.open(os.path.join(d, "frame-%05d.png" % fn)).convert("RGBA"), fn, boxes, scale)
         over = Image.new("RGBA", img.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(over)
         for (mt, kind, (cx, cy)) in marks:
@@ -102,6 +147,8 @@ def render(name, out, t0, t1, captions, marks=(), labels=None, loop_only=False):
                 text = s
         if text:
             caption(draw, img, text, scale)
+        if k != 1:
+            badge(draw, img, "早送り ×%g" % k, scale)
         if labels:
             font = ImageFont.truetype(FONT, int(12 * scale))
             for (cx, y, s) in labels:
@@ -201,3 +248,23 @@ if want("link"):
             (ev["cut"]["t"], "Option を押しながら離す → 切り離し"),
             (ev["scissors"]["t"], "線の ✂ でも切れる")]
     render("link", "demo-link.gif", ev["drag1"]["t"] - 0.8, ev["end"]["t"], caps)
+
+# ---- 6. AI をまたいだチーム（Claude × ChatGPT） -----------------------------------
+if want("crossai"):
+    d, tl, ev = load("crossai")
+    first = lambda prefix: min((e["t"] for e in tl["events"] if e["mark"].startswith(prefix)), default=None)
+    caps = [(0, "Claude のリーダーに「ChatGPT と Claude の仲間で分担して」と指示")]
+    if first("state:2:idle"): caps.append((first("state:2:idle"), "リーダーが ChatGPT（Codex）の仲間を作り、実装を頼む"))
+    if first("state:2:completed"): caps.append((first("state:2:completed"), "Codex が計算した結果が線を通って戻る"))
+    if first("state:3:idle"): caps.append((first("state:3:idle"), "次は Claude のレビュー係を作って、コードを確かめさせる"))
+    if first("state:3:completed"): caps.append((first("state:3:completed"), "レビューの結果が戻り、リーダーがまとめる"))
+    caps += [(ev["completed"]["t"], "AI をまたいだチームで完了"),
+             (ev["tap2"]["t"], "実装係のチャット：ChatGPT（Codex）で動いている"),
+             (ev["tap"]["t"], "リーダー（Claude）のチャット：分担と結果のまとめ")]
+    # 仲間の返事を待つだけの間は早送り（仲間が動き始めてから、結果が戻る少し前まで）
+    fast = []
+    for a, b in (("state:2:thinking", "state:2:completed"), ("state:3:thinking", "state:3:completed")):
+        ta, tb = first(a), first(b)
+        if ta and tb and tb - ta > 6:
+            fast.append((ta + 1.5, tb - 1.0, 3))
+    render("crossai", "demo-crossai.gif", ev["type"]["t"] - 0.8, ev["end"]["t"], caps, fast=fast)

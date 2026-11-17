@@ -8,6 +8,11 @@
  "scale": 2,
  "fps": 20,
  "dataDir": ".build/demo-data/basic",
+ "background": [
+  "#000000",
+  "#000000",
+  "#000000"
+ ],
  "steps": [
   {
    "delay": 1.2,

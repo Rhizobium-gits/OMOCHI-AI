@@ -1,15 +1,13 @@
 <p align="center">
-  <img src="docs/media/icon.png" width="160" alt="Jellyfish AI 的图标（透明的水母）">
+  <img src="docs/media/banner.jpg" width="100%" alt="漂浮在黑色背景上的透明玻璃水母与 Jellyfish AI 标志">
 </p>
 
-<h1 align="center">Jellyfish AI</h1>
-
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&color=brightgreen" alt="下载次数"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/macOS-14%2B-lightgrey" alt="macOS 14+">
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="下载次数"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-26262c?style=for-the-badge&labelColor=0d0d10&logo=apple&logoColor=white" alt="macOS 14+">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-26262c?style=for-the-badge&labelColor=0d0d10" alt="License: MIT"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/jellyfish-ai/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -17,13 +15,17 @@
 </p>
 
 <p align="center">
-  这是一款 macOS 应用：AI 智能体常驻在桌面上，每一个都作为独立的 AI 智能体（Claude Code・Codex・Gemini）运行。<br>
-  <i>macOS 桌面伙伴：屏幕上的每个小像素角色都是一个独立的 AI 智能体——Claude Code、Codex 或 Gemini。<br>按下 ⌘L，输入，然后看着它思考、工作、完成。</i>
+  <b>这是一款 macOS 应用：AI 智能体常驻在桌面上，每一个都作为独立的 AI 智能体（Claude Code・Codex・Gemini）运行。</b><br>
+  <sub><i>macOS 桌面伙伴：屏幕上的每个小像素角色都是一个独立的 AI 智能体——Claude Code、Codex 或 Gemini。<br>按下 ⌘L，输入，然后看着它思考、工作、完成。</i></sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><b>⬇︎ 下载（.dmg）</b></a>
-  &nbsp;·&nbsp; <a href="#主要功能">主要功能</a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><img src="docs/media/download.png" width="291" alt="下载（.dmg）"></a>
+</p>
+
+<p align="center">
+  <a href="#主要功能">主要功能</a>
+  &nbsp;·&nbsp; <a href="#跨-ai-的团队">跨 AI 的团队</a>
   &nbsp;·&nbsp; <a href="#下载与安装">安装</a>
   &nbsp;·&nbsp; <a href="#快速上手">快速上手</a>
   &nbsp;·&nbsp; <a href="#使用的-ai-与账户">使用的 AI</a>
@@ -55,6 +57,17 @@
 | **不会擅自收费** | 不处理 API 密钥，不使用以按量计费方式登录的 AI（Claude 也一样） |
 | **更新** | 可以在应用中、在终端中，或用一条命令更新。确认校验和、内容和签名后再替换 |
 | **日本語・English・简体中文** | 菜单和给智能体的说明都使用所选的语言 |
+
+## 跨 AI 的团队
+
+<p align="center">
+  <img src="docs/media/demo-crossai.gif" width="820" alt="Claude 的带队者创建 ChatGPT（Codex）的队友用 Python 计算，再让 Claude 的审查员检查代码，最后汇总结果的样子">
+</p>
+
+对 Claude 的水母说“创建 2 个队友来分工：ChatGPT（Codex）的「Codex 実装係」用 Python 计算 1～100 的素数之和，Claude 的「Claude レビュー係」检查这段代码”，带队者就会叫出 **不同 AI 的队友** 并用线连接，委托和结果沿着线往返，最后由带队者汇总（真实录屏；只有等待回复的部分以 3 倍速播放，字幕为日语）。
+
+- 每个队友都以你自己的登录运行各自 AI 的官方 CLI。聊天的标题和回复的小标题会显示该队友的 AI（这里是 ChatGPT（Codex））
+- 可以为每个队友选择 AI、模型和思考强度。详见 [按各 AI 的擅长之处分工](#按各-ai-的擅长之处分工)
 
 <p align="center">
   <img src="docs/media/demo-parallel.gif" width="820" alt="多只水母并行工作，完成的依次停下，长按即消失的样子">
@@ -235,6 +248,8 @@
 ### 按各 AI 的擅长之处分工
 
 **任何 AI 的水母都可以当带队者**。Claude 的水母可以叫出 ChatGPT 的队友，ChatGPT 的水母也可以叫出 Claude 的队友，一起分工或开发。把各自选好 AI 的水母（例如 Claude 和 ChatGPT）连接起来，就能互相委托、互相返回结果。
+
+实际效果见 [跨 AI 的团队](#跨-ai-的团队) 的演示。
 
 | AI | 适合的角色 | 不能做的事 |
 |---|---|---|
@@ -472,8 +487,12 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
   - 仅在启动时加上环境变量 `JELLYFISH_AUTOMATION=1`，并用 `token=…` 附上数据文件夹中 `automation.token` 的口令时可用（用于自动测试和演示录制。`scripts/demo/recorder.swift` 会自动附上）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - 用 `.build/debug/JellyfishAI --pixel-sheet out.png` 输出像素画的帧一览，用 `--settle-test` 验证完成时的静止，用 `--account-menu out.png` 绘制菜单中的账户和用量栏
 - 显示的文字在源码中用日语书写并用 `L("…")` 包裹，译文放在 `l10n/en.json`、`l10n/zh.json` 中。用 `scripts/l10n.py missing en` 查看缺失的译文，用 `scripts/l10n.py gen` 生成 Swift 的表，用 `scripts/l10n.py check` 检查缺失和 `%@` 的数量（CI 中也会检查）。用环境变量 `JELLYFISH_LANGUAGE=en` 可以固定语言启动
-- README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code 来录制。需要 Pillow 和 ffmpeg）
+- README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code（`crossai` 还会运行 Codex CLI），在黑色背景上录制。屏幕上出现的主目录路径（`/Users/<名字>`）会用 macOS 的文字识别找出并模糊处理（`scripts/demo/redact.sh`，只在本机处理）。需要 Pillow 和 ffmpeg）
 
 ## 许可证
 
 [MIT](LICENSE)。变更记录见 [CHANGELOG.md](CHANGELOG.md)。用于显示聊天的库（marked、KaTeX、Mermaid、DOMPurify、highlight.js）的许可证见 [Resources/chat/vendor/licenses](Resources/chat/vendor/licenses)，版本见 [VERSIONS.txt](Resources/chat/vendor/VERSIONS.txt)。
+
+<p align="center">
+  <img src="docs/media/icon.png" width="72" alt="">
+</p>

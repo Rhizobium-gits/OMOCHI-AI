@@ -1,15 +1,13 @@
 <p align="center">
-  <img src="docs/media/icon.png" width="160" alt="Jellyfish AI のアイコン（透明なクラゲ）">
+  <img src="docs/media/banner.jpg" width="100%" alt="黒い背景に浮かぶ透明なガラスのクラゲと Jellyfish AI のロゴ">
 </p>
 
-<h1 align="center">Jellyfish AI</h1>
-
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E6%95%B0&color=brightgreen" alt="ダウンロード数"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/macOS-14%2B-lightgrey" alt="macOS 14+">
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E6%95%B0&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="ダウンロード数"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-26262c?style=for-the-badge&labelColor=0d0d10&logo=apple&logoColor=white" alt="macOS 14+">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-26262c?style=for-the-badge&labelColor=0d0d10" alt="License: MIT"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/jellyfish-ai/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -17,13 +15,17 @@
 </p>
 
 <p align="center">
-  デスクトップ上にAIエージェントが常駐し、1 体ずつが独立した AI エージェント（Claude Code・Codex・Gemini）として動く macOS アプリです。<br>
-  <i>A macOS desktop companion: each little pixel character on your screen is an independent AI agent — Claude Code, Codex and Gemini.<br>Press ⌘L, type, and watch it think, work and finish.</i>
+  <b>デスクトップ上にAIエージェントが常駐し、1 体ずつが独立した AI エージェント（Claude Code・Codex・Gemini）として動く macOS アプリです。</b><br>
+  <sub><i>A macOS desktop companion: each little pixel character on your screen is an independent AI agent — Claude Code, Codex and Gemini.<br>Press ⌘L, type, and watch it think, work and finish.</i></sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><b>⬇︎ ダウンロード（.dmg）</b></a>
-  &nbsp;·&nbsp; <a href="#主な機能">主な機能</a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><img src="docs/media/download.png" width="291" alt="ダウンロード（.dmg）"></a>
+</p>
+
+<p align="center">
+  <a href="#主な機能">主な機能</a>
+  &nbsp;·&nbsp; <a href="#ai-をまたいだチーム">AI をまたいだチーム</a>
   &nbsp;·&nbsp; <a href="#ダウンロードとインストール">インストール</a>
   &nbsp;·&nbsp; <a href="#はじめかた">はじめかた</a>
   &nbsp;·&nbsp; <a href="#使う-ai-とアカウント">使う AI</a>
@@ -55,6 +57,17 @@
 | **勝手に課金しない** | API キーを扱わず、従量課金でログインしている AI は使わない（Claude も同じ） |
 | **アップデート** | アプリから・ターミナルから・コマンド 1 つで。チェックサム・中身・署名を確かめてから入れ替える |
 | **日本語・English・简体中文** | メニューもエージェントへの案内も、選んだ言語で |
+
+## AI をまたいだチーム
+
+<p align="center">
+  <img src="docs/media/demo-crossai.gif" width="820" alt="Claude のリーダーが ChatGPT（Codex）の仲間を作って Python で計算させ、Claude のレビュー係にコードを確かめさせて、結果をまとめる様子">
+</p>
+
+Claude のクラゲに「仲間を 2 人作って分担して。ChatGPT（Codex）の「Codex 実装係」が 1〜100 の素数の和を Python で計算し、Claude の「Claude レビュー係」がそのコードを確かめる」と頼むと、リーダーが **AI の違う仲間** を出して線でつなぎ、依頼と結果を線の上でやり取りしてまとめます（実際の録画。返事を待つ間だけ 3 倍速）。
+
+- 仲間はそれぞれの AI の公式の CLI を、あなたのログインのまま動かします。チャットのタイトルと返答の見出しに、その仲間の AI（ここでは ChatGPT（Codex））が出ます
+- 仲間ごとに AI・モデル・考える強さを選べます。詳しくは [AI ごとの得意なことで分担する](#ai-ごとの得意なことで分担する)
 
 <p align="center">
   <img src="docs/media/demo-parallel.gif" width="820" alt="複数のクラゲが並列に作業し、終わったものから止まり、長押しで消える様子">
@@ -235,6 +248,8 @@ PC 操作や画面の添付を使うなら、メニューバーのクラゲ › 
 ### AI ごとの得意なことで分担する
 
 **どの AI のクラゲもリーダーになれます**。Claude のクラゲが ChatGPT の仲間を、ChatGPT のクラゲが Claude の仲間を出して、分担したり一緒に開発したりできます。自分で AI を選んでおいたクラゲどうし（たとえば Claude と ChatGPT）をつなげば、お互いに頼み合い、結果を返し合います。
+
+実際の様子は [AI をまたいだチーム](#ai-をまたいだチーム) のデモで見られます。
 
 | AI | 向いている役割 | できないこと |
 |---|---|---|
@@ -472,8 +487,12 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
   - 環境変数 `JELLYFISH_AUTOMATION=1` を付けて起動し、データフォルダの `automation.token` の合言葉を `token=…` で付けたときだけ（自動テスト・デモ録画用。`scripts/demo/recorder.swift` が自動で付ける）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - `.build/debug/JellyfishAI --pixel-sheet out.png` でドット絵のコマ一覧、`--settle-test` で完了時の静止を検証、`--account-menu out.png` でメニューのアカウント・使用量の欄を描き出す
 - 表示の文字はソースに日本語で書いて `L("…")` で包み、訳は `l10n/en.json`・`l10n/zh.json` に置きます。`scripts/l10n.py missing en` で訳の抜け、`scripts/l10n.py gen` で Swift の表を作り、`scripts/l10n.py check` で抜けと `%@` の数を確かめます（CI でも確かめる）。環境変数 `JELLYFISH_LANGUAGE=en` で言語を固定して起動できます
-- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code を動かして録画。Pillow と ffmpeg が必要）
+- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）
 
 ## ライセンス
 
 [MIT](LICENSE)。変更履歴は [CHANGELOG.md](CHANGELOG.md)。チャットの表示に使うライブラリ（marked・KaTeX・Mermaid・DOMPurify・highlight.js）のライセンスは [Resources/chat/vendor/licenses](Resources/chat/vendor/licenses)、版は [VERSIONS.txt](Resources/chat/vendor/VERSIONS.txt) にあります。
+
+<p align="center">
+  <img src="docs/media/icon.png" width="72" alt="">
+</p>
