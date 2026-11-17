@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.jpg" width="100%" alt="黒い背景に浮かぶ透明なガラスのクラゲと Jellyfish AI のロゴ">
+  <img src="docs/media/banner.gif" width="100%" alt="黒い背景で拍動しながら漂う透明なガラスのクラゲと Jellyfish AI のロゴ">
 </p>
 
 <p align="center">

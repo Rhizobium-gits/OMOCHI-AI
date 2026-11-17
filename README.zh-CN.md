@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.jpg" width="100%" alt="漂浮在黑色背景上的透明玻璃水母与 Jellyfish AI 标志">
+  <img src="docs/media/banner.gif" width="100%" alt="在黑色背景上一张一合、缓缓漂动的透明玻璃水母与 Jellyfish AI 标志">
 </p>
 
 <p align="center">

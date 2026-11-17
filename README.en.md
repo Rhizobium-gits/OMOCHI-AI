@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.jpg" width="100%" alt="A translucent glass jellyfish floating on black, with the Jellyfish AI wordmark">
+  <img src="docs/media/banner.gif" width="100%" alt="A translucent glass jellyfish pulsing and drifting on black, with the Jellyfish AI wordmark">
 </p>
 
 <p align="center">
