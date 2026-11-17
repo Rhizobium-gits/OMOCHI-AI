@@ -1,45 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="820" height="344" viewBox="0 0 820 344" role="img" aria-label="1 日ごとのダウンロード">
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="300" viewBox="0 0 820 300" role="img" aria-label="1 日ごとのダウンロード">
 <title>1 日ごとのダウンロード</title>
-<rect x="0.5" y="0.5" width="819" height="343" rx="16" fill="#0d0d10" stroke="#2a2a31"/>
-<g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans CJK JP', 'Noto Sans JP', 'PingFang SC', 'Microsoft YaHei', sans-serif">
-<text x="24" y="42" font-size="18" font-weight="600" fill="#f0efec">1 日ごとのダウンロード</text>
-<text x="24" y="64" font-size="12" fill="#8b8b94">UTC の日ごと · 毎日自動で更新</text>
-<text x="796" y="30" font-size="12" fill="#8b8b94" text-anchor="end">累計</text>
-<text x="796" y="64" font-size="32" font-weight="700" fill="#f0efec" text-anchor="end">270</text>
-<rect x="24" y="84" width="10" height="10" rx="2" fill="#3987e5"/>
-<text x="40" y="93.5" font-size="12" fill="#c3c2b7">.dmg（新しく入れた）</text>
-<rect x="185.84" y="84" width="10" height="10" rx="2" fill="#d95926"/>
-<text x="201.84" y="93.5" font-size="12" fill="#c3c2b7">.zip（アップデート）</text>
-<rect x="347.68" y="84" width="10" height="10" rx="2" fill="#199e70"/>
-<text x="363.68" y="93.5" font-size="12" fill="#c3c2b7">git clone（人数）</text>
-<rect x="496.32" y="84" width="10" height="10" rx="2" fill="#17171d" stroke="#34343c"/>
-<text x="512.3199999999999" y="93.5" font-size="12" fill="#8b8b94">git clone は集計待ち（GitHub が数日遅れて出す）</text>
-<rect x="479.7" y="110" width="316.3" height="154" fill="#17171d"/>
-<line x1="58" y1="264.0" x2="796" y2="264.0" stroke="#24242a" stroke-width="1"/>
-<text x="48" y="268.0" font-size="11" fill="#8b8b94" text-anchor="end">0</text>
-<line x1="58" y1="215.3" x2="796" y2="215.3" stroke="#24242a" stroke-width="1"/>
-<text x="48" y="219.3" font-size="11" fill="#8b8b94" text-anchor="end">20</text>
-<line x1="58" y1="166.7" x2="796" y2="166.7" stroke="#24242a" stroke-width="1"/>
-<text x="48" y="170.7" font-size="11" fill="#8b8b94" text-anchor="end">40</text>
-<line x1="58" y1="118.0" x2="796" y2="118.0" stroke="#24242a" stroke-width="1"/>
-<text x="48" y="122.0" font-size="11" fill="#8b8b94" text-anchor="end">60</text>
-<path d="M98.7,264.0V214.5Q98.7,210.5 102.7,210.5H118.7Q122.7,210.5 122.7,214.5V264.0Z" fill="#199e70"/>
-<text x="110.7" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/11</text>
-<path d="M204.1,264.0V124.4Q204.1,120.4 208.1,120.4H224.1Q228.1,120.4 228.1,124.4V264.0Z" fill="#199e70"/>
-<text x="216.1" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/12</text>
-<text x="216.1" y="114.4" font-size="11" font-weight="600" fill="#c3c2b7" text-anchor="middle">59</text>
-<path d="M309.6,264.0V153.6Q309.6,149.6 313.6,149.6H329.6Q333.6,149.6 333.6,153.6V264.0Z" fill="#199e70"/>
-<text x="321.6" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/13</text>
-<path d="M415.0,264.0V129.3Q415.0,125.3 419.0,125.3H435.0Q439.0,125.3 439.0,129.3V264.0Z" fill="#199e70"/>
-<text x="427.0" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/14</text>
-<text x="532.4" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/15</text>
-<path d="M625.9,264.0V259.1H649.9V264.0Z" fill="#3987e5"/>
-<path d="M625.9,257.1V255.8Q625.9,251.8 629.9,251.8H645.9Q649.9,251.8 649.9,255.8V257.1Z" fill="#d95926"/>
-<text x="637.9" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/16</text>
-<path d="M731.3,264.0V260.7Q731.3,256.7 735.3,256.7H751.3Q755.3,256.7 755.3,260.7V264.0Z" fill="#3987e5"/>
-<text x="743.3" y="282" font-size="11" fill="#8b8b94" text-anchor="middle">11/17</text>
-<text x="743.3" y="250.7" font-size="11" font-weight="600" fill="#c3c2b7" text-anchor="middle">3</text>
-<line x1="58" y1="264" x2="796" y2="264" stroke="#3a3a42" stroke-width="1"/>
-<text x="24" y="306" font-size="11" fill="#8b8b94">更新 2026-11-17 UTC · 数は stats ブランチの stats.json</text>
-<text x="24" y="328" font-size="11" fill="#8b8b94">※ 11/15 までの .dmg・.zip（77 件）は日ごとの内訳がないため棒に入れていません（累計には入っています）</text>
+<rect x="0.5" y="0.5" width="819" height="299" rx="18" fill="#000000" stroke="#1f1f1f"/>
+<g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans CJK JP', 'Noto Sans JP', 'PingFang SC', 'Microsoft YaHei', sans-serif" style="font-variant-numeric: tabular-nums">
+<text x="32" y="48" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">1 日ごとのダウンロード</text>
+<text x="32" y="72" font-size="12" fill="#8a8a8a">.dmg・.zip・git clone の合計 · 毎日自動で更新</text>
+<text x="788" y="30" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">累計</text>
+<text x="788" y="70" font-size="38" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">270</text>
+<path d="M76.0,236.0V201.7Q76.0,198.7 79.0,198.7H93.0Q96.0,198.7 96.0,201.7V236.0Z" fill="#f2f2f2"/>
+<text x="86.0" y="191.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
+<text x="86.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
+<path d="M184.0,236.0V139.0Q184.0,136.0 187.0,136.0H201.0Q204.0,136.0 204.0,139.0V236.0Z" fill="#f2f2f2"/>
+<text x="194.0" y="129.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">59</text>
+<text x="194.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
+<path d="M292.0,236.0V159.3Q292.0,156.3 295.0,156.3H309.0Q312.0,156.3 312.0,159.3V236.0Z" fill="#f2f2f2"/>
+<text x="302.0" y="149.3" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">47</text>
+<text x="302.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
+<path d="M400.0,236.0V142.4Q400.0,139.4 403.0,139.4H417.0Q420.0,139.4 420.0,142.4V236.0Z" fill="#f2f2f2"/>
+<text x="410.0" y="132.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">57</text>
+<text x="410.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
+<text x="518.0" y="229.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
+<text x="518.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
+<path d="M616.0,236.0V230.5Q616.0,227.5 619.0,227.5H633.0Q636.0,227.5 636.0,230.5V236.0Z" fill="#f2f2f2"/>
+<text x="626.0" y="220.5" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">5</text>
+<text x="626.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
+<path d="M724.0,236.0V233.9Q724.0,230.9 727.0,230.9H741.0Q744.0,230.9 744.0,233.9V236.0Z" fill="#f2f2f2"/>
+<text x="734.0" y="223.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">3</text>
+<text x="734.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
+<line x1="32" y1="236.5" x2="788" y2="236.5" stroke="#2a2a2a" stroke-width="1"/>
+<text x="32" y="278" font-size="10.5" fill="#555555">更新 2026-11-17 UTC · 11/15 までの .dmg・.zip（77 件）は棒に含めていません · 直近の git clone は GitHub の集計待ち</text>
 </g></svg>
