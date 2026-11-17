@@ -61,7 +61,7 @@ PL
     plutil -lint "$PLIST" >/dev/null
     launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
     launchctl bootstrap "$DOMAIN" "$PLIST"
-    echo "入れました：毎日 10:00 とログインしたときに数え直します（ログ：$LOG）"
+    echo "入れました：毎日 10:00 とログインしたときに数え直します（ログ：${LOG}）"
     ;;
   uninstall)
     launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
@@ -70,7 +70,7 @@ PL
     ;;
   status)
     if launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1; then
-      echo "入っています（$PLIST）"
+      echo "入っています（${PLIST}）"
       launchctl print "$DOMAIN/$LABEL" | grep -E '^\s*(state|last exit code|runs) ' || true
     else
       echo "入っていません"
