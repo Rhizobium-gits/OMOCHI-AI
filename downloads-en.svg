@@ -1,31 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="820" height="300" viewBox="0 0 820 300" role="img" aria-label="Downloads per day">
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="320" viewBox="0 0 820 320" role="img" aria-label="Downloads per day">
 <title>Downloads per day</title>
-<rect x="0.5" y="0.5" width="819" height="299" rx="18" fill="#000000" stroke="#1f1f1f"/>
+<rect x="0.5" y="0.5" width="819" height="319" rx="18" fill="#000000" stroke="#1f1f1f"/>
 <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans CJK JP', 'Noto Sans JP', 'PingFang SC', 'Microsoft YaHei', sans-serif" style="font-variant-numeric: tabular-nums">
-<text x="32" y="48" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">Downloads per day</text>
-<text x="32" y="72" font-size="12" fill="#8a8a8a">.dmg + .zip + git clone · updated daily</text>
-<text x="788" y="30" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">Total</text>
-<text x="788" y="70" font-size="38" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">270</text>
-<path d="M76.0,236.0V201.7Q76.0,198.7 79.0,198.7H93.0Q96.0,198.7 96.0,201.7V236.0Z" fill="#f2f2f2"/>
-<text x="86.0" y="191.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
-<text x="86.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
-<path d="M184.0,236.0V139.0Q184.0,136.0 187.0,136.0H201.0Q204.0,136.0 204.0,139.0V236.0Z" fill="#f2f2f2"/>
-<text x="194.0" y="129.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">59</text>
-<text x="194.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
-<path d="M292.0,236.0V159.3Q292.0,156.3 295.0,156.3H309.0Q312.0,156.3 312.0,159.3V236.0Z" fill="#f2f2f2"/>
-<text x="302.0" y="149.3" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">47</text>
-<text x="302.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
-<path d="M400.0,236.0V142.4Q400.0,139.4 403.0,139.4H417.0Q420.0,139.4 420.0,142.4V236.0Z" fill="#f2f2f2"/>
-<text x="410.0" y="132.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">57</text>
-<text x="410.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
-<text x="518.0" y="229.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
-<text x="518.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
-<path d="M616.0,236.0V230.5Q616.0,227.5 619.0,227.5H633.0Q636.0,227.5 636.0,230.5V236.0Z" fill="#f2f2f2"/>
-<text x="626.0" y="220.5" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">5</text>
-<text x="626.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
-<path d="M724.0,236.0V233.9Q724.0,230.9 727.0,230.9H741.0Q744.0,230.9 744.0,233.9V236.0Z" fill="#f2f2f2"/>
-<text x="734.0" y="223.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">3</text>
-<text x="734.0" y="256" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
-<line x1="32" y1="236.5" x2="788" y2="236.5" stroke="#2a2a2a" stroke-width="1"/>
-<text x="32" y="278" font-size="10.5" fill="#555555">Updated 2026-11-17 UTC · 77 .dmg/.zip downloads up to 11/15 aren't in the bars · recent git clones are still being counted by GitHub</text>
+<text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">Downloads per day</text>
+<text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg + .zip + git clone · updated daily</text>
+<text x="788" y="34" font-size="11" fill="#8a8a8a" text-anchor="end">Total</text>
+<text x="788" y="70" font-size="32" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">272</text>
+<text x="638" y="34" font-size="11" fill="#8a8a8a" text-anchor="end">Updates (7 days)</text>
+<text x="638" y="70" font-size="32" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">44</text>
+<text x="488" y="34" font-size="11" fill="#8a8a8a" text-anchor="end">New (7 days)</text>
+<text x="488" y="70" font-size="32" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">43</text>
+<path d="M76.0,238.0V222.9Q76.0,219.9 79.0,219.9H93.0Q96.0,219.9 96.0,222.9V238.0Z" fill="#f2f2f2"/>
+<text x="86.0" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
+<text x="86.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
+<path d="M184.0,238.0V143.0Q184.0,140.0 187.0,140.0H201.0Q204.0,140.0 204.0,143.0V238.0Z" fill="#f2f2f2"/>
+<text x="194.0" y="133.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">119</text>
+<text x="194.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
+<path d="M292.0,238.0V197.4Q292.0,194.4 295.0,194.4H309.0Q312.0,194.4 312.0,197.4V238.0Z" fill="#f2f2f2"/>
+<text x="302.0" y="187.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">53</text>
+<text x="302.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
+<path d="M400.0,238.0V186.6Q400.0,183.6 403.0,183.6H417.0Q420.0,183.6 420.0,186.6V238.0Z" fill="#f2f2f2"/>
+<text x="410.0" y="176.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
+<text x="410.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
+<path d="M508.0,238.0V235.2Q508.0,232.2 511.0,232.2H525.0Q528.0,232.2 528.0,235.2V238.0Z" fill="#f2f2f2"/>
+<text x="518.0" y="225.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">7</text>
+<text x="518.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
+<path d="M616.0,238.0V237.7Q616.0,234.7 619.0,234.7H633.0Q636.0,234.7 636.0,237.7V238.0Z" fill="#f2f2f2"/>
+<text x="626.0" y="227.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">4</text>
+<text x="626.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
+<path d="M724.0,238.0V238.0Q724.0,237.2 724.8,237.2H743.2Q744.0,237.2 744.0,238.0V238.0Z" fill="#f2f2f2"/>
+<text x="734.0" y="230.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">1</text>
+<text x="734.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
+<line x1="32" y1="238.5" x2="788" y2="238.5" stroke="#2a2a2a" stroke-width="1"/>
+<text x="32" y="280" font-size="10.5" fill="#555555">Updated 2026-11-17 UTC · New = .dmg · Updates = .zip, updated from the app (the closest sign of active users)</text>
+<text x="32" y="298" font-size="10.5" fill="#555555">* Daily .dmg/.zip are estimates (GitHub gives only totals; split in proportion to time) · recent clones not counted yet</text>
 </g></svg>
