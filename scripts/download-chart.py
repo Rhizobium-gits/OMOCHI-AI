@@ -12,8 +12,7 @@
     記録（stats.json の daily。その時刻の累計）の間に増えた分を、その間の時間に比例して日に分ける。
     記録を始める前の分は、版ごとの数（releases）を、その版が最新だった間（公開から次の版の公開まで。
     README の .dmg とアプリのアップデートは、いつも最新の版を取る）の時間に比例して日に分ける
-- 右上：累計と、直近 7 日の新規（.dmg）・アップデート（.zip）。アプリは利用状況を送らないのでアクティブユーザー数は出せず、
-  アップデートの数が「使い続けている人」のいちばん近い目安
+- 右上は累計だけ（.dmg・.zip・git clone の合計。README のバッジと同じ数）
 - 標準ライブラリだけで書く（GitHub Actions でもそのまま動く）
 """
 import datetime as dt
@@ -44,10 +43,8 @@ TEXTS = {
     "ja": {
         "title": "1 日ごとのダウンロード",
         "sub": ".dmg・.zip・git clone の合計 · 毎日自動で更新",
-        "new": "新規（7 日）",
-        "upd": "アップデート（7 日）",
         "total": "累計",
-        "note1": "更新 {date} UTC · 新規 = .dmg、アップデート = .zip（アプリから上げた数。使い続けている人の目安）",
+        "note1": "更新 {date} UTC",
         "note2": "※ .dmg・.zip の日ごとの数は推定（GitHub は累計しか出さないので、時間に比例して分けた）",
         "pending": "直近の git clone は GitHub の集計待ち",
         "empty": "まだ日ごとの記録がありません",
@@ -55,10 +52,8 @@ TEXTS = {
     "en": {
         "title": "Downloads per day",
         "sub": ".dmg + .zip + git clone · updated daily",
-        "new": "New (7 days)",
-        "upd": "Updates (7 days)",
         "total": "Total",
-        "note1": "Updated {date} UTC · New = .dmg · Updates = .zip, updated from the app (the closest sign of active users)",
+        "note1": "Updated {date} UTC",
         "note2": "* Daily .dmg/.zip are estimates (GitHub gives only totals; split in proportion to time)",
         "pending": "recent clones not counted yet",
         "empty": "No daily records yet",
@@ -66,10 +61,8 @@ TEXTS = {
     "zh": {
         "title": "每日下载量",
         "sub": ".dmg・.zip・git clone 合计 · 每天自动更新",
-        "new": "新安装（7 天）",
-        "upd": "更新（7 天）",
         "total": "累计",
-        "note1": "更新于 {date} UTC · 新安装 = .dmg，更新 = .zip（从应用内更新的次数，最接近活跃用户的指标）",
+        "note1": "更新于 {date} UTC",
         "note2": "※ .dmg・.zip 的每日数量为估算（GitHub 只提供累计，按时间比例分配）",
         "pending": "最近的 git clone 仍在等待 GitHub 统计",
         "empty": "还没有按日的记录",
@@ -132,12 +125,12 @@ def estimate(stats, kind):
 
 
 def series(stats, today):
-    """[(日付, その日の数)]、直近 7 日の新規・アップデート、clone がまだ出ていない日があるか"""
+    """[(日付, その日の数)]、clone がまだ出ていない日があるか"""
     clones = stats.get("clones") or {}
     dmg, zp = estimate(stats, "dmg"), estimate(stats, "zip")
     starts = [dt.date.fromisoformat(k) for k in clones] + list(dmg) + list(zp)
     if not starts:
-        return [], 0, 0, False
+        return [], False
     first = max(min(starts), today - dt.timedelta(days=DAYS - 1))
     last_clone = max(clones) if clones else ""
     days, pending = [], False
@@ -148,8 +141,7 @@ def series(stats, today):
         if k > last_clone:
             pending = True
         d += dt.timedelta(days=1)
-    week = [today - dt.timedelta(days=i) for i in range(7)]
-    return days, sum(dmg.get(x, 0) for x in week), sum(zp.get(x, 0) for x in week), pending
+    return days, pending
 
 
 def bar_path(x, y_top, w, h, r):
@@ -163,14 +155,9 @@ def md(d):
     return f"{d.month}/{d.day}"
 
 
-def stat(a, x_end, label, value):
-    a(f'<text x="{x_end}" y="34" font-size="11" fill="{GRAY}" text-anchor="end">{escape(label)}</text>')
-    a(f'<text x="{x_end}" y="70" font-size="32" font-weight="700" fill="{WHITE}" text-anchor="end" letter-spacing="-1">{value:,}</text>')
-
-
 def render(stats, lang, today):
     t = TEXTS[lang]
-    days, new7, upd7, pending = series(stats, today)
+    days, pending = series(stats, today)
     out = []
     a = out.append
     a(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" '
@@ -178,12 +165,12 @@ def render(stats, lang, today):
     a(f'<title>{escape(t["title"])}</title>')
     a(f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="18" fill="{BG}" stroke="{EDGE}"/>')
     a(f'<g font-family="{FONT}" style="font-variant-numeric: tabular-nums">')
-    # 見出し（左）と数（右：新規・アップデート・累計）
+    # 見出し（左）と累計（右）
     a(f'<text x="{PAD}" y="50" font-size="19" font-weight="600" fill="{WHITE}" letter-spacing="-0.2">{escape(t["title"])}</text>')
     a(f'<text x="{PAD}" y="74" font-size="12" fill="{GRAY}">{escape(t["sub"])}</text>')
-    stat(a, W - PAD, t["total"], int(stats.get("total", 0)))
-    stat(a, W - PAD - 150, t["upd"], upd7)
-    stat(a, W - PAD - 300, t["new"], new7)
+    a(f'<text x="{W - PAD}" y="32" font-size="11" fill="{GRAY}" text-anchor="end" letter-spacing="0.6">{escape(t["total"])}</text>')
+    a(f'<text x="{W - PAD}" y="74" font-size="40" font-weight="700" fill="{WHITE}" text-anchor="end" letter-spacing="-1">'
+      f'{int(stats.get("total", 0)):,}</text>')
 
     if not days:
         a(f'<text x="{W / 2}" y="{(Y0 + Y1) / 2}" font-size="13" fill="{GRAY}" text-anchor="middle">{escape(t["empty"])}</text>')
