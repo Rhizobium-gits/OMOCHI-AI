@@ -10,8 +10,9 @@
 #   clone  git clone（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラー・CI の clone も入る）
 #   SHA256SUMS.txt はアップデートのたびに取るので数えない
 # clone 数は GitHub が直近 14 日の分しか残さないので、日ごとに stats.json に貯める（同じ日は大きいほうを取る）。
-# .dmg・.zip は GitHub が累計しか出さないので、その日（UTC）の累計を daily に貯め、前の日との差を 1 日の数にする（グラフ）。
-# daily が無い stats.json からは、stats ブランチの過去のコミットの累計で埋める
+# .dmg・.zip は GitHub が累計しか出さないので、その日（UTC）の累計と数えた時刻を daily に貯め、版ごとの数（公開した時刻つき）を
+# releases に置く。グラフ（download-chart.py）は、記録の間の増えた分と、記録を始める前の版ごとの数を、時間に比例して日に分ける（推定）。
+# daily が無い・時刻の無い stats.json からは、stats ブランチの過去のコミット（その時刻の累計）で埋める
 # clone 数を読むには、このリポジトリの Administration（読み取り）の権限が要る：
 #   ・この Mac から：gh にログインしているアカウント（push できる人）で読める
 #   ・GitHub Actions（.github/workflows/stats.yml）から：シークレット TRAFFIC_TOKEN があれば読む。
@@ -47,19 +48,22 @@ if gh api "repos/$REPO/branches/$BRANCH" --silent 2>/dev/null; then
   fi
 fi
 
-# 日ごとの累計（.dmg・.zip）。まだ無ければ stats ブランチの過去の stats.json から（その日の最後の数＝大きいほう）
+# 日ごとの累計（.dmg・.zip）と数えた時刻（at）。無い・時刻が無いときは stats ブランチの過去の stats.json から
+# （その日のいちばん遅いコミットの数と時刻）
 TODAY="$(date -u +%Y-%m-%d)"
+NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 DAILY="$(printf '%s' "$OLD" | jq -c '.daily // empty')"
-if [[ -z "$DAILY" ]]; then
+if [[ -z "$DAILY" ]] || ! printf '%s' "$DAILY" | jq -e 'all(.[]; has("at"))' >/dev/null; then
   DAILY='{}'
   if [[ $BRANCH_EXISTS == 1 ]]; then
-    while IFS=$'\t' read -r sha day; do
+    while IFS=$'\t' read -r sha at; do
       S="$(gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/stats.json?ref=$sha" 2>/dev/null)" || continue
       printf '%s' "$S" | jq -e 'type == "object" and has("dmg")' >/dev/null 2>&1 || continue
-      DAILY="$(jq -cn --argjson d "$DAILY" --argjson s "$S" --arg day "$day" '
-        $d + {($day): {dmg: ([$d[$day].dmg // 0, $s.dmg] | max), zip: ([$d[$day].zip // 0, $s.zip] | max)}}')"
+      DAILY="$(jq -cn --argjson d "$DAILY" --argjson s "$S" --arg at "$at" '
+        ($at[0:10]) as $day
+        | if ($d[$day].at // "") >= $at then $d else $d + {($day): {dmg: $s.dmg, zip: $s.zip, at: $at}} end')"
     done < <(gh api "repos/$REPO/commits?sha=$BRANCH&path=stats.json&per_page=100" --paginate \
-               --jq '.[] | [.sha, .commit.committer.date[0:10]] | @tsv')
+               --jq '.[] | [.sha, .commit.committer.date] | @tsv')
   fi
 fi
 
@@ -73,22 +77,26 @@ fi
 printf '%s' "$CLONES" | jq -e 'type == "object" and (.clones | type == "array")' >/dev/null 2>&1 || CLONES=null
 [[ "$CLONES" == null ]] && echo "clone 数を読めませんでした（Administration の読み取りの権限が要ります）。clone は貯めてある分のままにします" >&2
 
-# リリースのファイルごとのダウンロード数（下書きは除く）
-ASSETS="$(gh api "repos/$REPO/releases" --paginate --jq '.[] | select(.draft | not) | .assets[] | {name, download_count}' | jq -s .)"
+# 版ごとの .dmg・.zip のダウンロード数と公開した時刻（下書きは除く）
+RELEASES="$(gh api "repos/$REPO/releases" --paginate --jq '.[] | select(.draft | not) | {tag: .tag_name, published: .published_at,
+  dmg: ([.assets[] | select(.name | endswith(".dmg")) | .download_count] | add // 0),
+  zip: ([.assets[] | select(.name | endswith(".zip")) | .download_count] | add // 0)}' | jq -s 'sort_by(.published)')"
 
-NEW="$(jq -n --argjson old "$OLD" --argjson t "$CLONES" --argjson assets "$ASSETS" --argjson daily "$DAILY" --arg today "$TODAY" '
+NEW="$(jq -n --argjson old "$OLD" --argjson t "$CLONES" --argjson releases "$RELEASES" --argjson daily "$DAILY" --arg today "$TODAY" --arg now "$NOW" '
   ($old.clones // {}) as $kept
   | (reduce ((if $t == null then [] else ($t.clones // []) end)[] | select(.count > 0)) as $d ($kept;
       ($d.timestamp[0:10]) as $day
       | .[$day] = {count: ([.[$day].count // 0, $d.count] | max), uniques: ([.[$day].uniques // 0, $d.uniques] | max)}))
   | to_entries | sort_by(.key) | from_entries
   | . as $clones
-  | ([$assets[] | select(.name | endswith(".dmg")) | .download_count] | add // 0) as $dmg
-  | ([$assets[] | select(.name | endswith(".zip")) | .download_count] | add // 0) as $zip
+  | ([$releases[] | .dmg] | add // 0) as $dmg
+  | ([$releases[] | .zip] | add // 0) as $zip
   | ([$clones[] | .uniques] | add // 0) as $clone
-  | ($daily + {($today): {dmg: ([$daily[$today].dmg // 0, $dmg] | max), zip: ([$daily[$today].zip // 0, $zip] | max)}}
+  # 今日の累計：数が変わったときだけ時刻を新しくする（変わらなければ、前に数えたときのまま）
+  | ($daily + {($today): (if ($daily[$today].dmg == $dmg and $daily[$today].zip == $zip) then $daily[$today]
+                         else {dmg: $dmg, zip: $zip, at: $now} end)}
      | to_entries | sort_by(.key) | from_entries) as $days
-  | {total: ($dmg + $zip + $clone), dmg: $dmg, zip: $zip, clone: $clone, clones: $clones, daily: $days}')"
+  | {total: ($dmg + $zip + $clone), dmg: $dmg, zip: $zip, clone: $clone, clones: $clones, daily: $days, releases: $releases}')"
 
 if [[ $DRY == 1 ]]; then
   printf '%s\n' "$NEW" | jq .
@@ -112,7 +120,7 @@ if [[ $BRANCH_EXISTS == 0 ]]; then
     gh api -X POST "repos/$REPO/git/refs" --input - --silent
 fi
 
-BODY="$(printf '%s' "$NEW" | jq --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{updated: $now} + .')"
+BODY="$(printf '%s' "$NEW" | jq --arg now "$NOW" '{updated: $now} + .')"
 WORK="$(mktemp -d)"
 trap 'rm -rf -- "$WORK"' EXIT
 printf '%s\n' "$BODY" > "$WORK/stats.json"
