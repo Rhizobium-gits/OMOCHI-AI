@@ -3,6 +3,7 @@
 # （stats.json と、scripts/download-chart.py が作る downloads-ja.svg・downloads-en.svg・downloads-zh.svg を 1 つのコミットで）。
 #   scripts/download-stats.sh            数え直して、変わっていれば stats ブランチに書く（無ければ作る）
 #   scripts/download-stats.sh --dry-run  書かずに、数え直した stats.json を出すだけ
+#   scripts/download-stats.sh --force    数が変わっていなくても書く（グラフの見た目を変えたときに）
 # 数えるもの（合計が total、バッジに出る数）：
 #   dmg    リリースの .dmg のダウンロード（README・リリースのページ・curl などで取って入れた）
 #   zip    リリースの JellyfishAI-<版>.zip のダウンロード（アプリの「アップデートする」・ターミナルの update.sh・手での .zip）
@@ -21,9 +22,11 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="${JELLYFISH_REPO:-Rhizobium-gits/jellyfish-ai}"
 BRANCH="${JELLYFISH_STATS_BRANCH:-stats}"
 DRY=0
+FORCE=0
 for a in "$@"; do
   case "$a" in
     --dry-run) DRY=1 ;;
+    --force) FORCE=1 ;;
     *) echo "unknown argument: $a" >&2; exit 2 ;;
   esac
 done
@@ -93,7 +96,7 @@ if [[ $DRY == 1 ]]; then
 fi
 
 # 数が変わっていなければ書かない（書くたびに stats ブランチにコミットが 1 つ増えるので）
-if [[ "$(printf '%s' "$OLD" | jq -S 'del(.updated)')" == "$(printf '%s' "$NEW" | jq -S .)" ]]; then
+if [[ $FORCE == 0 && "$(printf '%s' "$OLD" | jq -S 'del(.updated)')" == "$(printf '%s' "$NEW" | jq -S .)" ]]; then
   echo "変わっていません: $(printf '%s' "$NEW" | jq -c '{total, dmg, zip, clone}')"
   exit 0
 fi

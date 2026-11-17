@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-en.svg" width="820" alt="Chart of downloads per day (.dmg, .zip and git clone, stacked; updated automatically every day)"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-en.svg" width="820" alt="Chart of downloads per day (.dmg, .zip and git clone combined; updated automatically every day)"></a>
 </p>
 
 <p align="center">
