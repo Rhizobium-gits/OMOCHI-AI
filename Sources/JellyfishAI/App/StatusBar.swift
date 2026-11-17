@@ -169,6 +169,31 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         return item
     }
 
+    /// 🔌 コネクタ：いまの決まりと、ワンタッチ設定（選ぶだけで、すべてのコネクタをまとめて切り替える）
+    private func connectorsMenuItem(_ s: AppSettings) -> NSMenuItem {
+        let current = ConnectorPreset.matching(s.connectors)
+        let item = NSMenuItem(title: L("🔌 コネクタ: %@", current.map { $0.label } ?? L("カスタム")), action: nil, keyEquivalent: "")
+        let cm = NSMenu()
+        cm.autoenablesItems = false
+        for k in ConnectorKind.allCases {
+            cm.addItem(.header("\(k.icon) \(k.label): \(ConnectorPolicy.summary(s.connectors[k]))"))
+        }
+        cm.addItem(.separator())
+        cm.addItem(.header(L("ワンタッチ設定")))
+        for p in ConnectorPreset.allCases {
+            let it = ClosureMenuItem("\(p.icon) \(p.label)", checked: current == p) { [weak self] in self?.manager.applyConnectorPreset(p) }
+            it.toolTip = p.detail
+            cm.addItem(it)
+        }
+        cm.addItem(.separator())
+        cm.addItem(ClosureMenuItem(L("コネクタの画面を開く（AI・モデルごとに決める）…")) { [weak self] in self?.manager.showConnectors() })
+        cm.addItem(.separator())
+        cm.addItem(.header(L("・この Mac のカレンダー・リマインダー・メール（Google・iCloud なども Mac のアプリ経由）")))
+        cm.addItem(.header(L("・書き込みはクラゲの横の確認で押したときだけ。メールは送らない（下書きを開くだけ）")))
+        item.submenu = cm
+        return item
+    }
+
     /// アカウントと AI：ログインの状態・使う AI（既定）・ログイン（公式の画面をターミナルで）・API キーでの課金の許可
     private func accountsMenuItem(_ s: AppSettings) -> NSMenuItem {
         let item = NSMenuItem(title: L("🔑 アカウントと AI"), action: nil, keyEquivalent: "")
@@ -418,6 +443,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(fps)
 
         menu.addItem(accountsMenuItem(s))
+        menu.addItem(connectorsMenuItem(s))
 
         // クラゲごとにチャットで選んでいないときのモデル
         let modelItem = NSMenuItem(title: L("🧠 モデル（既定）: %@", manager.defaultModelName), action: nil, keyEquivalent: "")
@@ -470,6 +496,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         pm.addItem(.header(L("使う AI（既定）: %@", s.engine.displayName)))
         for e in AgentEngine.allCases where e != .claude { pm.addItem(.header("・\(e.displayName): " + e.policyLine)) }
         pm.addItem(.header(L("・チーム（仲間を作る・頼む）と自律組織はどの AI でも。PC 操作・外部ツール（MCP）・モデルの「自動」は Claude だけ")))
+        pm.addItem(.header(L("・コネクタ（カレンダー・リマインダー・メール）は、🔌 コネクタで決めた AI・モデル・範囲だけ")))
         pm.addItem(.header(s.allowAPIBilling ? L("⚠️ API キー（従量課金）での利用を許可しています") : L("・API キー（従量課金）でのログイン・環境変数は使わない")))
         pm.addItem(.separator())
         pm.addItem(.header("claude: \(manager.claudePathDescription)"))

@@ -56,6 +56,7 @@
 | **Chat** | Like the ChatGPT, Claude and Gemini apps, **tables, math, diagrams and charts, and highlighted code** are shown as they are. Images and PDFs appear as thumbnails, web pages with their cover and title. 🎙 Mac Dictation, 🎧 system audio transcription, screen and file attachments, ↑↓ for previous instructions |
 | **PC control** | Only jellyfish you allow can look at the screen, click and type (Claude). The edges of the screen glow while it's in control, and Esc stops it |
 | **👀 Watching** | A jellyfish reads the front window **on this Mac only** (0 tokens, nothing sent) and asks “take a look?” when something looks like an error. Only that one image is sent, and only if you press it (per jellyfish, off by default) |
+| **🔌 Connectors** | Give jellyfish this Mac's **Calendar, Reminders and Mail** (Google, iCloud and others through the Mac apps), choosing which AI and which model may use each, and how much. One-touch presets, every write asks you first, and mail is never sent |
 | **🔐 Permissions** | Lists the macOS permissions (Accessibility, Screen Recording, Full Disk Access, Automation) and what each one enables, and grants or revokes them all at once |
 | **See your usage** | Bars in the menu bar for Claude's weekly limit and ChatGPT's 5-hour and weekly limits. Plus calls and tokens per AI, per model and per account |
 | **No surprise charges** | Doesn't handle API keys, and doesn't use AIs signed in on pay-as-you-go (Claude included) |
@@ -148,6 +149,7 @@ Below that are New jellyfish, Hide / Show all, past sessions and the list of age
 | Appearance, Size | Pixel-art / realistic jellyfish, and size |
 | Screen awareness | Which display is captured when you say “this screen” (the display with the app you were using / all displays) |
 | 🔑 Accounts & AI | Sign-in status, AI to use (default), sign in, install & sign in, and allowing use with API keys |
+| 🔌 Connectors | Current rules, one-touch presets, and the Connectors window (set per AI and model) |
 | 🧠 Model (default) | The default model for each AI |
 | Execution policy | The rules for running each AI without asking, and the location and version of the CLIs in use |
 | PC control | The agents you've allowed, and stopping them right now |
@@ -337,6 +339,28 @@ Turn it on per jellyfish with **👀** in its chat (or right-click › “Watch�
 - **Load**: every 4 seconds it takes a small capture just to see whether anything changed, and **reads text only after a change has settled** (at most every 8 seconds; it doesn't read while output keeps streaming or while the screen keeps changing, as with video). Measured here (Apple silicon, with a frequently changing front window): about 2% of one core (about 30% if it read every time). **👀 Watching** in the menu bar shows the CPU actually measured over the last minute. You can also measure it with `JellyfishAI --watch-bench 60`
 - It needs the Screen Recording permission ([Grant or revoke macOS permissions all at once](#grant-or-revoke-macos-permissions-all-at-once))
 
+## Connectors (Calendar, Reminders, Mail)
+
+Under the menu bar jellyfish › **🔌 Connectors**, you can turn this Mac's **Calendar, Reminders and Mail** into tools for agents (all off by default). Google Calendar, Gmail and others work too: add the account in System Settings › Internet Accounts and it shows up in the Mac apps. Jellyfish never handles passwords, tokens or API keys for Google or anything else.
+
+- **What they can do**: 📅 view and add events, ✅ view, add and complete reminders, ✉️ search and read mail and open drafts (`calendar_events`, `calendar_create_event`, `reminders_list`, `reminders_create`, `reminders_complete`, `mail_search`, `mail_read`, `mail_draft`). They're given as Jellyfish MCP tools to Claude, ChatGPT (Codex) and Gemini jellyfish alike
+- **Per connector**: access (off / read only / read & write), which AIs may use it (Claude, ChatGPT, Gemini), and which models of that AI (e.g. only Claude Fable and Opus, or only certain Codex models). Jellyfish that don't match never see the tools, and Jellyfish refuses the call if they try (the turn's model is checked against what the CLI reports)
+- **One-touch presets**: one button switches every connector at once (in the menu and in the window)
+
+  | | |
+  |---|---|
+  | 🔒 All off | Give connectors to no AI |
+  | 👀 Read only | All three read only (any AI) |
+  | ⭐️ Recommended | Calendar and Reminders read & write (any AI); Mail read only, Claude only |
+  | 🛡 Top Claude models only | Everything read & write, but only Claude Fable and Opus |
+  | 🔓 Allow all | Everything read & write (any AI, any model; every write asks you first) |
+
+- **Writes need your OK**: adding events or reminders and completing reminders show “📅 OK to add this event?” with the details next to the jellyfish, and run only when you approve (it doesn't steal keyboard focus; nothing happens if you don't respond within 5 minutes). **Mail is never sent**: `mail_draft` only opens a draft window in Mail, and you review and send it
+- **Mail contents are data**: email bodies, subjects and senders, and notes in events and reminders, are passed as “outside data”, and agents are told not to follow instructions inside them. Jellyfish using PC control don't get Mail
+- A jellyfish's right-click menu (and its entry in the menu bar) shows which connectors it can use right now
+- The contents are sent to that jellyfish's AI (Anthropic, OpenAI or Google). Jellyfish's log (`app.log`) records only the names of the tools used
+- **macOS permissions**: for Calendar and Reminders, macOS asks the first time they're used (or when you press “Allow…” in 🔌 Connectors). For Mail, allow controlling Mail under Automation. If Mail isn't running, it's launched without coming to the front
+
 ## Grant or revoke macOS permissions all at once
 
 The menu bar jellyfish › **🔐 Permissions (Full Access)** lists the macOS permissions Jellyfish AI has and what each one lets it do (the scope of Full Access).
@@ -443,8 +467,9 @@ scripts/install.sh
 - **No surprise charges**: Jellyfish doesn't handle API keys, doesn't use AIs signed in with an API key (pay-as-you-go), and doesn't pass API key environment variables ([No surprise charges](#no-surprise-charges))
 - **The rules for running without asking** are each AI's official ones: Claude uses Auto Mode (`--permission-mode auto`; Claude Code's safety checks stop things like exfiltrating credentials, unintended sending to outside services, and irreversible operations), Codex uses its sandbox (can write only inside the working folder, no network), and Gemini uses auto_edit (auto-approves only edits, doesn't run commands). Options that remove the safety mechanisms, such as `bypassPermissions` and `--yolo`, are not used, and options are passed only after checking that they exist in each CLI's `--help`. You can check the current rules and the location and version of each CLI under “Execution policy” in the menu bar
 - **PC control** is used only when you ask directly in that agent's chat (never for requests from teammates)
+- **Connectors** (Calendar, Reminders, Mail) are given only to jellyfish whose AI, model and access match the rules in 🔌 Connectors, and Jellyfish checks again on every call. Writes happen only when you approve, and mail is never sent
 - **No widening permissions across AIs**: an agent working on a teammate's request doesn't create or ask teammates on a different AI
-- **macOS permissions**: Jellyfish doesn't disable OS security features and doesn't grant permissions on its own. You can check the permissions it has and their scope in “🔐 Permissions”, and revoke them all at once. The app is signed with Hardened Runtime enabled (so other programs can't inject into the app and use its permissions), and the only exception is the entitlement needed to show the Apple Events confirmation
+- **macOS permissions**: Jellyfish doesn't disable OS security features and doesn't grant permissions on its own. You can check the permissions it has and their scope in “🔐 Permissions”, and revoke them all at once. The app is signed with Hardened Runtime enabled (so other programs can't inject into the app and use its permissions), and the only exceptions are the entitlements needed to show the Apple Events confirmation and the Calendar and Reminders (connectors) permission prompts
 - **Jellyfish AI's own network access** is limited to GitHub's public API when you choose “Check for updates…” and at the interval you picked for automatic update checks (it only reads the latest release's version), the release files when you press “Update”, and web previews in chats (only URLs you typed yourself and pages you pressed “Show cover” for; can be turned off in the menu). No usage reporting. Instructions and attachments are sent to each company through its AI's CLI
 - External control through `jellyfish://` URLs accepts only harmless actions such as toggling the display (it doesn't accept sending instructions, granting PC control, and so on; rapid-fire calls are throttled, and it doesn't steal keyboard focus)
 - Autonomous organization learning and usage are computed on-device only, and saved with permissions that only you can read

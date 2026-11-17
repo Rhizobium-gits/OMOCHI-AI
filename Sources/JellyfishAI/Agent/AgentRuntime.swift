@@ -37,6 +37,11 @@ final class AgentRuntime {
     private(set) var activity: String?
     /// 実際に使われたモデル（Claude Code の init イベントから）
     private(set) var activeModel: String?
+    /// このターンで CLI に渡したモデル（nil = CLI の既定）と、このターンで CLI がモデルを知らせたか
+    private(set) var plannedModel: String?
+    private var modelReportedThisTurn = false
+    /// コネクタの「使ってよいモデル」の判定に使うモデル：このターンで CLI が知らせたもの → 渡したもの → 前のターンのもの（推測）
+    var connectorModel: String? { (modelReportedThisTurn ? activeModel : nil) ?? plannedModel ?? activeModel }
     /// モデルが「自動」のときに、このターンで選んだモデルと理由
     private(set) var autoChoice: ModelRouter.Choice?
     private(set) var permissionMode: String?
@@ -207,6 +212,9 @@ final class AgentRuntime {
         } else {
             autoChoice = nil
         }
+        // コネクタの判定に使うモデル（「自動」は選んだモデル、指定が無ければ設定の既定。どちらも無ければ CLI の既定 = 分からない）
+        plannedModel = (opts.model ?? backend.defaultModel).flatMap { $0.isEmpty || $0 == ModelRouter.auto ? nil : $0 }
+        modelReportedThisTurn = false
         // チームのツール（Jellyfish の MCP）：Claude は --mcp-config、Codex・Gemini はそれぞれの CLI の設定の形で渡す
         if let t = teamConfig?() {
             if claude {
@@ -294,6 +302,7 @@ final class AgentRuntime {
                 saveMeta()
             }
             self.activeModel = model
+            if model?.isEmpty == false { modelReportedThisTurn = true }
             self.permissionMode = mode
         case .thinking:
             if pendingTools == 0 { setTurnState(.thinking); activity = L("考えています…") }

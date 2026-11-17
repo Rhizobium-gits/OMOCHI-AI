@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-11-17
+
+### 追加
+
+- **🔌 コネクタ（カレンダー・リマインダー・メール）**：この Mac のカレンダー・リマインダー・メールを、Jellyfish の MCP のツールとしてエージェントに渡せるようにした（既定はすべてオフ）。Google カレンダー・Gmail なども、システム設定 › インターネットアカウント に追加すれば Mac のアプリ経由で使える（Jellyfish はパスワード・トークン・API キーを扱わない）。ツールは `calendar_events`・`calendar_create_event`・`reminders_list`・`reminders_create`・`reminders_complete`・`mail_search`・`mail_read`・`mail_draft`
+  - **AI・モデルごとに決める**：コネクタごとに、使わせる範囲（オフ・見るだけ・見る書く）、使える AI（Claude・ChatGPT（Codex）・Gemini）、その AI で使えるモデル（Claude は Fable・Opus・Sonnet・Haiku、ほかの AI は CLI のモデルの一覧から）を選べる。決まりに合わないクラゲにはツールを見せず、呼ばれたら、このターンのモデル（CLI が知らせたもの）でもう一度確かめて断る
+  - **ワンタッチ設定**：🔒 すべてオフ・👀 見るだけ・⭐️ おすすめ（カレンダー・リマインダーは見る書く、メールは見るだけで Claude だけ）・🛡 Claude の上位モデルだけ（Fable・Opus）・🔓 すべて許可。メニューバーのクラゲ › 🔌 コネクタ と、コネクタの画面のボタン 1 つで、すべてのコネクタをまとめて切り替える
+  - **書き込みは本人の確認つき**：予定・リマインダーの追加と完了は、クラゲの横の吹き出しに中身が出て、押したときだけ実行（入力先は奪わない。5 分押さなければ実行しない）。メールは送らない（`mail_draft` はメールアプリに下書きの画面を開くだけ）
+  - メールの本文・予定のメモは「外から来たデータ」として渡し、中の指示に従わないよう伝える。PC 操作を使っているクラゲにはメールを渡さない
+  - クラゲのメニューに、そのクラゲがいま使えるコネクタを出す。メニューバーの「実行ポリシー」にも決まりを出す
+  - カレンダー・リマインダーの許可の確認を出すため、Hardened Runtime の例外 `com.apple.security.personal-information.calendars` と、Info.plist の使う理由を足した
+
 ### 変更
 
 - README の上のバナーを、ホームページのクラゲが拍動して漂う GIF（`docs/media/banner.gif`、3.4 秒でくり返す）にした（前の静止画 `banner.jpg` は消した）
@@ -282,6 +294,7 @@
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[1.2.5]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.5
 [1.2.4]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.4
 [1.2.3]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.2

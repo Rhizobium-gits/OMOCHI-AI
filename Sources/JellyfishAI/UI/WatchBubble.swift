@@ -11,6 +11,10 @@ final class WatchBubble: NSObject {
         var closeTip: String = L("閉じる（この画像は送らずに消します）")
         var ignore: String = L("このアプリでは聞かない")
         var note: String? = L("押すと、このウィンドウの 1 枚だけを送ります")
+        /// 中身の最大の行数（コネクタの確認は多め）
+        var detailLines: Int = 2
+        /// 閉じるボタンの文字（コネクタの確認は「やめる」）
+        var closeTitle: String = "✕"
 
         static func watch(appName: String, snippet: String) -> Text {
             Text(title: L("エラーっぽいのが出たよ、見る？"), detail: "\(appName)：\(snippet)")
@@ -64,21 +68,22 @@ final class WatchBubble: NSObject {
         detail.font = .systemFont(ofSize: 11)
         detail.textColor = .secondaryLabelColor
         detail.lineBreakMode = .byTruncatingTail
-        detail.maximumNumberOfLines = 2
+        detail.maximumNumberOfLines = text.detailLines
         detail.cell?.wraps = true
         detail.preferredMaxLayoutWidth = 270
 
         let show = NSButton(title: text.show, target: self, action: #selector(showTapped))
         show.bezelStyle = .rounded
         show.keyEquivalent = "\r"
-        let close = NSButton(title: "✕", target: self, action: #selector(dismissTapped))
+        let close = NSButton(title: text.closeTitle, target: self, action: #selector(dismissTapped))
         close.bezelStyle = .rounded
         close.toolTip = text.closeTip
         let ignore = NSButton(title: text.ignore, target: self, action: #selector(ignoreTapped))
         ignore.isBordered = false
         ignore.font = .systemFont(ofSize: 10.5)
         ignore.contentTintColor = .secondaryLabelColor
-        let buttons = NSStackView(views: [show, close, NSView(), ignore])
+        // 右の小さなボタンは、文字があるときだけ（コネクタの確認には無い）
+        let buttons = NSStackView(views: text.ignore.isEmpty ? [show, close, NSView()] : [show, close, NSView(), ignore])
         buttons.orientation = .horizontal
         buttons.spacing = 6
 

@@ -37,8 +37,16 @@
 	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>コネクタ（🔌）で許可した AI のエージェントが、予定を読んだり（あなたが確認したときだけ）追加したりするために使います。</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>コネクタ（🔌）で許可した AI のエージェントが、予定を読んだり（あなたが確認したときだけ）追加したりするために使います。</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>コネクタ（🔌）で許可した AI のエージェントが、リマインダーを読んだり（あなたが確認したときだけ）追加・完了にしたりするために使います。</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>コネクタ（🔌）で許可した AI のエージェントが、リマインダーを読んだり（あなたが確認したときだけ）追加・完了にしたりするために使います。</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>エージェントがほかのアプリ（Finder・ブラウザなど）を操作するときに使います。送ってよいかはアプリごとに確認します。</string>
+	<string>エージェントがほかのアプリ（Finder・ブラウザ・コネクタのメールなど）を操作するときに使います。送ってよいかはアプリごとに確認します。</string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>「この画面」を参照する指示のときに、その時点の画面をエージェントに渡すために使います。</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

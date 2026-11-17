@@ -98,6 +98,8 @@ struct AppSettings: Codable {
     var lastUpdateCheck: Double = 0
     /// 吹き出しの「この版は知らせない」で外した版のタグ（それより新しい版が出たらまた知らせる）
     var skippedUpdateVersion: String = ""
+    /// コネクタ（この Mac のカレンダー・リマインダー・メールをエージェントのツールにする）の決まり。既定はすべてオフ
+    var connectors = ConnectorSettings()
 
     init() {}
 
@@ -138,6 +140,7 @@ struct AppSettings: Codable {
         updateCheck = c.value(UpdateCheckInterval.self, .updateCheck, d.updateCheck)
         lastUpdateCheck = c.value(Double.self, .lastUpdateCheck, d.lastUpdateCheck)
         skippedUpdateVersion = c.value(String.self, .skippedUpdateVersion, d.skippedUpdateVersion)
+        connectors = c.value(ConnectorSettings.self, .connectors, d.connectors)
     }
 }
 

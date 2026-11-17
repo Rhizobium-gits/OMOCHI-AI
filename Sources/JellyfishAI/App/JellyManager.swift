@@ -1263,6 +1263,57 @@ final class JellyManager {
         if done == "grant" { w.grantFinished() } else { w.show() }
     }
 
+    // MARK: - コネクタ（カレンダー・リマインダー・メール）
+
+    private var connectorsWindow: ConnectorsWindowController?
+    func showConnectors() {
+        let w = connectorsWindow ?? ConnectorsWindowController(manager: self)
+        connectorsWindow = w
+        w.show()
+    }
+
+    func updateConnectors(_ change: (inout ConnectorSettings) -> Void) {
+        updateSettings { change(&$0.connectors) }
+        AppLog.write("connectors: \(ConnectorKind.allCases.map { "\($0.rawValue)=\(ConnectorPolicy.summary(settings.connectors[$0]))" }.joined(separator: " | "))")
+    }
+
+    /// ワンタッチ設定（ボタン 1 つで、すべてのコネクタの決まりをまとめて変える）
+    func applyConnectorPreset(_ p: ConnectorPreset) {
+        updateConnectors { $0 = p.settings }
+        DispatchQueue.main.async { [weak self] in self?.connectorsWindow?.rebuild() }
+    }
+
+    /// 書き込みの確認：クラゲの横に吹き出しを出し、押されたら true。✕・5 分たっても押されなければ false。
+    /// 入力先は奪わない（キーにならないパネル）
+    private var connectorBubbles: [UUID: WatchBubble] = [:]
+    func confirmConnector(for c: JellyController, action: MacConnectors.Action, engine: AgentEngine, completion: @escaping (Bool) -> Void) {
+        let key = UUID()
+        var answered = false
+        let finish: (Bool) -> Void = { [weak self] ok in
+            guard !answered else { return }
+            answered = true
+            self?.connectorBubbles[key] = nil
+            AppLog.write("connector confirm: agent \(c.record.number) \(ok ? "approved" : "declined")")
+            completion(ok)
+        }
+        let text = WatchBubble.Text(title: action.title, detail: action.detail, show: action.confirm,
+                                    closeTip: L("やめる（実行しない）"), ignore: "",
+                                    note: L("%@（%@）からの依頼。押したときだけ実行します", c.record.title, engine.displayName),
+                                    detailLines: 6, closeTitle: L("やめる"))
+        let b = WatchBubble(text, accent: c.record.color.nsColor, near: c.panel.frame, autoClose: 300,
+                            onShow: { finish(true) }, onDismiss: { finish(false) }, onIgnoreApp: { finish(false) })
+        connectorBubbles[key] = b
+        b.present()
+    }
+
+    /// クラゲごとのメニューに出す、そのクラゲがいま使えるコネクタ
+    func connectorSummary(for c: JellyController) -> String? {
+        guard settings.connectors.anyEnabled, let rt = runtimes[c.record.id], let team else { return nil }
+        let ks = ConnectorPolicy.kinds(team.connectorTools(c.record.id, rt))
+        if ks.isEmpty { return L("🔌 コネクタ: このクラゲ（%@）には渡さない設定", rt.effectiveEngine.displayName) }
+        return L("🔌 コネクタ: %@", ks.map { "\($0.0.icon)\($0.0.label)（\($0.writes ? ConnectorAccess.readWrite.shortLabel : ConnectorAccess.read.shortLabel)）" }.joined(separator: L("・")))
+    }
+
     /// まとめて取り消す前に：すべてのクラゲの PC 操作をオフにし、操作中なら止め、🎧 の聞き取りを止める
     func disableAllPrivileges() {
         if let d = DesktopControl.shared.driver { DesktopControl.shared.release(d) }
@@ -1316,6 +1367,9 @@ final class JellyManager {
             items.append(.separator())
         }
         items.append(ClosureMenuItem(L("チャットを開く…")) { [weak self, weak c] in if let c { self?.openChat(for: c) } })
+        if let cs = connectorSummary(for: c) {
+            items.append(ClosureMenuItem(cs) { [weak self] in self?.showConnectors() })
+        }
         items.append(ClosureMenuItem(L("名前を変える…")) { [weak self, weak c] in if let c { self?.promptRename(c) } })
         let watching = runtimes[r.id]?.watchScreen == true
         items.append(ClosureMenuItem(L("👀 見守る（エラーに気づいたら聞く）"), checked: watching) { [weak self, weak c] in

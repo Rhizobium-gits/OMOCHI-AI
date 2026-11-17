@@ -447,10 +447,11 @@ final class TeamCoordinator {
     private var runPrompts: [UUID: String] = [:]
 
     func runConfig(for c: JellyController, runtime rt: AgentRuntime) -> RunConfig? {
-        // PC 操作のツールは Claude だけ。チームのツールは、どの AI のクラゲにも渡す
-        guard let m = manager, m.settings.teamEnabled || (rt.pcControl && rt.effectiveEngine == .claude),
-              let exe = Bundle.main.executableURL else { return nil }
+        // PC 操作のツールは Claude だけ。チームのツールとコネクタ（設定で許した AI・モデルだけ）は、どの AI のクラゲにも渡す
         let id = c.record.id
+        let connectors = connectorTools(id, rt)
+        guard let m = manager, m.settings.teamEnabled || (rt.pcControl && rt.effectiveEngine == .claude) || !connectors.isEmpty,
+              let exe = Bundle.main.executableURL else { return nil }
         let cfg: [String: Any] = ["mcpServers": ["jellyfish": [
             "type": "stdio", "command": exe.path, "args": ["--mcp-bridge", bus.path, id.uuidString],
         ]]]
@@ -465,16 +466,18 @@ final class TeamCoordinator {
         }
         if usesPCTools(id, rt) { prompt += "\n\n" + DesktopControl.systemPrompt }
         else if rt.pcControl { prompt += "\n\n" + TeamCoordinator.pcNotForRequests }
-        // 事前に許可するのはチームのツールだけ。PC 操作のツールは毎回 Claude Code の安全判定を通す
-        let allowed = m.settings.teamEnabled
-            ? teamTools().compactMap { $0["name"] as? String }.map { "mcp__jellyfish__\($0)" } : []
+        if let note = ConnectorPolicy.prompt(connectors) { prompt += (prompt.isEmpty ? "" : "\n\n") + note }
+        // 事前に許可するのはチームのツールとコネクタ（コネクタは、使ってよい AI・モデル・範囲を Jellyfish が呼ばれるたびに確かめ、
+        // 書き込みは本人の確認を取る）。PC 操作のツールは毎回 Claude Code の安全判定を通す
+        let names = (m.settings.teamEnabled ? teamTools().compactMap { $0["name"] as? String } : []) + connectors.map(\.name)
         runPrompts[id] = prompt
         return RunConfig(mcpConfig: url, systemPrompt: prompt,
-                         allowedTools: allowed,
+                         allowedTools: names.map { "mcp__jellyfish__\($0)" },
                          // wait_for_tasks は仲間の作業が終わるまで待つので、MCP の既定のタイムアウトより長くする
+                         // （コネクタの書き込みの確認も最大 5 分待つ）
                          env: ["MCP_TOOL_TIMEOUT": "2400000"],
                          bridge: (exe.path, ["--mcp-bridge", bus.path, id.uuidString]),
-                         toolNames: m.settings.teamEnabled ? teamTools().compactMap { $0["name"] as? String } : [])
+                         toolNames: names)
     }
 
     /// MCP の initialize で返す説明。Claude 以外（Gemini は system prompt を足すオプションが無い）には、チームの案内をここで渡す
@@ -618,6 +621,53 @@ final class TeamCoordinator {
     }
 
     func usesPCTools(_ id: UUID, _ rt: AgentRuntime) -> Bool { rt.pcControl && running[id] == nil && rt.effectiveEngine.supportsJellyfishTools }
+
+    // MARK: - コネクタ（この Mac のカレンダー・リマインダー・メール）
+
+    func connectorContext(_ id: UUID, _ rt: AgentRuntime) -> ConnectorPolicy.Context {
+        ConnectorPolicy.Context(engine: rt.effectiveEngine, model: rt.connectorModel, pcTools: usesPCTools(id, rt))
+    }
+
+    /// このクラゲにいま渡すコネクタのツール（設定の AI・モデル・範囲と、PC 操作の有無で決まる）
+    func connectorTools(_ id: UUID, _ rt: AgentRuntime) -> [ConnectorTool] {
+        guard let m = manager, m.settings.connectors.anyEnabled else { return [] }
+        return ConnectorPolicy.tools(m.settings.connectors, connectorContext(id, rt))
+    }
+
+    /// コネクタのツールを呼ぶ：決まりをもう一度確かめ（このターンのモデルはもう分かっている）、書き込みは本人の確認を取ってから
+    private func callConnector(_ t: ConnectorTool, _ args: [String: Any], caller: UUID, me: JellyController, rt: AgentRuntime,
+                               reply: @escaping (String, Bool) -> Void) {
+        guard let m = manager else { reply(L("呼び出し元が見つかりません"), true); return }
+        let ctx = connectorContext(caller, rt)
+        if let why = ConnectorPolicy.denial(t, m.settings.connectors, ctx) {
+            AppLog.write("connector refused: \(t.name) agent=\(me.record.number) engine=\(ctx.engine.rawValue) model=\(ctx.model ?? "-")")
+            reply(why, true)
+            return
+        }
+        AppLog.write("connector: \(t.name) agent=\(me.record.number) engine=\(ctx.engine.rawValue) model=\(ctx.model ?? "-")")
+        MacConnectors.shared.prepare(t, args) { [weak self, weak me] p in
+            switch p {
+            case .failed(let why):
+                reply(why, true)
+            case .ready(let action):
+                guard t.confirms else { action.perform(reply); return }
+                guard let self, let me, let m = self.manager else { reply(L("クラゲが見つかりません"), true); return }
+                m.confirmConnector(for: me, action: action, engine: ctx.engine) { [weak self] ok in
+                    guard ok else {
+                        reply(L("ユーザーが「やめる」を選んだ（または 5 分のあいだ押さなかった）ので、実行していません。やり直さずに、そう伝えてください"), true)
+                        return
+                    }
+                    // 確認を待つあいだに設定が変わっていたら実行しない
+                    if let self, let m = self.manager, let rt2 = m.runtime(for: me),
+                       let why = ConnectorPolicy.denial(t, m.settings.connectors, self.connectorContext(caller, rt2)) {
+                        reply(why, true)
+                        return
+                    }
+                    action.perform(reply)
+                }
+            }
+        }
+    }
 
     /// いま仲間からの依頼で動いているなら、依頼元のエージェント
     func requester(ofRunning id: UUID) -> UUID? { running[id].flatMap { tasks[$0]?.from } }
@@ -1044,8 +1094,9 @@ final class TeamCoordinator {
             reply([:])
         case "tools/list":
             var tools = manager?.settings.teamEnabled == true ? teamTools() : []
-            if let id = conn.agentID, let c = controller(id), let rt = manager?.runtime(for: c), usesPCTools(id, rt) {
-                tools += DesktopControl.toolDefinitions
+            if let id = conn.agentID, let c = controller(id), let rt = manager?.runtime(for: c) {
+                if usesPCTools(id, rt) { tools += DesktopControl.toolDefinitions }
+                tools += connectorTools(id, rt).map(\.definition)
             }
             reply(["tools": tools])
         case "tools/call":
@@ -1117,6 +1168,11 @@ final class TeamCoordinator {
             }
             DesktopControl.shared.call(tool, args, agent: caller, name: me.record.title, color: me.record.color.nsColor,
                                        dir: rt.dir, reply: reply)
+            return
+        }
+        if let ct = ConnectorTool.named(tool) {
+            guard let rt = m.runtime(for: me) else { fail(L("呼び出し元が見つかりません")); return }
+            callConnector(ct, args, caller: caller, me: me, rt: rt, reply: reply)
             return
         }
         switch tool {

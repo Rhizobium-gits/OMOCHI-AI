@@ -7,5 +7,9 @@
 	     送ってよいかはアプリごとに本人が決める（システム設定 › プライバシーとセキュリティ › オートメーション） -->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
+	<!-- コネクタ（🔌）：カレンダーとリマインダー（EventKit）。Hardened Runtime では、この例外が無いと許可の確認も出ずに拒否される。
+	     読み書きしてよいかは本人が決める（システム設定 › プライバシーとセキュリティ › カレンダー・リマインダー） -->
+	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
 </dict>
 </plist>

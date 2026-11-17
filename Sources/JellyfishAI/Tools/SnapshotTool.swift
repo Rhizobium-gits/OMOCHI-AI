@@ -10,10 +10,11 @@ import UniformTypeIdentifiers
 ///   --icon out.png [--icon-source art.png]   アプリアイコン (1024px)。art を角丸の枠に収める（無ければクラゲのドット絵を描く）
 ///   --settle-test                            完了/キャンセルで本当に静止するかを検証
 ///   --account-menu out.png                   メニューのアカウントと使用量の欄（実際に claude から読む。明暗 2 つ並べる）
+///   --connectors-window out.png [--preset p] [--bg dark|light]   🔌 コネクタの画面（ワンタッチ設定 p の内容で。画面には出さずに描く）
 enum SnapshotTool {
     static func handles(_ args: [String]) -> Bool {
         args.contains("--sheet") || args.contains("--strip") || args.contains("--icon") || args.contains("--settle-test") || args.contains("--status-frames")
-            || args.contains("--pixel-sheet") || args.contains("--account-menu") || args.contains("--chat-sample") || args.contains("--watch-bench")
+            || args.contains("--pixel-sheet") || args.contains("--account-menu") || args.contains("--connectors-window") || args.contains("--chat-sample") || args.contains("--watch-bench")
     }
 
     static func run(_ args: [String]) -> Int32 {
@@ -22,6 +23,7 @@ enum SnapshotTool {
             return args[i + 1]
         }
         if let out = value("--sheet") { return sheet(out, dark: value("--bg") != "light") }
+        if let out = value("--connectors-window") { return connectorsWindow(out, preset: value("--preset"), dark: value("--bg") != "light") }
         if let out = value("--pixel-sheet") { return pixelSheet(out, dark: value("--bg") != "light") }
         if let out = value("--strip") {
             return strip(out,
@@ -373,6 +375,23 @@ enum SnapshotTool {
             if let cg = p.cgImage { ctx.draw(cg, in: CGRect(x: x, y: H - p.pixelsHigh, width: p.pixelsWide, height: p.pixelsHigh)) }
             x += p.pixelsWide + Int(gap * 2)
         }
+        return write(ctx.makeImage()!, out)
+    }
+
+    // MARK: - connectors window
+
+    static func connectorsWindow(_ out: String, preset: String?, dark: Bool) -> Int32 {
+        _ = NSApplication.shared
+        let c = ConnectorsWindowController(manager: nil, preview: (preset.flatMap(ConnectorPreset.init(rawValue:)) ?? .recommended).settings)
+        c.window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        c.rebuild()
+        guard let v = c.window.contentView, let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { return 1 }
+        v.cacheDisplay(in: v.bounds, to: rep)
+        guard let img = rep.cgImage else { return 1 }
+        let ctx = makeContext(img.width, img.height)
+        ctx.setFillColor(dark ? CGColor(gray: 0.15, alpha: 1) : CGColor(gray: 0.95, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: img.width, height: img.height))
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
         return write(ctx.makeImage()!, out)
     }
 
