@@ -15,6 +15,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-en.svg" width="820" alt="Chart of downloads per day (.dmg, .zip and git clone, stacked; updated automatically every day)"></a>
+</p>
+
+<p align="center">
   <b>A macOS app where AI agents live on your desktop, each one running as an independent AI agent（Claude Code・Codex・Gemini）.</b><br>
   <sub>Press ⌘L, type, and watch it think, work and finish.</sub>
 </p>
@@ -55,7 +59,7 @@
 | **🔐 Permissions** | Lists the macOS permissions (Accessibility, Screen Recording, Full Disk Access, Automation) and what each one enables, and grants or revokes them all at once |
 | **See your usage** | Bars in the menu bar for Claude's weekly limit and ChatGPT's 5-hour and weekly limits. Plus calls and tokens per AI, per model and per account |
 | **No surprise charges** | Doesn't handle API keys, and doesn't use AIs signed in on pay-as-you-go (Claude included) |
-| **Updates** | From the app, from Terminal, or with a single command. Checks the checksum, contents and signature before replacing the app |
+| **Updates** | From the app, from Terminal, or with a single command. Checks the checksum, contents and signature before replacing the app. Choose to check for new versions **every day, week or month, or never** (never by default) |
 | **日本語, English, 简体中文** | Menus and the guidance given to agents are in the language you choose |
 
 ## Teams across AIs
@@ -152,6 +156,7 @@ Below that are New jellyfish, Hide / Show all, past sessions and the list of age
 | External tools (MCP) | Only when named / Always / Don't use |
 | Show web page previews in chats | Cover images and titles of web pages (images and PDFs are shown even when it's off) |
 | Open at login, 🌐 Language | |
+| Check for updates automatically | Every day, every week, every month, or never (default) |
 | About Jellyfish AI, Check for updates… | |
 
 ## Chat
@@ -388,7 +393,10 @@ From menu bar jellyfish › **🌐 言語 · Language · 语言**, you can choos
 
 ## Updates
 
-- Menu bar jellyfish › **Check for updates…** checks GitHub for a newer version (only when you choose it; it never connects automatically)
+- Menu bar jellyfish › **Check for updates…** checks GitHub for a newer version
+- **Check automatically**: menu bar jellyfish › **Check for updates automatically** lets you choose **every day, every week, every month or never** (never by default, so nothing connects automatically unless you choose). When chosen, it reads only the latest release's version from GitHub's public API at that interval (time the Mac spent asleep is caught up within an hour of waking)
+  - When there's a new version, a visible jellyfish tells you in a speech bubble: **“Version … is out”** (it doesn't take keyboard focus). Click “Take a Look” to see what changed; the app is only replaced when you press “Update”. “Skip this version” skips just that version, and ✕ tells you again at the next check
+  - While a new version is known, “Check for updates…” in the menu reads “⬆︎ Version … is available…”. The menu also shows when it last checked
 - If there's a new version, press **“Update”** and it downloads the new version (.zip) from the GitHub release, checks the checksum in `SHA256SUMS.txt`, the contents (that it's that version of Jellyfish AI) and the code signature, then replaces the app and reopens it (settings, jellyfish, and conversations are kept). Nothing happens unless you press it
   - If you installed it with a **fixed signature** ([Stop being asked for permissions after every update](#stop-being-asked-for-permissions-after-every-update)), the new version is re-signed with this Mac's fixed signature before the replacement, so your macOS permissions carry over. Along the way macOS asks “codesign wants to use the key”; choose “Allow”. If that key isn't in your keychain, the release's temporary signature is kept
   - It won't replace the app while jellyfish are working. If the app was opened from a location that can't be changed (such as inside the .dmg), or macOS stops the replacement (System Settings › Privacy & Security › App Management), it points you to the download page
@@ -437,7 +445,7 @@ scripts/install.sh
 - **PC control** is used only when you ask directly in that agent's chat (never for requests from teammates)
 - **No widening permissions across AIs**: an agent working on a teammate's request doesn't create or ask teammates on a different AI
 - **macOS permissions**: Jellyfish doesn't disable OS security features and doesn't grant permissions on its own. You can check the permissions it has and their scope in “🔐 Permissions”, and revoke them all at once. The app is signed with Hardened Runtime enabled (so other programs can't inject into the app and use its permissions), and the only exception is the entitlement needed to show the Apple Events confirmation
-- **Jellyfish AI's own network access** is limited to GitHub's public API when you choose “Check for updates…”, the release files when you press “Update”, and web previews in chats (only URLs you typed yourself and pages you pressed “Show cover” for; can be turned off in the menu). No automatic checks, no usage reporting. Instructions and attachments are sent to each company through its AI's CLI
+- **Jellyfish AI's own network access** is limited to GitHub's public API when you choose “Check for updates…” and at the interval you picked for automatic update checks (it only reads the latest release's version), the release files when you press “Update”, and web previews in chats (only URLs you typed yourself and pages you pressed “Show cover” for; can be turned off in the menu). No usage reporting. Instructions and attachments are sent to each company through its AI's CLI
 - External control through `jellyfish://` URLs accepts only harmless actions such as toggling the display (it doesn't accept sending instructions, granting PC control, and so on; rapid-fire calls are throttled, and it doesn't steal keyboard focus)
 - Autonomous organization learning and usage are computed on-device only, and saved with permissions that only you can read
 - For details, see [SECURITY.md](SECURITY.md) (it also describes the remaining risks). Please report vulnerabilities privately through the Security tab
@@ -464,7 +472,7 @@ scripts/install.sh          # build, install to the Applications folder, and lau
 - To update, use `scripts/update.sh --source`. To build only, use `scripts/build.sh` (→ `dist/JellyfishAI.app`, for this Mac's CPU); to run the tests, use `scripts/test.sh` (swift test)
 - The app icon is made by fitting `Resources/AppIcon.png` (a 1024px square) into the rounded frame of macOS icons
 - Distribution files are made in `dist/release/` with `scripts/release.sh` (universal `JellyfishAI.dmg`, `JellyfishAI-<version>.zip`, `SHA256SUMS.txt`). Update `VERSION` and `CHANGELOG.md`, commit and push, then publish to GitHub Releases with `scripts/release.sh --publish`
-- **Download counts**: `scripts/downloads.sh` reads per-release counts from GitHub (`.dmg` = times it was downloaded to install, `.zip` = the app's “Update” and manual .zip downloads; `--traffic` adds page views and clones for the last 14 days, `--json` prints JSON). The badge at the top of the README is the total of `.dmg` and `.zip` downloads and git clones (the number of people who cloned, as counted by GitHub per day, added up; clones by bots, mirrors and CI are included). `scripts/download-stats.sh` recounts it and writes `stats.json` on the `stats` branch (with the breakdown), and GitHub Actions (`.github/workflows/stats.yml`) runs it every day. GitHub keeps clone counts for only the last 14 days, so they're accumulated per day. To read clone counts in Actions, the `TRAFFIC_TOKEN` secret (a fine-grained token for this repository only, with read-only Administration) is needed. Without it, only release downloads are recounted, and clones are added when `scripts/release.sh --publish` or `scripts/download-stats.sh` runs locally. Every version's .dmg has the same name, so `releases/latest/download/JellyfishAI.dmg` always points at the latest version
+- **Download counts**: `scripts/downloads.sh` reads per-release counts from GitHub (`.dmg` = times it was downloaded to install, `.zip` = the app's “Update” and manual .zip downloads; `--traffic` adds page views and clones for the last 14 days, `--json` prints JSON). The chart at the top of the README (downloads per day) is made by `scripts/download-chart.py` from the daily totals in `stats.json` (`daily`; GitHub only gives running totals for .dmg and .zip, so each day's number is the difference between daily totals) and the clone counts, and is put on the same `stats` branch as `downloads-ja.svg`, `downloads-en.svg` and `downloads-zh.svg`. The badge is the total of `.dmg` and `.zip` downloads and git clones (the number of people who cloned, as counted by GitHub per day, added up; clones by bots, mirrors and CI are included). `scripts/download-stats.sh` recounts it and writes `stats.json` on the `stats` branch (with the breakdown), and GitHub Actions (`.github/workflows/stats.yml`) runs it every day. GitHub keeps clone counts for only the last 14 days, so they're accumulated per day. To read clone counts in Actions, the `TRAFFIC_TOKEN` secret (a fine-grained token for this repository only, with read-only Administration) is needed. Without it, only release downloads are recounted, and clones are added when `scripts/release.sh --publish` or `scripts/download-stats.sh` runs locally. Every version's .dmg has the same name, so `releases/latest/download/JellyfishAI.dmg` always points at the latest version
 
 ## Where data is stored
 

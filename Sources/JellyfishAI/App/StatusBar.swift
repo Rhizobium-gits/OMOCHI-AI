@@ -575,10 +575,44 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem(L("Jellyfish AI について")) { AppInfo.showAbout() })
-        menu.addItem(ClosureMenuItem(L("アップデートを確認…")) { [weak self] in UpdateChecker.check(manager: self?.manager) })
+        // 自動の確認で新しい版を見つけていれば、そう書く
+        let updateTitle = UpdateSchedule.shared.available.map { L("⬆︎ 新しい版 %@ があります…", $0) } ?? L("アップデートを確認…")
+        menu.addItem(ClosureMenuItem(updateTitle) { [weak self] in UpdateChecker.check(manager: self?.manager) })
+        menu.addItem(updateScheduleMenuItem(s))
         menu.addItem(ClosureMenuItem(L("使い方（GitHub）")) { NSWorkspace.shared.open(AppInfo.repoURL) })
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem(L("Jellyfish AI を終了"), key: "q") { NSApp.terminate(nil) })
+    }
+
+    /// アップデートの自動確認：毎日・毎週・毎月・確認しない
+    private func updateScheduleMenuItem(_ s: AppSettings) -> NSMenuItem {
+        let item = NSMenuItem(title: L("アップデートの自動確認（%@）", s.updateCheck.label), action: nil, keyEquivalent: "")
+        let um = NSMenu()
+        um.autoenablesItems = false
+        for iv in UpdateCheckInterval.allCases {
+            um.addItem(ClosureMenuItem(iv.label, checked: s.updateCheck == iv) { [weak self] in
+                self?.manager.updateSettings { $0.updateCheck = iv }
+                AppLog.write("update auto-check: \(iv.rawValue)")
+                UpdateSchedule.shared.intervalChanged()
+            })
+        }
+        um.addItem(.separator())
+        if s.lastUpdateCheck > 0 {
+            let when = DateFormatter.localizedString(from: Date(timeIntervalSince1970: s.lastUpdateCheck), dateStyle: .medium, timeStyle: .short)
+            um.addItem(.header(L("前に確かめた日時: %@", when)))
+        } else {
+            um.addItem(.header(L("まだ確かめていません")))
+        }
+        if !s.skippedUpdateVersion.isEmpty {
+            let v = s.skippedUpdateVersion
+            um.addItem(ClosureMenuItem(L("%@ をまた知らせる", v)) { [weak self] in
+                self?.manager.updateSettings { $0.skippedUpdateVersion = "" }
+            })
+        }
+        um.addItem(.header(L("・読むのは GitHub の公開 API の、最新リリースの版だけ")))
+        um.addItem(.header(L("・新しい版があればクラゲの吹き出しで知らせる。入れ替えるのは「アップデートする」を押したときだけ")))
+        item.submenu = um
+        return item
     }
 
     private func applyShortcut(_ hk: HotKeySpec, to item: NSMenuItem) {

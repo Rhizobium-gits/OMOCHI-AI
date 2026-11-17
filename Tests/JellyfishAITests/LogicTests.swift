@@ -176,6 +176,50 @@ import Testing
     }
 }
 
+@Suite struct UpdateScheduleTests {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    @Test func neverChecksByDefault() throws {
+        let s = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+        #expect(s.updateCheck == .never)
+        #expect(s.lastUpdateCheck == 0)
+        #expect(s.skippedUpdateVersion == "")
+        #expect(!UpdateCheckInterval.never.isDue(lastCheck: 0, now: now))
+        #expect(!UpdateCheckInterval.never.isDue(lastCheck: 1, now: now))
+    }
+
+    @Test func unknownIntervalFallsBackToNever() throws {
+        let s = try JSONDecoder().decode(AppSettings.self, from: Data(#"{"updateCheck": "hourly"}"#.utf8))
+        #expect(s.updateCheck == .never)
+    }
+
+    @Test func intervalRoundTrips() throws {
+        var s = AppSettings()
+        s.updateCheck = .monthly
+        s.lastUpdateCheck = 1_700_000_000
+        s.skippedUpdateVersion = "v9.9.9"
+        let back = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
+        #expect(back.updateCheck == .monthly)
+        #expect(back.lastUpdateCheck == 1_700_000_000)
+        #expect(back.skippedUpdateVersion == "v9.9.9")
+    }
+
+    @Test func dueWhenNeverCheckedOrIntervalPassed() {
+        let t = now.timeIntervalSince1970
+        #expect(UpdateCheckInterval.daily.isDue(lastCheck: 0, now: now))
+        #expect(!UpdateCheckInterval.daily.isDue(lastCheck: t - 3600, now: now))
+        #expect(UpdateCheckInterval.daily.isDue(lastCheck: t - 86_400, now: now))
+        #expect(!UpdateCheckInterval.weekly.isDue(lastCheck: t - 6 * 86_400, now: now))
+        #expect(UpdateCheckInterval.weekly.isDue(lastCheck: t - 7 * 86_400, now: now))
+        #expect(!UpdateCheckInterval.monthly.isDue(lastCheck: t - 29 * 86_400, now: now))
+        #expect(UpdateCheckInterval.monthly.isDue(lastCheck: t - 30 * 86_400, now: now))
+    }
+
+    @Test func clockMovedBackChecksAgain() {
+        #expect(UpdateCheckInterval.weekly.isDue(lastCheck: now.timeIntervalSince1970 + 600, now: now))
+    }
+}
+
 @Suite struct ModelTests {
     @Test func linkIsUndirected() {
         let a = UUID(), b = UUID()

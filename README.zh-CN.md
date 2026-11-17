@@ -15,6 +15,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-zh.svg" width="820" alt="每日下载量图表（.dmg、.zip、git clone 堆叠显示，每天自动更新）"></a>
+</p>
+
+<p align="center">
   <b>这是一款 macOS 应用：AI 智能体常驻在桌面上，每一个都作为独立的 AI 智能体（Claude Code・Codex・Gemini）运行。</b><br>
   <sub><i>macOS 桌面伙伴：屏幕上的每个小像素角色都是一个独立的 AI 智能体——Claude Code、Codex 或 Gemini。<br>按下 ⌘L，输入，然后看着它思考、工作、完成。</i></sub>
 </p>
@@ -55,7 +59,7 @@
 | **🔐 权限** | 列出 macOS 的权限（辅助功能、屏幕录制、完全磁盘访问权限、自动化）以及授予后能做什么，可以全部允许、全部撤销 |
 | **用量一目了然** | 菜单栏中以进度条显示 Claude 的本周额度，以及 ChatGPT 的 5 小时、本周额度。还能按 AI、按模型、按账户查看调用次数和 token |
 | **不会擅自收费** | 不处理 API 密钥，不使用以按量计费方式登录的 AI（Claude 也一样） |
-| **更新** | 可以在应用中、在终端中，或用一条命令更新。确认校验和、内容和签名后再替换 |
+| **更新** | 可以在应用中、在终端中，或用一条命令更新。确认校验和、内容和签名后再替换。检查新版本可选 **每天、每周、每月或不检查**（默认不检查） |
 | **日本語・English・简体中文** | 菜单和给智能体的说明都使用所选的语言 |
 
 ## 跨 AI 的团队
@@ -152,6 +156,7 @@
 | 外部工具（MCP） | 仅在提到时 / 始终 / 不使用 |
 | 在聊天中显示网页预览 | 网页的封面图片和标题（关闭后仍会显示图片和 PDF） |
 | 登录时自动启动、🌐 语言 | |
+| 自动检查更新 | 每天、每周、每月、不检查（默认） |
 | 关于 Jellyfish AI、检查更新… | |
 
 ## 聊天
@@ -388,7 +393,10 @@ Claude Code 中配置的 MCP 服务器（位于 `~/.claude.json` 或项目的 `.
 
 ## 更新
 
-- 在菜单栏的水母 › **检查更新…** 中，向 GitHub 确认是否有新版本（仅在选择时。不会自动联网）
+- 在菜单栏的水母 › **检查更新…** 中，向 GitHub 确认是否有新版本
+- **自动检查**：在菜单栏的水母 › **自动检查更新** 中，可以选择 **每天、每周、每月、不检查**（默认不检查＝不选择就不会自动联网）。选择后，会按该间隔通过 GitHub 的公开 API 只读取最新发布的版本号（Mac 睡眠期间错过的检查，会在唤醒后 1 小时内补上）
+  - 有新版本时，可见的水母会用对话气泡提醒 **“新版本 … 发布了”**（不会抢占输入焦点）。点“看看”确认改动内容，只有点“更新”时才会替换。“不再提醒此版本”只跳过该版本，点 ✕ 则下次检查时再提醒
+  - 发现新版本期间，菜单中的“检查更新…”会变成“⬆︎ 有新版本 …”。上次检查的时间也显示在这个菜单中
 - 如果有新版本，点按 **“更新”** 后，会从 GitHub 的发布下载新版本（.zip），确认 `SHA256SUMS.txt` 的校验和、内容（是否为该版本的 Jellyfish AI）和代码签名后替换应用并重新打开（设置、水母和对话都会保留）。不点按就什么都不做
   - 如果是用**固定签名**（[让每次更新后不再请求权限](#让每次更新后不再请求权限)）安装的，会先用这台 Mac 的固定签名重新签名新版本再替换，因此 macOS 的权限会保留。过程中 macOS 会询问“codesign 想要使用密钥”，请选择“允许”。如果钥匙串中没有该密钥，则保持发布版的临时签名进行替换
   - 有水母正在工作时不会替换。如果应用是从无法修改的位置（如 .dmg 内）打开的，或者 macOS 阻止了替换（系统设置 › 隐私与安全性 › App 管理），会引导你前往下载页面
@@ -437,7 +445,7 @@ scripts/install.sh
 - **电脑操控** 只在你在该智能体的聊天中直接要求时使用（队友的委托中不使用）
 - **不跨 AI 扩大权限**：正在处理队友委托的智能体，不会创建或委托与自己不同 AI 的队友
 - **macOS 的权限**：不禁用操作系统的安全功能，也不擅自授予权限。已授予的权限及其范围可以在“🔐 权限”中查看，并可全部撤销。启用 Hardened Runtime 并签名（防止其他程序注入应用并利用其权限），例外只有用于显示 Apple Events 确认的 entitlement
-- **Jellyfish AI 自身的网络通信** 只有：选择“检查更新…”时访问 GitHub 的公开 API、点按“更新”时获取发布的文件，以及聊天中的网页预览（仅限你自己输入的 URL 和点按了“显示封面”的网页。可在菜单中关闭）。不会自动检查，也不发送使用情况。指令和附件会通过各 AI 的 CLI 发送给相应的公司
+- **Jellyfish AI 自身的网络通信** 只有：选择“检查更新…”时，以及选择了自动检查更新时按该间隔访问 GitHub 的公开 API（只读取最新发布的版本号）、点按“更新”时获取发布的文件，以及聊天中的网页预览（仅限你自己输入的 URL 和点按了“显示封面”的网页。可在菜单中关闭）。不发送使用情况。指令和附件会通过各 AI 的 CLI 发送给相应的公司
 - 通过 `jellyfish://` URL 从外部进行的操作，只接受切换显示等无害的操作（不接受发送指令、允许电脑操控等。连续的调用会被节流，也不会抢走键盘输入焦点）
 - 自主组织的学习和用量只在本机计算，并以仅本人可读的权限保存
 - 详情请参阅 [SECURITY.md](SECURITY.md)（也写明了仍然存在的风险）。漏洞请通过 Security 标签页私下报告
@@ -464,7 +472,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
 - 更新用 `scripts/update.sh --source`。只构建用 `scripts/build.sh`（→ `dist/JellyfishAI.app`，适用于这台 Mac 的 CPU），测试用 `scripts/test.sh`（swift test）
 - 应用图标由 `Resources/AppIcon.png`（1024px 的正方形）放入 macOS 图标的圆角框中生成
 - 分发包用 `scripts/release.sh` 生成到 `dist/release/`（universal 的 `JellyfishAI.dmg`、`JellyfishAI-<版本>.zip`、`SHA256SUMS.txt`）。更新 `VERSION` 和 `CHANGELOG.md` 并提交、push 后，用 `scripts/release.sh --publish` 发布到 GitHub Releases
-- **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的徽章是 `.dmg`、`.zip` 的下载次数与 git clone 次数（GitHub 统计的每天 clone 人数之和，包括机器人、镜像和 CI 的 clone）的总和。`scripts/download-stats.sh` 重新统计后写入 `stats` 分支的 `stats.json`（明细也在这里），GitHub Actions（`.github/workflows/stats.yml`）每天运行一次。GitHub 只保留最近 14 天的 clone 次数，因此按天累积。要在 Actions 中读取 clone 次数，需要密钥 `TRAFFIC_TOKEN`（仅限本仓库、仅有 Administration 只读权限的 fine-grained 令牌）。没有它时只重新统计发布的下载次数，clone 会在本地运行 `scripts/release.sh --publish` 或 `scripts/download-stats.sh` 时加上。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/JellyfishAI.dmg` 始终指向最新版本
+- **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的图表（每日下载量）由 `scripts/download-chart.py` 根据 `stats.json` 中的每日累计（`daily`。GitHub 只提供 .dmg、.zip 的累计数，所以用每天累计的差作为当天的数量）和 clone 次数生成，以 `downloads-ja.svg`、`downloads-en.svg`、`downloads-zh.svg` 放在同一个 `stats` 分支上。徽章是 `.dmg`、`.zip` 的下载次数与 git clone 次数（GitHub 统计的每天 clone 人数之和，包括机器人、镜像和 CI 的 clone）的总和。`scripts/download-stats.sh` 重新统计后写入 `stats` 分支的 `stats.json`（明细也在这里），GitHub Actions（`.github/workflows/stats.yml`）每天运行一次。GitHub 只保留最近 14 天的 clone 次数，因此按天累积。要在 Actions 中读取 clone 次数，需要密钥 `TRAFFIC_TOKEN`（仅限本仓库、仅有 Administration 只读权限的 fine-grained 令牌）。没有它时只重新统计发布的下载次数，clone 会在本地运行 `scripts/release.sh --publish` 或 `scripts/download-stats.sh` 时加上。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/JellyfishAI.dmg` 始终指向最新版本
 
 ## 数据存储位置
 

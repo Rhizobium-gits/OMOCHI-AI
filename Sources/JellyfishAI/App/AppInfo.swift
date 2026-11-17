@@ -82,20 +82,38 @@ enum AppVersion {
     }
 }
 
-/// アップデートの確認。メニューから選んだときだけ GitHub の公開情報（最新リリース）を 1 回読む。
-/// 自動では確認しない（ユーザーが意図しない通信をしない）。新しい版があれば、許可を求めてから入れ替える（AppUpdater）
+/// アップデートの確認。GitHub の公開情報（最新リリース）を 1 回読む。
+/// 読むのは、メニューから選んだときと、メニューの「アップデートの自動確認」で間隔を選んだ人のその間隔ごと（UpdateSchedule。既定は確認しない）だけ。
+/// 新しい版があれば、許可を求めてから入れ替える（AppUpdater）
 enum UpdateChecker {
-    static func check(manager: JellyManager? = nil) {
+    struct Latest {
+        var tag: String?
+        var json: [String: Any]?
+        var status: Int
+        var error: Error?
+    }
+
+    /// 最新リリースを読む（読み終わりは URLSession のスレッドで呼ぶ）
+    static func fetchLatest(_ done: @escaping (Latest) -> Void) {
         var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(AppInfo.repo)/releases/latest")!)
         req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         req.timeoutInterval = 15
         URLSession.shared.dataTask(with: req) { data, resp, err in
-            let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
             let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
-            let tag = json?["tag_name"] as? String
+            done(Latest(tag: json?["tag_name"] as? String, json: json, status: (resp as? HTTPURLResponse)?.statusCode ?? 0, error: err))
+        }.resume()
+    }
+
+    static func check(manager: JellyManager? = nil) {
+        fetchLatest { latest in
+            let (tag, json, status, err) = (latest.tag, latest.json, latest.status, latest.error)
             // いまの版の署名（固定の署名なら鍵があるかを security で調べるので、画面のスレッドの外で）
             let signing = AppUpdater.currentSigning()
             DispatchQueue.main.async {
+                if let tag, status == 200 {
+                    UpdateSchedule.shared.note(latest: tag)
+                    manager?.updateSettings { $0.lastUpdateCheck = Date().timeIntervalSince1970 }
+                }
                 let a = NSAlert()
                 a.icon = NSApp.applicationIconImage
                 let current = AppInfo.version
@@ -163,7 +181,7 @@ enum UpdateChecker {
                     if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
                 }
             }
-        }.resume()
+        }
     }
 
     /// リリースノート（スクロールできる小さな欄）

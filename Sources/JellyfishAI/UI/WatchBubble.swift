@@ -1,8 +1,22 @@
 import AppKit
 
-/// 見守りのクラゲが出す吹き出し：「エラーっぽいのが出たよ、見る？」。
-/// 前面に出ても入力先は奪わない（キーにならないパネル）。押せるのは「見る」「✕」「このアプリでは聞かない」だけ
+/// クラゲが出す吹き出し：見守りの「エラーっぽいのが出たよ、見る？」と、アップデートの「新しい版が出たよ」。
+/// 前面に出ても入力先は奪わない（キーにならないパネル）。押せるのは「見る」「✕」と、右の小さなボタン（このアプリでは聞かない・この版は知らせない）だけ
 final class WatchBubble: NSObject {
+    /// 吹き出しの文言（既定は見守り）
+    struct Text {
+        var title: String
+        var detail: String
+        var show: String = L("見る")
+        var closeTip: String = L("閉じる（この画像は送らずに消します）")
+        var ignore: String = L("このアプリでは聞かない")
+        var note: String? = L("押すと、このウィンドウの 1 枚だけを送ります")
+
+        static func watch(appName: String, snippet: String) -> Text {
+            Text(title: L("エラーっぽいのが出たよ、見る？"), detail: "\(appName)：\(snippet)")
+        }
+    }
+
     private let panel: NSPanel
     private var timer: Timer?
     private var onShow: (() -> Void)?
@@ -14,8 +28,11 @@ final class WatchBubble: NSObject {
         override var canBecomeMain: Bool { false }
     }
 
-    init(appName: String, snippet: String, accent: NSColor, near anchor: NSRect,
+    private let autoClose: TimeInterval
+
+    init(_ text: Text, accent: NSColor, near anchor: NSRect, autoClose: TimeInterval = 90,
          onShow: @escaping () -> Void, onDismiss: @escaping () -> Void, onIgnoreApp: @escaping () -> Void) {
+        self.autoClose = autoClose
         self.onShow = onShow
         self.onDismiss = onDismiss
         self.onIgnoreApp = onIgnoreApp
@@ -41,9 +58,9 @@ final class WatchBubble: NSObject {
         bg.layer?.borderWidth = 1.5
         bg.layer?.borderColor = accent.withAlphaComponent(0.8).cgColor
 
-        let title = NSTextField(labelWithString: L("エラーっぽいのが出たよ、見る？"))
+        let title = NSTextField(labelWithString: text.title)
         title.font = .systemFont(ofSize: 13, weight: .semibold)
-        let detail = NSTextField(labelWithString: "\(appName)：\(snippet)")
+        let detail = NSTextField(labelWithString: text.detail)
         detail.font = .systemFont(ofSize: 11)
         detail.textColor = .secondaryLabelColor
         detail.lineBreakMode = .byTruncatingTail
@@ -51,13 +68,13 @@ final class WatchBubble: NSObject {
         detail.cell?.wraps = true
         detail.preferredMaxLayoutWidth = 270
 
-        let show = NSButton(title: L("見る"), target: self, action: #selector(showTapped))
+        let show = NSButton(title: text.show, target: self, action: #selector(showTapped))
         show.bezelStyle = .rounded
         show.keyEquivalent = "\r"
         let close = NSButton(title: "✕", target: self, action: #selector(dismissTapped))
         close.bezelStyle = .rounded
-        close.toolTip = L("閉じる（この画像は送らずに消します）")
-        let ignore = NSButton(title: L("このアプリでは聞かない"), target: self, action: #selector(ignoreTapped))
+        close.toolTip = text.closeTip
+        let ignore = NSButton(title: text.ignore, target: self, action: #selector(ignoreTapped))
         ignore.isBordered = false
         ignore.font = .systemFont(ofSize: 10.5)
         ignore.contentTintColor = .secondaryLabelColor
@@ -65,11 +82,15 @@ final class WatchBubble: NSObject {
         buttons.orientation = .horizontal
         buttons.spacing = 6
 
-        let note = NSTextField(labelWithString: L("押すと、このウィンドウの 1 枚だけを送ります"))
-        note.font = .systemFont(ofSize: 10)
-        note.textColor = .tertiaryLabelColor
+        var rows: [NSView] = [title, detail, buttons]
+        if let n = text.note {
+            let note = NSTextField(labelWithString: n)
+            note.font = .systemFont(ofSize: 10)
+            note.textColor = .tertiaryLabelColor
+            rows.append(note)
+        }
 
-        let stack = NSStackView(views: [title, detail, buttons, note])
+        let stack = NSStackView(views: rows)
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 5
@@ -111,12 +132,12 @@ final class WatchBubble: NSObject {
         return p
     }
 
-    /// 出す（前面に出すが、入力先は奪わない）。90 秒で自動で閉じる（送らずに消す）
+    /// 出す（前面に出すが、入力先は奪わない）。autoClose 秒（見守りは 90 秒）で自動で閉じる（「✕」と同じ）
     func present() {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { ctx in ctx.duration = 0.2; panel.animator().alphaValue = 1 }
-        timer = Timer.scheduledTimer(withTimeInterval: 90, repeats: false) { [weak self] _ in self?.dismissTapped() }
+        timer = Timer.scheduledTimer(withTimeInterval: autoClose, repeats: false) { [weak self] _ in self?.dismissTapped() }
     }
 
     func close() {

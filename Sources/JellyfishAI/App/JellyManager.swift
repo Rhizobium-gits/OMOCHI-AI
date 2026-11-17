@@ -119,6 +119,32 @@ final class JellyManager {
         updateSettings { $0.watchIgnoredApps.removeAll { $0 == bundleID } }
     }
 
+    /// アップデートの自動確認で新しい版が見つかったとき：見えているクラゲの上に吹き出しで知らせる（入力先は奪わない）。
+    /// クラゲが 1 体も見えていなければ出さない（メニューの「新しい版 … があります…」で分かる）
+    private var updateBubble: WatchBubble?
+
+    func showUpdateBubble(_ tag: String) {
+        guard updateBubble == nil, !settings.allHidden,
+              let c = controllers.filter({ !$0.record.hidden }).min(by: { $0.record.number < $1.record.number }) else { return }
+        let text = WatchBubble.Text(title: L("新しい版 %@ が出たよ", tag),
+                                    detail: L("いまは %@。「見る」で変わったところを見てから、アップデートするか決められます", AppInfo.version),
+                                    closeTip: L("閉じる（次の確認のときにまた知らせます）"),
+                                    ignore: L("この版は知らせない"), note: nil)
+        let b = WatchBubble(text, accent: c.record.color.nsColor, near: c.panel.frame, autoClose: 600,
+            onShow: { [weak self] in
+                self?.updateBubble = nil
+                UpdateChecker.check(manager: self)
+            },
+            onDismiss: { [weak self] in self?.updateBubble = nil },
+            onIgnoreApp: { [weak self] in
+                self?.updateBubble = nil
+                self?.updateSettings { $0.skippedUpdateVersion = tag }
+            })
+        updateBubble = b
+        b.present()
+        AppLog.write("update bubble: \(tag) on agent \(c.record.number)")
+    }
+
     private func handleWatchFinding(_ f: WatchFinding, target: JellyController? = nil) {
         guard watchBubble == nil, let c = target ?? watchingControllers.first, let rt = runtimes[c.record.id] else { return }
         let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
@@ -127,7 +153,7 @@ final class JellyManager {
         // 押されなければ 10 分で消す
         watchImages[url] = Timer.scheduledTimer(withTimeInterval: 600, repeats: false) { [weak self] _ in self?.discardWatchImage(url) }
         let b = WatchBubble(
-            appName: f.appName, snippet: f.snippet, accent: c.record.color.nsColor, near: c.panel.frame,
+            .watch(appName: f.appName, snippet: f.snippet), accent: c.record.color.nsColor, near: c.panel.frame,
             onShow: { [weak self, weak c] in
                 guard let self else { return }
                 self.watchBubble = nil

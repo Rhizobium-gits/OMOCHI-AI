@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-11-17
+
+### 追加
+
+- **アップデートの自動確認**：メニューバーのクラゲ › **アップデートの自動確認** で、**毎日・毎週・毎月・確認しない** から選べる（既定は確認しない。選ばなければ、これまでどおり自動では通信しない）。選ぶと、その間隔ごとに GitHub の公開 API で最新リリースの版だけを読み、新しい版があれば見えているクラゲが吹き出しで「新しい版 … が出たよ」と知らせる（入力先は奪わない）。「見る」でリリースノートを確かめ、「アップデートする」を押したときだけ入れ替える。「この版は知らせない」でその版だけ外せる。見つけている間はメニューの「アップデートを確認…」が「⬆︎ 新しい版 … があります…」になり、前に確かめた日時もメニューに出る
+- README の上に **1 日ごとのダウンロード** のグラフ（.dmg・.zip・git clone の積み上げ、直近 60 日、日本語・English・简体中文）。`scripts/download-chart.py` が作り、`scripts/download-stats.sh`（GitHub Actions で毎日）が `stats` ブランチに `stats.json` と一緒に 1 つのコミットで置く。.dmg・.zip は GitHub が累計しか出さないので、`stats.json` に日ごとの累計（`daily`）を貯めて、前の日との差を 1 日の数にする（無いときは `stats` ブランチの過去のコミットの累計から埋める）。GitHub が clone 数を数日遅れて出す最近の日は、帯で「集計待ち」と示す
+
 ### 変更
 
 - README（日本語・English・简体中文）を黒を基調に作り直した：上に黒い背景のガラスのクラゲのバナー、黒いバッジ、ダウンロードのボタン。デモの GIF をすべて黒い背景で撮り直し、**AI をまたいだチーム** のデモ（Claude のリーダーが ChatGPT（Codex）の仲間に実装を、Claude のレビュー係に確認を頼んでまとめる）と、その節を足した
@@ -268,6 +275,7 @@
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[1.2.4]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.4
 [1.2.3]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.1

@@ -54,6 +54,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         shortcuts = Shortcuts(manager: manager)
         statusBar = StatusBarController(manager: manager, shortcuts: shortcuts)
         manager.start()
+        // アップデートの自動確認（メニューで間隔を選んだときだけ。既定は確認しない）
+        UpdateSchedule.shared.start(manager: manager)
         let live = Set(manager.controllers.map(\.record.id))
         DispatchQueue.global(qos: .utility).async { DataJanitor.cleanUpRemovedAgents(dataDir: AppPaths.dataDir, live: live) }
         manager.prefetchBackend()

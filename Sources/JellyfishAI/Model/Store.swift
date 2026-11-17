@@ -92,6 +92,12 @@ struct AppSettings: Codable {
     var linkPreviews: Bool = true
     /// 見守りで「このアプリでは聞かない」にしたアプリ（バンドル ID）
     var watchIgnoredApps: [String] = []
+    /// アップデートの自動確認の間隔（既定は確認しない。選んだときだけ、GitHub の公開 API で最新リリースの版を読む）
+    var updateCheck: UpdateCheckInterval = .never
+    /// 前にアップデートを確かめた時刻（UNIX 秒。0 = まだ）。自動でも手でも、読めたときに書く
+    var lastUpdateCheck: Double = 0
+    /// 吹き出しの「この版は知らせない」で外した版のタグ（それより新しい版が出たらまた知らせる）
+    var skippedUpdateVersion: String = ""
 
     init() {}
 
@@ -129,6 +135,9 @@ struct AppSettings: Codable {
         geminiModel = c.value(String.self, .geminiModel, d.geminiModel)
         linkPreviews = c.value(Bool.self, .linkPreviews, d.linkPreviews)
         watchIgnoredApps = c.value([String].self, .watchIgnoredApps, d.watchIgnoredApps)
+        updateCheck = c.value(UpdateCheckInterval.self, .updateCheck, d.updateCheck)
+        lastUpdateCheck = c.value(Double.self, .lastUpdateCheck, d.lastUpdateCheck)
+        skippedUpdateVersion = c.value(String.self, .skippedUpdateVersion, d.skippedUpdateVersion)
     }
 }
 

@@ -1,6 +1,6 @@
 name: Download stats
 
-# README のダウンロード数のバッジ（stats ブランチの stats.json）を毎日数え直す。
+# README のダウンロード数のバッジと「1 日ごとのダウンロード」のグラフ（stats ブランチの stats.json・downloads-*.svg）を毎日数え直す。
 # clone 数を読むにはシークレット TRAFFIC_TOKEN（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要る。
 # 無くても、リリースのダウンロード数は数え直す（clone は前に貯めた分のまま）
 on:
@@ -21,12 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # 自分の clone を数に入れないよう、checkout せずに API でこのコミットのスクリプトだけ取る
+      # （download-stats.sh が、同じフォルダの download-chart.py で README のグラフを作る）
       - name: Count downloads
         env:
           GH_TOKEN: ${{ github.token }}
           TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
           JELLYFISH_REPO: ${{ github.repository }}
         run: |
-          gh api -H "Accept: application/vnd.github.raw" \
-            "repos/$GITHUB_REPOSITORY/contents/scripts/download-stats.sh?ref=$GITHUB_SHA" > "$RUNNER_TEMP/download-stats.sh"
+          for f in download-stats.sh download-chart.py; do
+            gh api -H "Accept: application/vnd.github.raw" \
+              "repos/$GITHUB_REPOSITORY/contents/scripts/$f?ref=$GITHUB_SHA" > "$RUNNER_TEMP/$f"
+          done
           bash "$RUNNER_TEMP/download-stats.sh"

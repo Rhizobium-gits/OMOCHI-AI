@@ -15,6 +15,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-ja.svg" width="820" alt="1 日ごとのダウンロード数のグラフ（.dmg・.zip・git clone の積み上げ。毎日自動で更新）"></a>
+</p>
+
+<p align="center">
   <b>デスクトップ上にAIエージェントが常駐し、1 体ずつが独立した AI エージェント（Claude Code・Codex・Gemini）として動く macOS アプリです。</b><br>
   <sub><i>A macOS desktop companion: each little pixel character on your screen is an independent AI agent — Claude Code, Codex and Gemini.<br>Press ⌘L, type, and watch it think, work and finish.</i></sub>
 </p>
@@ -55,7 +59,7 @@
 | **🔐 権限** | macOS の許可（アクセシビリティ・画面収録・フルディスクアクセス・オートメーション）と、付けると何ができるかを一覧にし、まとめて許可・まとめて取り消し |
 | **使用量が見える** | メニューバーに Claude の今週の枠、ChatGPT の 5 時間・今週の枠をバーで。AI ごと・モデルごと・アカウントごとの回数とトークンも |
 | **勝手に課金しない** | API キーを扱わず、従量課金でログインしている AI は使わない（Claude も同じ） |
-| **アップデート** | アプリから・ターミナルから・コマンド 1 つで。チェックサム・中身・署名を確かめてから入れ替える |
+| **アップデート** | アプリから・ターミナルから・コマンド 1 つで。チェックサム・中身・署名を確かめてから入れ替える。新しい版の確認は **毎日・毎週・毎月・しない** から選べる（既定はしない） |
 | **日本語・English・简体中文** | メニューもエージェントへの案内も、選んだ言語で |
 
 ## AI をまたいだチーム
@@ -152,6 +156,7 @@ PC 操作や画面の添付を使うなら、メニューバーのクラゲ › 
 | 外部ツール（MCP） | 呼んだときだけ / いつも / 使わない |
 | チャットに Web ページのプレビューを出す | Web の表紙の画像とタイトル（オフでも画像・PDF は表示） |
 | ログイン時に自動起動・🌐 言語 | |
+| アップデートの自動確認 | 毎日・毎週・毎月・確認しない（既定） |
 | Jellyfish AI について・アップデートを確認… | |
 
 ## チャット
@@ -388,7 +393,10 @@ Claude Code に設定してある MCP サーバー（`~/.claude.json` やプロ�
 
 ## アップデート
 
-- メニューバーのクラゲ › **アップデートを確認…** で、新しい版があるか GitHub に確かめます（選んだときだけ。自動では通信しません）
+- メニューバーのクラゲ › **アップデートを確認…** で、新しい版があるか GitHub に確かめます
+- **自動で確認する**：メニューバーのクラゲ › **アップデートの自動確認** で **毎日・毎週・毎月・確認しない** から選べます（既定は確認しない＝選ばなければ自動では通信しません）。選ぶと、その間隔ごとに GitHub の公開 API で最新リリースの版だけを読みます（Mac が眠っていた分は、起きてから 1 時間以内に）
+  - 新しい版があると、見えているクラゲが吹き出しで **「新しい版 … が出たよ」** と知らせます（入力先は奪いません）。「見る」で変わったところを確かめ、「アップデートする」を押したときだけ入れ替えます。「この版は知らせない」でその版だけ外せ、✕ なら次の確認でまた知らせます
+  - 新しい版を見つけている間は、メニューの「アップデートを確認…」が「⬆︎ 新しい版 … があります…」になります。前に確かめた日時もこのメニューに出ます
 - 新しい版があれば **「アップデートする」** を押すと、GitHub のリリースから新しい版（.zip）をダウンロードし、`SHA256SUMS.txt` のチェックサム・中身（Jellyfish AI のその版か）・コード署名を確かめてから入れ替え、開き直します（設定・クラゲ・会話は残ります）。押さなければ何もしません
   - **固定の署名**（[更新のたびに許可を求められないようにする](#更新のたびに許可を求められないようにする)）で入れているときは、新しい版をこの Mac の固定の署名で署名し直してから入れ替えるので、macOS の許可がそのまま続きます。途中で macOS が「codesign がキーを使おうとしています」と確かめるので「許可」を押してください。その鍵がキーチェーンに無いときは、配布版の仮の署名のまま入れ替えます
   - 作業中のクラゲがいるときは入れ替えません。アプリを書き換えられない場所（.dmg の中など）から開いているときや、macOS が入れ替えを止めたとき（システム設定 › プライバシーとセキュリティ › アプリ管理）は、ダウンロードページを案内します
@@ -437,7 +445,7 @@ scripts/install.sh
 - **PC 操作** は、そのエージェントのチャットで直接頼んだときだけ使います（仲間からの依頼では使わない）
 - **AI をまたいで権限を広げない**：仲間からの依頼で動いているエージェントは、自分と違う AI の仲間を作ったり頼んだりしません
 - **macOS の許可**：OS のセキュリティ機能を無効にせず、許可を勝手に付けません。付いている許可と、その範囲は「🔐 権限」で確かめられ、まとめて取り消せます。Hardened Runtime を有効にして署名し（他のプログラムがアプリに入り込んで許可を使えないように）、例外は Apple Events の確認を出すための entitlement だけです
-- **Jellyfish AI 自身の通信** は、「アップデートを確認…」のときの GitHub の公開 API、「アップデートする」のときのリリースのファイル、チャットの Web のプレビュー（自分が打った URL と、「表紙を見る」を押したページだけ。メニューで止められる）だけです。自動の確認・利用状況の送信はしません。指示や添付は、それぞれの AI の CLI を通じてその会社に送られます
+- **Jellyfish AI 自身の通信** は、「アップデートを確認…」と、アップデートの自動確認を選んだときのその間隔ごとの GitHub の公開 API（最新リリースの版を読むだけ）、「アップデートする」のときのリリースのファイル、チャットの Web のプレビュー（自分が打った URL と、「表紙を見る」を押したページだけ。メニューで止められる）だけです。利用状況の送信はしません。指示や添付は、それぞれの AI の CLI を通じてその会社に送られます
 - `jellyfish://` URL での外からの操作は、表示の切り替えなど無害なものだけを受け付けます（指示の送信・PC 操作の許可などは受け付けない。続けざまの呼び出しは間引き、キーボードの入力先も奪わない）
 - 自律組織の学習と使用量は端末内だけで計算し、本人だけが読める権限で保存します
 - 詳しくは [SECURITY.md](SECURITY.md)（残るリスクも書いています）。脆弱性は Security タブから非公開で報告してください
@@ -464,7 +472,7 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
 - 更新は `scripts/update.sh --source`。ビルドだけなら `scripts/build.sh`（→ `dist/JellyfishAI.app`、この Mac の CPU 用）、テストは `scripts/test.sh`（swift test）
 - アプリのアイコンは `Resources/AppIcon.png`（1024px の正方形）を macOS のアイコンの角丸の枠に収めて作ります
 - 配布物は `scripts/release.sh` で `dist/release/` に作ります（universal の `JellyfishAI.dmg`・`JellyfishAI-<版>.zip`・`SHA256SUMS.txt`）。`VERSION` と `CHANGELOG.md` を更新してコミット・push し、`scripts/release.sh --publish` で GitHub Releases に公開します
-- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のバッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラー・CI の clone も入ります）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
+- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のグラフ（1 日ごとのダウンロード）は、`scripts/download-chart.py` が `stats.json` の日ごとの累計（`daily`。.dmg・.zip は GitHub が累計しか出さないので、毎日の累計の差を 1 日の数にする）と clone 数から作り、同じ `stats` ブランチに `downloads-ja.svg`・`downloads-en.svg`・`downloads-zh.svg` として置きます。バッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラー・CI の clone も入ります）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
 
 ## データの保存場所
 
