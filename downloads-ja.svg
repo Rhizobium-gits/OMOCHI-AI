@@ -4,12 +4,8 @@
 <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans CJK JP', 'Noto Sans JP', 'PingFang SC', 'Microsoft YaHei', sans-serif" style="font-variant-numeric: tabular-nums">
 <text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">1 日ごとのダウンロード</text>
 <text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg・.zip・git clone の合計 · 毎日自動で更新</text>
-<text x="788" y="34" font-size="11" fill="#8a8a8a" text-anchor="end">累計</text>
-<text x="788" y="70" font-size="32" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">272</text>
-<text x="638" y="34" font-size="11" fill="#8a8a8a" text-anchor="end">アップデート（7 日）</text>
-<text x="638" y="70" font-size="32" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">44</text>
-<text x="488" y="34" font-size="11" fill="#8a8a8a" text-anchor="end">新規（7 日）</text>
-<text x="488" y="70" font-size="32" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">43</text>
+<text x="788" y="32" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">累計</text>
+<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">273</text>
 <path d="M76.0,238.0V222.9Q76.0,219.9 79.0,219.9H93.0Q96.0,219.9 96.0,222.9V238.0Z" fill="#f2f2f2"/>
 <text x="86.0" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
 <text x="86.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
@@ -25,13 +21,13 @@
 <path d="M508.0,238.0V235.2Q508.0,232.2 511.0,232.2H525.0Q528.0,232.2 528.0,235.2V238.0Z" fill="#f2f2f2"/>
 <text x="518.0" y="225.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">7</text>
 <text x="518.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
-<path d="M616.0,238.0V237.7Q616.0,234.7 619.0,234.7H633.0Q636.0,234.7 636.0,237.7V238.0Z" fill="#f2f2f2"/>
-<text x="626.0" y="227.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">4</text>
+<path d="M616.0,238.0V236.9Q616.0,233.9 619.0,233.9H633.0Q636.0,233.9 636.0,236.9V238.0Z" fill="#f2f2f2"/>
+<text x="626.0" y="226.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">5</text>
 <text x="626.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
 <path d="M724.0,238.0V238.0Q724.0,237.2 724.8,237.2H743.2Q744.0,237.2 744.0,238.0V238.0Z" fill="#f2f2f2"/>
 <text x="734.0" y="230.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">1</text>
 <text x="734.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
 <line x1="32" y1="238.5" x2="788" y2="238.5" stroke="#2a2a2a" stroke-width="1"/>
-<text x="32" y="280" font-size="10.5" fill="#555555">更新 2026-11-17 UTC · 新規 = .dmg、アップデート = .zip（アプリから上げた数。使い続けている人の目安）</text>
+<text x="32" y="280" font-size="10.5" fill="#555555">更新 2026-11-17 UTC</text>
 <text x="32" y="298" font-size="10.5" fill="#555555">※ .dmg・.zip の日ごとの数は推定（GitHub は累計しか出さないので、時間に比例して分けた） · 直近の git clone は GitHub の集計待ち</text>
 </g></svg>
