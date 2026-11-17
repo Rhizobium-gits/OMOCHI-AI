@@ -284,7 +284,7 @@ final class MacConnectors {
         }
     }
 
-    private static func time(_ d: Date) -> String {
+    static func time(_ d: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: L("ja_JP"))
         f.setLocalizedDateFormatFromTemplate("HHmm")

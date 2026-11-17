@@ -27,6 +27,33 @@ final class ConnectorsWindowController: NSObject, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
+    // MARK: - デモの録画用（合言葉つきの自動化のときだけ jellyfish://connectors から）
+
+    /// 前面化せずに、左上を topLeft（画面の左上が原点の座標）に合わせて出す。入力先は奪わない
+    func showForDemo(topLeft: NSPoint?) {
+        rebuild()
+        if let p = topLeft {
+            let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
+            window.setFrameTopLeftPoint(NSPoint(x: p.x, y: primaryHeight - p.y))
+        } else {
+            window.center()
+        }
+        window.orderFrontRegardless()
+    }
+
+    /// 識別子（ワンタッチ設定の名前・「calendar.gemini」など）のボタンを、押したように見せて押す
+    @discardableResult
+    func pressForDemo(_ id: String) -> Bool {
+        func find(_ v: NSView) -> NSButton? {
+            if let b = v as? NSButton, b.identifier?.rawValue == id, !(v is NSPopUpButton) { return b }
+            for s in v.subviews { if let b = find(s) { return b } }
+            return nil
+        }
+        guard let root = window.contentView, let b = find(root) else { return false }
+        b.performClick(nil)
+        return true
+    }
+
     private var settings: ConnectorSettings { manager?.settings.connectors ?? preview ?? ConnectorSettings() }
 
     private func change(_ f: (inout ConnectorSettings) -> Void) {

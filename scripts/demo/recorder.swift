@@ -32,7 +32,10 @@ struct Timeline: Decodable {
 }
 
 let args = CommandLine.arguments
-let demoApp = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("dist/JellyfishAI.app")
+// 録画する Jellyfish（DEMO_APP・DEMO_BUNDLE_ID で、普段のアプリを止めずに別の ID の写しを撮れる。record.sh の DEMO_KEEP_APP=1）
+let demoApp = ProcessInfo.processInfo.environment["DEMO_APP"].map { URL(fileURLWithPath: $0) }
+    ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("dist/JellyfishAI.app")
+let demoBundleID = ProcessInfo.processInfo.environment["DEMO_BUNDLE_ID"] ?? "ai.jellyfish.desktop"
 guard args.count >= 3 else { print("usage: recorder <timeline.json> <outdir>"); exit(2) }
 let timeline = try! JSONDecoder().decode(Timeline.self, from: Data(contentsOf: URL(fileURLWithPath: args[1])))
 let outDir = URL(fileURLWithPath: args[2], isDirectory: true)
@@ -86,8 +89,8 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     func startCapture() async throws {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         let me = ProcessInfo.processInfo.processIdentifier
-        let apps = content.applications.filter { $0.processID == me || $0.bundleIdentifier == "ai.jellyfish.desktop" }
-        guard apps.contains(where: { $0.bundleIdentifier == "ai.jellyfish.desktop" }) else {
+        let apps = content.applications.filter { $0.processID == me || $0.bundleIdentifier == demoBundleID }
+        guard apps.contains(where: { $0.bundleIdentifier == demoBundleID }) else {
             print("JellyfishAI が起動していません"); exit(1)
         }
         let r = regionTopLeft
@@ -155,7 +158,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     /// その時点の Jellyfish のウィンドウ（位置は録画範囲内の座標）
     func jellyWindows() -> [[String: Any]] {
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return [] }
-        let pids = Set(NSRunningApplication.runningApplications(withBundleIdentifier: "ai.jellyfish.desktop").map(\.processIdentifier))
+        let pids = Set(NSRunningApplication.runningApplications(withBundleIdentifier: demoBundleID).map(\.processIdentifier))
         let r = regionTopLeft
         return list.compactMap { w in
             guard let pid = w[kCGWindowOwnerPID as String] as? Int32, pids.contains(pid),
@@ -185,7 +188,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
 
     func run() async {
         // アプリの起動を待つ（起動直後のクラゲ出現アニメーションが落ち着くまで）
-        for _ in 0..<100 where NSRunningApplication.runningApplications(withBundleIdentifier: "ai.jellyfish.desktop").isEmpty {
+        for _ in 0..<100 where NSRunningApplication.runningApplications(withBundleIdentifier: demoBundleID).isEmpty {
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
         try? await Task.sleep(nanoseconds: 1_500_000_000)

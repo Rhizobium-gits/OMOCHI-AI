@@ -287,6 +287,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         case "watchtest":
             // テスト用（合言葉つきの自動化のときだけ）：見守りの吹き出しを見本の画像で出す
             manager.debugWatchFinding()
+        case "connectors":
+            // デモの録画用（合言葉つきの自動化のときだけ）：コネクタの画面を前面化せずに出し、x・y（左上）に置き、press のボタンを押す
+            let p = param("x").flatMap(Double.init).flatMap { x in param("y").flatMap(Double.init).map { NSPoint(x: x, y: $0) } }
+            manager.debugConnectors(topLeft: p, press: param("press"), close: param("close") == "1")
+        case "connectortest":
+            // デモの録画用：書き込みの確認の吹き出しを見本で出す（answer=yes|no で押す。何も書き込まない）
+            manager.debugConnectorConfirm(agent, answer: param("answer"))
         case "accounts":
             // 自動化（合言葉つき）のときだけ：アカウントと AI の画面
             manager.showAccounts()

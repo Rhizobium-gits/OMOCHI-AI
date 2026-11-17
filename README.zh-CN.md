@@ -35,6 +35,7 @@
   &nbsp;·&nbsp; <a href="#使用的-ai-与账户">使用的 AI</a>
   &nbsp;·&nbsp; <a href="#团队分工">团队</a>
   &nbsp;·&nbsp; <a href="#一次性授予或撤销-macos-权限">🔐 权限</a>
+  &nbsp;·&nbsp; <a href="#连接器日历提醒事项邮件">🔌 连接器</a>
   &nbsp;·&nbsp; <a href="#更新">更新</a>
 </p>
 
@@ -86,7 +87,7 @@
 - 以下 AI 的 CLI 中至少一个（[使用的 AI 与账户](#使用的-ai-与账户)）。Claude Code 可使用的功能最多。即使尚未安装，也可以在应用中经你允许后安装
   - [Claude Code](https://code.claude.com/docs/en/setup)（Claude 账户）。会自动从 PATH、`~/.local/bin`、Homebrew 以及 VS Code / Cursor 扩展内置的 `claude` 中选出最新版本
   - [Codex CLI](https://github.com/openai/codex)（ChatGPT 账户）。ChatGPT 桌面应用内置的 Codex CLI 也会被自动找到，只要在该应用中登录了 ChatGPT 就能直接使用
-  - [Gemini CLI](https://github.com/google-gemini/gemini-cli)（Google 账户）
+  - [Gemini CLI](https://github.com/google-gemini/gemini-cli)（付费的 Gemini API 密钥等。个人 Google 账户已于 2026-06-18 停止提供，[见下方说明](#使用的-ai-与账户)）
 
 1. **下载**
    **[下载 JellyfishAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg)**（始终是最新版本。也可以在 [Releases 的最新版本](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest) 页面获取同一文件，另有内容相同的 `.zip`）
@@ -202,9 +203,9 @@
 |---|---|---|---|---|
 | Claude | Claude Code | Claude（Pro、Max 等） | Auto 模式（危险操作由 Claude Code 的安全判断阻止） | 全部 |
 | ChatGPT | Codex CLI | ChatGPT（Plus、Pro 等） | 沙盒（只能写入工作文件夹内、无网络） | 除电脑操控、外部工具（MCP）和模型的“自动”以外 |
-| Gemini | Gemini CLI | Google 账户 | auto_edit（只自动批准工作文件夹内的编辑、不执行命令） | 除电脑操控、外部工具（MCP）和模型的“自动”以外 |
+| Gemini | Gemini CLI | 付费的 Gemini API 密钥、Gemini Code Assist Standard / Enterprise（个人 Google 账户已于 2026-06-18 停止） | auto_edit（只自动批准工作文件夹内的编辑、不执行命令） | 除电脑操控、外部工具（MCP）和模型的“自动”以外 |
 
-- **登录**：在首次启动时出现的“账户与 AI”界面，或菜单栏的水母 › **🔑 账户与 AI** 中进行。会在终端中打开各 CLI 的官方登录（`claude auth login --claudeai`、`codex login`、Gemini CLI 的“Sign in with Google”），由你本人在浏览器中完成。**Jellyfish 不会接收或保存密码、令牌或 API 密钥**。用其他账户重新登录也在同一界面中进行
+- **登录**：在首次启动时出现的“账户与 AI”界面，或菜单栏的水母 › **🔑 账户与 AI** 中进行。会在终端中打开各 CLI 的官方登录（`claude auth login --claudeai`、`codex login`、Gemini CLI 的登录），由你本人在浏览器中完成。**Jellyfish 不会接收或保存密码、令牌或 API 密钥**。用其他账户重新登录也在同一界面中进行
 - **未安装的 AI** 可以点按“安装并登录…”，会显示要执行的命令并请求许可。允许后，会在终端中安装官方软件包，接着开始登录（不使用管理员密码或 sudo）
   - Claude：Anthropic 的官方安装程序（`curl -fsSL https://claude.ai/install.sh | bash`，安装到 `~/.local/bin`）
   - ChatGPT（Codex）：`npm install -g @openai/codex`。没有 npm 或无法写入 npm 的全局目录时，使用 `brew install --cask codex`
@@ -213,6 +214,7 @@
 - **可以为每只水母选择 AI**：聊天窗口顶部一行的“AI”。更改后会开始新的对话。未单独选择的水母遵循菜单中的“要使用的 AI（默认）”，即使更改了默认值，也不会尝试用新的 AI 接着之前 AI 的对话
 - **所有 AI 都能使用的功能**：对话、工作、继续、团队（创建和委托队友）、自主组织、附加屏幕和文件、🎧 收听、🎙 听写。对 ChatGPT 用 `--image` 附加图片，对 Gemini 则把存放附件（屏幕截图、转写）的位置加入其工作区后交给它
 - Gemini 会确认是否信任文件夹，在不信任的文件夹中不会运行。请在聊天中用“在此文件夹打开 Gemini”打开，仅在这是你信任的文件夹时才选择信任（Jellyfish 不会跳过这项确认）
+- **Gemini CLI 已于 2026-06-18 停止向个人 Google 账户（免费、Google AI Pro、Ultra）提供服务**（[Google 的公告](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)）。现在只有使用付费的 Gemini API 密钥（打开菜单栏水母 › 🔑 账户与 AI ›“允许使用 API 密钥（按量计费）”，按使用量付费），或用 Gemini Code Assist Standard / Enterprise 的组织账户登录的 Gemini CLI 才能使用 Gemini。其后继的 Antigravity CLI（`agy`）不受支持：Google 不允许在个人方案下从其他应用驱动它
 
 ### 模型与思考强度
 
@@ -340,6 +342,10 @@ flowchart LR
 - 需要屏幕录制权限（[一次性授予或撤销 macOS 权限](#一次性授予或撤销-macos-权限)）
 
 ## 连接器（日历、提醒事项、邮件）
+
+<p align="center">
+  <img src="docs/media/demo-connectors.gif" width="820" alt="在连接器窗口中按下一键设置（仅查看、推荐、仅限 Claude 高级模型）切换规则，按 AI 逐个选择，最后在水母旁出现添加日程的确认气泡">
+</p>
 
 在菜单栏水母 › **🔌 连接器** 中，可以把这台 Mac 的**日历、提醒事项、邮件**变成代理的工具（默认全部关闭）。Google 日历、Gmail 等也可以：在 系统设置 › 互联网账户 中添加账户后，会出现在 Mac 的应用中，直接就能用。Jellyfish 不处理 Google 等的密码、令牌或 API 密钥。
 
@@ -497,7 +503,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
 - 更新用 `scripts/update.sh --source`。只构建用 `scripts/build.sh`（→ `dist/JellyfishAI.app`，适用于这台 Mac 的 CPU），测试用 `scripts/test.sh`（swift test）
 - 应用图标由 `Resources/AppIcon.png`（1024px 的正方形）放入 macOS 图标的圆角框中生成
 - 分发包用 `scripts/release.sh` 生成到 `dist/release/`（universal 的 `JellyfishAI.dmg`、`JellyfishAI-<版本>.zip`、`SHA256SUMS.txt`）。更新 `VERSION` 和 `CHANGELOG.md` 并提交、push 后，用 `scripts/release.sh --publish` 发布到 GitHub Releases
-- **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的图表（每日下载量）由 `scripts/download-chart.py` 生成。git clone 是 GitHub 按天统计的人数；.dmg、.zip 为估算（GitHub 只提供累计数，因此把 `stats.json` 中每日记录 `daily`（当时的累计）之间增加的数量，以及开始记录之前按版本的数量 `releases`（该版本为最新版的期间），按时间比例分配到各天）。右上角是累计（与徽章的数字相同）。图表以 `downloads-ja.svg`、`downloads-en.svg`、`downloads-zh.svg` 放在同一个 `stats` 分支上。徽章是 `.dmg`、`.zip` 的下载次数与 git clone 次数（GitHub 统计的每天 clone 人数之和，包括机器人、镜像和 CI 的 clone）的总和。`scripts/download-stats.sh` 重新统计后写入 `stats` 分支的 `stats.json`（明细也在这里），GitHub Actions（`.github/workflows/stats.yml`）每天运行一次。GitHub 只保留最近 14 天的 clone 次数，因此按天累积。要在 Actions 中读取 clone 次数，需要密钥 `TRAFFIC_TOKEN`（仅限本仓库、仅有 Administration 只读权限的 fine-grained 令牌）。没有它时只重新统计发布的下载次数，clone 会在本地运行 `scripts/release.sh --publish` 或 `scripts/download-stats.sh` 时加上。若要在本机每天重新统计，运行 `scripts/download-stats-daily.sh install`（launchd，每天 10:00 和登录时运行；用登录 gh 的账户读取 clone 次数；仅在 Mac 开机的日子运行。用 `uninstall` 停止，用 `status` 查看状态）。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/JellyfishAI.dmg` 始终指向最新版本
+- **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的图表（每日下载量）由 `scripts/download-chart.py` 生成。git clone 是 GitHub 按天统计的人数；.dmg、.zip 为估算（GitHub 只提供累计数，因此把 `stats.json` 中每日记录 `daily`（当时的累计）之间增加的数量，以及开始记录之前按版本的数量 `releases`（该版本为最新版的期间），按时间比例分配到各天）。右上角是累计（与徽章的数字相同）。图表以 `downloads-ja.svg`、`downloads-en.svg`、`downloads-zh.svg` 放在同一个 `stats` 分支上。徽章是 `.dmg`、`.zip` 的下载次数与 git clone 次数（GitHub 统计的每天 clone 人数之和，包括机器人和镜像的 clone；本仓库的 CI 以归档而非 git 获取源代码，因此不计入）的总和。`scripts/download-stats.sh` 重新统计后写入 `stats` 分支的 `stats.json`（明细也在这里），GitHub Actions（`.github/workflows/stats.yml`）每天运行一次。GitHub 只保留最近 14 天的 clone 次数，因此按天累积。要在 Actions 中读取 clone 次数，需要密钥 `TRAFFIC_TOKEN`（仅限本仓库、仅有 Administration 只读权限的 fine-grained 令牌）。没有它时只重新统计发布的下载次数，clone 会在本地运行 `scripts/release.sh --publish` 或 `scripts/download-stats.sh` 时加上。若要在本机每天重新统计，运行 `scripts/download-stats-daily.sh install`（launchd，每天 10:00 和登录时运行；用登录 gh 的账户读取 clone 次数；仅在 Mac 开机的日子运行。用 `uninstall` 停止，用 `status` 查看状态）。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/JellyfishAI.dmg` 始终指向最新版本
 
 ## 数据存储位置
 
@@ -520,7 +526,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
   - 仅在启动时加上环境变量 `JELLYFISH_AUTOMATION=1`，并用 `token=…` 附上数据文件夹中 `automation.token` 的口令时可用（用于自动测试和演示录制。`scripts/demo/recorder.swift` 会自动附上）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - 用 `.build/debug/JellyfishAI --pixel-sheet out.png` 输出像素画的帧一览，用 `--settle-test` 验证完成时的静止，用 `--account-menu out.png` 绘制菜单中的账户和用量栏
 - 显示的文字在源码中用日语书写并用 `L("…")` 包裹，译文放在 `l10n/en.json`、`l10n/zh.json` 中。用 `scripts/l10n.py missing en` 查看缺失的译文，用 `scripts/l10n.py gen` 生成 Swift 的表，用 `scripts/l10n.py check` 检查缺失和 `%@` 的数量（CI 中也会检查）。用环境变量 `JELLYFISH_LANGUAGE=en` 可以固定语言启动
-- README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code（`crossai` 还会运行 Codex CLI），在黑色背景上录制。屏幕上出现的主目录路径（`/Users/<名字>`）会用 macOS 的文字识别找出并模糊处理（`scripts/demo/redact.sh`，只在本机处理）。需要 Pillow 和 ffmpeg）
+- README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code（`crossai` 还会运行 Codex CLI），在黑色背景上录制。屏幕上出现的主目录路径（`/Users/<名字>`）会用 macOS 的文字识别找出并模糊处理（`scripts/demo/redact.sh`，只在本机处理）。需要 Pillow 和 ffmpeg）。`connectors` 只录制连接器窗口和确认气泡，不运行 AI，也不会拍到真实的日程或邮件。加上 `DEMO_KEEP_APP=1` 时，不停止日常使用的 Jellyfish AI，而是用另一个 ID 的副本录制
 
 ## 许可证
 

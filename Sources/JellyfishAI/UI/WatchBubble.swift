@@ -23,6 +23,8 @@ final class WatchBubble: NSObject {
 
     private let panel: NSPanel
     private var timer: Timer?
+    private weak var showButton: NSButton?
+    private weak var closeButton: NSButton?
     private var onShow: (() -> Void)?
     private var onDismiss: (() -> Void)?
     private var onIgnoreApp: (() -> Void)?
@@ -84,6 +86,8 @@ final class WatchBubble: NSObject {
         ignore.contentTintColor = .secondaryLabelColor
         // 右の小さなボタンは、文字があるときだけ（コネクタの確認には無い）
         let buttons = NSStackView(views: text.ignore.isEmpty ? [show, close, NSView()] : [show, close, NSView(), ignore])
+        showButton = show
+        closeButton = close
         buttons.orientation = .horizontal
         buttons.spacing = 6
 
@@ -151,6 +155,9 @@ final class WatchBubble: NSObject {
         panel.orderOut(nil)
         onShow = nil; onDismiss = nil; onIgnoreApp = nil
     }
+
+    /// デモの録画用：「見る」（または閉じる）を押したように見せて押す
+    func pressForDemo(_ approve: Bool) { (approve ? showButton : closeButton)?.performClick(nil) }
 
     @objc private func showTapped() { let f = onShow; close(); f?() }
     @objc private func dismissTapped() { let f = onDismiss; close(); f?() }

@@ -1,6 +1,6 @@
 """recorder の出力（frame-*.png + timeline.json）から README 用の GIF を作る。
 
-    python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link crossai]
+    python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link crossai connectors]
 
 - 字幕・タップの輪は録画時の events（手順の時刻・クラゲの位置・状態の変化）から付ける
 - 再生速度は実時間のまま。AI の返事を待つだけの長い間だけ早送りし、右上に「早送り ×3」を出す
@@ -248,6 +248,18 @@ if want("link"):
             (ev["cut"]["t"], "Option を押しながら離す → 切り離し"),
             (ev["scissors"]["t"], "線の ✂ でも切れる")]
     render("link", "demo-link.gif", ev["drag1"]["t"] - 0.8, ev["end"]["t"], caps)
+
+# ---- 7. コネクタ（カレンダー・リマインダー・メールを AI・モデルごとに） ------------------
+if want("connectors"):
+    d, tl, ev = load("connectors")
+    caps = [(0, "コネクタ：この Mac のカレンダー・リマインダー・メールをエージェントのツールに"),
+            (ev["readOnly"]["t"], "ワンタッチ設定「見るだけ」：3 つとも見るだけ（どの AI でも）"),
+            (ev["recommended"]["t"], "「おすすめ」：カレンダー・リマインダーは書ける、メールは Claude だけ"),
+            (ev["claudeTop"]["t"], "「Claude の上位モデルだけ」：Fable・Opus のクラゲだけが使える"),
+            (ev["custom"]["t"], "AI ごと・モデルごとに、自分で選ぶこともできる"),
+            (ev["confirm"]["t"], "予定の追加などの書き込みは、クラゲの横で確認（見本）"),
+            (ev["approve"]["t"], "押したときだけ実行する。メールは送らない（下書きを開くだけ）")]
+    render("connectors", "demo-connectors.gif", ev["open"]["t"] - 0.6, ev["end"]["t"], caps)
 
 # ---- 6. AI をまたいだチーム（Claude × ChatGPT） -----------------------------------
 if want("crossai"):

@@ -1306,6 +1306,37 @@ final class JellyManager {
         b.present()
     }
 
+    /// デモの録画用（合言葉つきの自動化のときだけ）：コネクタの画面を前面化せずに出す・ボタンを押す・閉じる
+    func debugConnectors(topLeft: NSPoint?, press: String?, close: Bool) {
+        let w = connectorsWindow ?? ConnectorsWindowController(manager: self)
+        connectorsWindow = w
+        if close { w.window.orderOut(nil); return }
+        if !w.window.isVisible { w.showForDemo(topLeft: topLeft) } else if let p = topLeft {
+            w.window.setFrameTopLeftPoint(NSPoint(x: p.x, y: (NSScreen.screens.first?.frame.height ?? 0) - p.y))
+        }
+        if let id = press, !w.pressForDemo(id) { AppLog.write("connectors demo: no button \(id.prefix(40))") }
+    }
+
+    /// デモの録画用：書き込みの確認の吹き出しを見本の中身で出す（answer で「追加する」「やめる」を押す。何も書き込まない）
+    private var demoConfirm: WatchBubble?
+    func debugConnectorConfirm(_ c: JellyController?, answer: String?) {
+        if let a = answer { demoConfirm?.pressForDemo(a == "yes"); return }
+        guard let c else { return }
+        let start = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date().addingTimeInterval(86400)) ?? Date()
+        let detail = ["「" + L("打ち合わせ") + "」",
+                      ConnectorDates.display(start, dateOnly: false) + "–" + MacConnectors.time(start.addingTimeInterval(3600)),
+                      L("カレンダー: %@", L("仕事"))].joined(separator: "\n")
+        let text = WatchBubble.Text(title: L("📅 予定を追加していい？"), detail: detail, show: L("追加する"),
+                                    closeTip: L("やめる（実行しない）"), ignore: "",
+                                    note: L("%@（%@）からの依頼。押したときだけ実行します", c.record.title, AgentEngine.claude.displayName),
+                                    detailLines: 6, closeTitle: L("やめる"))
+        let b = WatchBubble(text, accent: c.record.color.nsColor, near: c.panel.frame, autoClose: 60,
+                            onShow: { [weak self] in self?.demoConfirm = nil }, onDismiss: { [weak self] in self?.demoConfirm = nil },
+                            onIgnoreApp: { [weak self] in self?.demoConfirm = nil })
+        demoConfirm = b
+        b.present()
+    }
+
     /// クラゲごとのメニューに出す、そのクラゲがいま使えるコネクタ
     func connectorSummary(for c: JellyController) -> String? {
         guard settings.connectors.anyEnabled, let rt = runtimes[c.record.id], let team else { return nil }

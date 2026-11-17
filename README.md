@@ -35,6 +35,7 @@
   &nbsp;·&nbsp; <a href="#使う-ai-とアカウント">使う AI</a>
   &nbsp;·&nbsp; <a href="#チーム分業">チーム</a>
   &nbsp;·&nbsp; <a href="#macos-の許可をまとめて設定取り消す">🔐 権限</a>
+  &nbsp;·&nbsp; <a href="#コネクタカレンダーリマインダーメール">🔌 コネクタ</a>
   &nbsp;·&nbsp; <a href="#アップデート">アップデート</a>
 </p>
 
@@ -86,7 +87,7 @@ Claude のクラゲに「仲間を 2 人作って分担して。ChatGPT（Codex�
 - 次の AI の CLI のどれか 1 つ以上（[使う AI とアカウント](#使う-ai-とアカウント)）。いちばん多くの機能が使えるのは Claude Code です。入っていなくても、アプリから許可して入れられます
   - [Claude Code](https://code.claude.com/docs/en/setup)（Claude のアカウント）。PATH・`~/.local/bin`・Homebrew・VS Code / Cursor 拡張に同梱の `claude` から最新版を自動で選びます
   - [Codex CLI](https://github.com/openai/codex)（ChatGPT のアカウント）。ChatGPT のデスクトップアプリに入っている Codex CLI も自動で見つけ、アプリで ChatGPT にログインしていればそのまま使えます
-  - [Gemini CLI](https://github.com/google-gemini/gemini-cli)（Google アカウント）
+  - [Gemini CLI](https://github.com/google-gemini/gemini-cli)（有料の Gemini API キーなど。個人の Google アカウントは 2026-06-18 で提供が終わりました。[下の注意](#使う-ai-とアカウント)）
 
 1. **ダウンロード**
    **[JellyfishAI.dmg をダウンロード](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg)**（いつも最新版。[Releases の最新版](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest) のページからも同じものを取れます。`.zip` もあり、中身は同じ）
@@ -202,9 +203,9 @@ PC 操作や画面の添付を使うなら、メニューバーのクラゲ › 
 |---|---|---|---|---|
 | Claude | Claude Code | Claude（Pro / Max など） | Auto モード（危ない操作は Claude Code の安全判定が止める） | すべて |
 | ChatGPT | Codex CLI | ChatGPT（Plus / Pro など） | サンドボックス（作業フォルダの中だけ書ける・ネットワークなし） | PC 操作・外部ツール（MCP）・モデルの「自動」以外 |
-| Gemini | Gemini CLI | Google アカウント | auto_edit（作業フォルダの中の編集だけ自動で承認・コマンドは実行しない） | PC 操作・外部ツール（MCP）・モデルの「自動」以外 |
+| Gemini | Gemini CLI | 有料の Gemini API キー・Gemini Code Assist Standard / Enterprise（個人の Google アカウントは 2026-06-18 で終了） | auto_edit（作業フォルダの中の編集だけ自動で承認・コマンドは実行しない） | PC 操作・外部ツール（MCP）・モデルの「自動」以外 |
 
-- **ログイン**：初めて起動したときの「アカウントと AI」の画面か、メニューバーのクラゲ › **🔑 アカウントと AI** から。それぞれの CLI の公式のログイン（`claude auth login --claudeai`・`codex login`・Gemini CLI の「Sign in with Google」）をターミナルで開き、ブラウザで本人が行います。**Jellyfish はパスワード・トークン・API キーを受け取らず、保存もしません**。別のアカウントでのログインし直しも同じ画面から
+- **ログイン**：初めて起動したときの「アカウントと AI」の画面か、メニューバーのクラゲ › **🔑 アカウントと AI** から。それぞれの CLI の公式のログイン（`claude auth login --claudeai`・`codex login`・Gemini CLI のログイン）をターミナルで開き、ブラウザで本人が行います。**Jellyfish はパスワード・トークン・API キーを受け取らず、保存もしません**。別のアカウントでのログインし直しも同じ画面から
 - **入っていない AI** は「入れてログイン…」で、実行するコマンドを見せて許可を求めます。許可すると、ターミナルで公式のパッケージを入れ、続けてログインを始めます（管理者のパスワード・sudo は使いません）
   - Claude：Anthropic の公式インストーラ（`curl -fsSL https://claude.ai/install.sh | bash`、`~/.local/bin` に入る）
   - ChatGPT（Codex）：`npm install -g @openai/codex`。npm が無いか、npm のグローバルの入れ先に書けないときは `brew install --cask codex`
@@ -213,6 +214,7 @@ PC 操作や画面の添付を使うなら、メニューバーのクラゲ › 
 - **クラゲごとに AI を選べます**：チャットの上の段の「AI」。変えると新しい会話になります。選んでいないクラゲはメニューの「使う AI（既定）」に従い、既定を変えたときも前の AI の会話を新しい AI で続けようとはしません
 - **どの AI でも使えるもの**：話す・作業する・続ける・チーム（仲間を作る・頼む）・自律組織・画面とファイルの添付・🎧 聞き取り・🎙 音声入力。ChatGPT には画像を `--image` で添え、Gemini には添付（画面の画像・文字起こし）の置き場所をワークスペースに足して渡します
 - Gemini はフォルダの信頼を確かめます。信頼していないフォルダでは動かないので、チャットの「Gemini をこのフォルダで開く」から開き、信頼してよいフォルダのときだけ信頼してください（Jellyfish はこの確認を飛ばしません）
+- **Gemini CLI は 2026-06-18 で、個人の Google アカウント（無料・Google AI Pro・Ultra）への提供を終えました**（[Google の発表](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)）。いま Gemini を使えるのは、有料の Gemini API キー（メニューバーのクラゲ › 🔑 アカウントと AI ›「API キー（従量課金）での利用を許可」をオン。使った分だけ料金がかかります）か、Gemini Code Assist Standard / Enterprise の組織のアカウントでログインした Gemini CLI です。後継の Antigravity CLI（`agy`）は、個人向けプランのまま他のアプリから動かすことを Google が認めていないので、Jellyfish は対応していません
 
 ### モデルと考える強さ
 
@@ -340,6 +342,10 @@ flowchart LR
 - 画面収録の許可が要ります（[macOS の許可をまとめて設定・取り消す](#macos-の許可をまとめて設定取り消す)）
 
 ## コネクタ（カレンダー・リマインダー・メール）
+
+<p align="center">
+  <img src="docs/media/demo-connectors.gif" width="820" alt="コネクタの画面で、ワンタッチ設定（見るだけ・おすすめ・Claude の上位モデルだけ）を押して決まりが切り替わり、AI ごとに選び、最後にクラゲの横に予定の追加の確認の吹き出しが出る様子">
+</p>
 
 メニューバーのクラゲ › **🔌 コネクタ** で、この Mac の **カレンダー・リマインダー・メール** をエージェントのツールにできます（既定はすべてオフ）。Google カレンダー・Gmail なども、システム設定 › インターネットアカウント に追加すれば Mac のアプリに出るので、そのまま使えます。Jellyfish は Google などのパスワード・トークン・API キーを扱いません。
 
@@ -497,7 +503,7 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
 - 更新は `scripts/update.sh --source`。ビルドだけなら `scripts/build.sh`（→ `dist/JellyfishAI.app`、この Mac の CPU 用）、テストは `scripts/test.sh`（swift test）
 - アプリのアイコンは `Resources/AppIcon.png`（1024px の正方形）を macOS のアイコンの角丸の枠に収めて作ります
 - 配布物は `scripts/release.sh` で `dist/release/` に作ります（universal の `JellyfishAI.dmg`・`JellyfishAI-<版>.zip`・`SHA256SUMS.txt`）。`VERSION` と `CHANGELOG.md` を更新してコミット・push し、`scripts/release.sh --publish` で GitHub Releases に公開します
-- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のグラフ（1 日ごとのダウンロード）は `scripts/download-chart.py` が作ります。git clone は GitHub が日ごとに数えた人数そのまま、.dmg・.zip は推定です（GitHub は累計しか出さないので、`stats.json` の日ごとの記録 `daily`（その時刻の累計）の間に増えた分と、記録を始める前の版ごとの数 `releases`（その版が最新だった間）を、時間に比例して日に分けます）。右上は累計（バッジと同じ数）です。グラフは同じ `stats` ブランチに `downloads-ja.svg`・`downloads-en.svg`・`downloads-zh.svg` として置きます。バッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラー・CI の clone も入ります）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。手元の Mac で毎日数え直すなら `scripts/download-stats-daily.sh install`（launchd で毎日 10:00 とログインしたとき。gh にログインしているアカウントで clone 数も読む。Mac が起きている日だけ。やめるのは `uninstall`、様子は `status`）。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
+- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のグラフ（1 日ごとのダウンロード）は `scripts/download-chart.py` が作ります。git clone は GitHub が日ごとに数えた人数そのまま、.dmg・.zip は推定です（GitHub は累計しか出さないので、`stats.json` の日ごとの記録 `daily`（その時刻の累計）の間に増えた分と、記録を始める前の版ごとの数 `releases`（その版が最新だった間）を、時間に比例して日に分けます）。右上は累計（バッジと同じ数）です。グラフは同じ `stats` ブランチに `downloads-ja.svg`・`downloads-en.svg`・`downloads-zh.svg` として置きます。バッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラーの clone も入ります。このリポジトリの CI はソースを git でなくアーカイブで取るので入りません）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。手元の Mac で毎日数え直すなら `scripts/download-stats-daily.sh install`（launchd で毎日 10:00 とログインしたとき。gh にログインしているアカウントで clone 数も読む。Mac が起きている日だけ。やめるのは `uninstall`、様子は `status`）。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
 
 ## データの保存場所
 
@@ -520,7 +526,7 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
   - 環境変数 `JELLYFISH_AUTOMATION=1` を付けて起動し、データフォルダの `automation.token` の合言葉を `token=…` で付けたときだけ（自動テスト・デモ録画用。`scripts/demo/recorder.swift` が自動で付ける）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - `.build/debug/JellyfishAI --pixel-sheet out.png` でドット絵のコマ一覧、`--settle-test` で完了時の静止を検証、`--account-menu out.png` でメニューのアカウント・使用量の欄を描き出す
 - 表示の文字はソースに日本語で書いて `L("…")` で包み、訳は `l10n/en.json`・`l10n/zh.json` に置きます。`scripts/l10n.py missing en` で訳の抜け、`scripts/l10n.py gen` で Swift の表を作り、`scripts/l10n.py check` で抜けと `%@` の数を確かめます（CI でも確かめる）。環境変数 `JELLYFISH_LANGUAGE=en` で言語を固定して起動できます
-- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）
+- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）。`connectors` はコネクタの画面と確認の吹き出しだけを撮り、AI は動かさず、本物の予定やメールも写しません。`DEMO_KEEP_APP=1` を付けると、普段の Jellyfish AI を止めずに別の ID の写しで撮ります
 
 ## ライセンス
 
