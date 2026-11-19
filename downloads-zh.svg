@@ -5,31 +5,34 @@
 <text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">每日下载量</text>
 <text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg・.zip・git clone 合计 · 每天自动更新</text>
 <text x="788" y="32" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">累计</text>
-<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">300</text>
-<path d="M69.2,238.0V222.9Q69.2,219.9 72.2,219.9H86.2Q89.2,219.9 89.2,222.9V238.0Z" fill="#f2f2f2"/>
-<text x="79.2" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
-<text x="79.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
-<path d="M163.8,238.0V143.0Q163.8,140.0 166.8,140.0H180.8Q183.8,140.0 183.8,143.0V238.0Z" fill="#f2f2f2"/>
-<text x="173.8" y="133.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">119</text>
-<text x="173.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
-<path d="M258.2,238.0V197.4Q258.2,194.4 261.2,194.4H275.2Q278.2,194.4 278.2,197.4V238.0Z" fill="#f2f2f2"/>
-<text x="268.2" y="187.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">53</text>
-<text x="268.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
-<path d="M352.8,238.0V186.6Q352.8,183.6 355.8,183.6H369.8Q372.8,183.6 372.8,186.6V238.0Z" fill="#f2f2f2"/>
-<text x="362.8" y="176.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
-<text x="362.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
-<path d="M447.2,238.0V222.1Q447.2,219.1 450.2,219.1H464.2Q467.2,219.1 467.2,222.1V238.0Z" fill="#f2f2f2"/>
-<text x="457.2" y="212.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">23</text>
-<text x="457.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
-<path d="M541.8,238.0V231.1Q541.8,228.1 544.8,228.1H558.8Q561.8,228.1 561.8,231.1V238.0Z" fill="#f2f2f2"/>
-<text x="551.8" y="221.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">12</text>
-<text x="551.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
-<path d="M636.2,238.0V236.9Q636.2,233.9 639.2,233.9H653.2Q656.2,233.9 656.2,236.9V238.0Z" fill="#f2f2f2"/>
-<text x="646.2" y="226.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">5</text>
-<text x="646.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
-<text x="740.8" y="231.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
-<text x="740.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/18</text>
+<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">369</text>
+<path d="M64.0,238.0V222.9Q64.0,219.9 67.0,219.9H81.0Q84.0,219.9 84.0,222.9V238.0Z" fill="#f2f2f2"/>
+<text x="74.0" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
+<text x="74.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
+<path d="M148.0,238.0V143.0Q148.0,140.0 151.0,140.0H165.0Q168.0,140.0 168.0,143.0V238.0Z" fill="#f2f2f2"/>
+<text x="158.0" y="133.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">119</text>
+<text x="158.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
+<path d="M232.0,238.0V197.4Q232.0,194.4 235.0,194.4H249.0Q252.0,194.4 252.0,197.4V238.0Z" fill="#f2f2f2"/>
+<text x="242.0" y="187.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">53</text>
+<text x="242.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
+<path d="M316.0,238.0V186.6Q316.0,183.6 319.0,183.6H333.0Q336.0,183.6 336.0,186.6V238.0Z" fill="#f2f2f2"/>
+<text x="326.0" y="176.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
+<text x="326.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
+<path d="M400.0,238.0V222.1Q400.0,219.1 403.0,219.1H417.0Q420.0,219.1 420.0,222.1V238.0Z" fill="#f2f2f2"/>
+<text x="410.0" y="212.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">23</text>
+<text x="410.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
+<path d="M484.0,238.0V231.1Q484.0,228.1 487.0,228.1H501.0Q504.0,228.1 504.0,231.1V238.0Z" fill="#f2f2f2"/>
+<text x="494.0" y="221.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">12</text>
+<text x="494.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
+<path d="M568.0,238.0V181.7Q568.0,178.7 571.0,178.7H585.0Q588.0,178.7 588.0,181.7V238.0Z" fill="#f2f2f2"/>
+<text x="578.0" y="171.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">72</text>
+<text x="578.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
+<path d="M652.0,238.0V238.0Q652.0,236.4 653.6,236.4H670.4Q672.0,236.4 672.0,238.0V238.0Z" fill="#f2f2f2"/>
+<text x="662.0" y="229.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">2</text>
+<text x="662.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/18</text>
+<text x="746.0" y="231.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
+<text x="746.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/19</text>
 <line x1="32" y1="238.5" x2="788" y2="238.5" stroke="#2a2a2a" stroke-width="1"/>
-<text x="32" y="280" font-size="10.5" fill="#555555">更新于 2026-11-18 UTC</text>
+<text x="32" y="280" font-size="10.5" fill="#555555">更新于 2026-11-19 UTC</text>
 <text x="32" y="298" font-size="10.5" fill="#555555">※ .dmg・.zip 的每日数量为估算（GitHub 只提供累计，按时间比例分配） · 最近的 git clone 仍在等待 GitHub 统计</text>
 </g></svg>
