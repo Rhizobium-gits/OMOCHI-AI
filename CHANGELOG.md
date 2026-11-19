@@ -11,6 +11,7 @@
 
 ### 変更
 
+- CI（GitHub Actions）が、ソースを git ではなく、そのコミットのアーカイブ（tarball）で取るようにした。git で取ると GitHub が clone として数えるので、push のたびに動く CI の分が README のダウンロード数（git clone の人数）に入っていた可能性が高い。CI のビルドのビルド番号は 1 になる（確かめるだけで配らないビルド）
 - README（日本語・English・简体中文）：🔌 コネクタの節に GIF（`docs/media/demo-connectors.gif`。ワンタッチ設定・AI ごとの選択・書き込みの確認の吹き出し）を入れ、上の目次に足した。Gemini CLI が 2026-06-18 で個人の Google アカウントへの提供を終えたこと（いまは有料の Gemini API キーか Gemini Code Assist Standard / Enterprise）と、後継の Antigravity CLI に対応しない理由を書いた
 - デモの録画（`scripts/demo/`）：新しいテイク `connectors`（コネクタの画面と確認の吹き出しだけ。AI は動かさず、本物の予定・メールも写さない）。`DEMO_KEEP_APP=1` で、普段の Jellyfish AI を止めずに、ID を変えた写し（`ai.jellyfish.desktop.demo`）で撮れる（録画のあと LaunchServices から外す）。録画用の `jellyfish://connectors`・`connectortest` は合言葉つきの自動化のときだけ受け付ける
 

@@ -7,7 +7,7 @@
 # 数えるもの（合計が total、バッジに出る数）：
 #   dmg    リリースの .dmg のダウンロード（README・リリースのページ・curl などで取って入れた）
 #   zip    リリースの JellyfishAI-<版>.zip のダウンロード（アプリの「アップデートする」・ターミナルの update.sh・手での .zip）
-#   clone  git clone（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラー・CI の clone も入る）
+#   clone  git clone（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラーの clone も入る。このリポジトリの CI はソースを git でなくアーカイブで取るので入らない）
 #   SHA256SUMS.txt はアップデートのたびに取るので数えない
 # clone 数は GitHub が直近 14 日の分しか残さないので、日ごとに stats.json に貯める（同じ日は大きいほうを取る）。
 # .dmg・.zip は GitHub が累計しか出さないので、その日（UTC）の累計と数えた時刻を daily に貯め、版ごとの数（公開した時刻つき）を
