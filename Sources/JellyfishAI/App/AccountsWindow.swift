@@ -13,9 +13,13 @@ final class AccountsWindowController: NSObject, NSWindowDelegate {
 
     init(manager: JellyManager) {
         self.manager = manager
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 420), styleMask: [.titled, .closable],
-                          backing: .buffered, defer: false)
+        window = ActiveSpace.make {
+            NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 420), styleMask: [.titled, .closable],
+                     backing: .buffered, defer: false)
+        }
         super.init()
+        // 今いるスペース（ほかのアプリのフル画面でも）に出す
+        window.collectionBehavior.insert(.moveToActiveSpace)
         window.title = L("アカウントと AI")
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -87,6 +91,7 @@ final class AccountsWindowController: NSObject, NSWindowDelegate {
         refresh()
         manager?.refreshEngineStatus()
         window.center()
+        ActiveSpace.bringHere(window)
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         // 開いている間は、ターミナルでログインしたらすぐ分かるよう、ときどき確かめ直す

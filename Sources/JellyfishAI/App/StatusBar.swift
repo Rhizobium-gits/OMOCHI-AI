@@ -272,8 +272,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 a.informativeText = L("これまでの依頼の記録（%ld 件）と、進化した組織の型を消して、はじめの状態に戻します。", org.episodes.count)
                 a.addButton(withTitle: L("リセット"))
                 a.addButton(withTitle: L("キャンセル"))
-                NSApp.activate(ignoringOtherApps: true)
-                if a.runModal() == .alertFirstButtonReturn { org.reset() }
+                if ActiveSpace.runModal(a) == .alertFirstButtonReturn { org.reset() }
             })
         }
         om.addItem(.separator())
@@ -580,7 +579,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 let a = NSAlert()
                 a.messageText = L("自動起動を設定できませんでした")
                 a.informativeText = err
-                a.runModal()
+                ActiveSpace.runModal(a)
             }
             self?.manager.updateSettings { $0.launchAtLogin = LoginItem.isEnabled }
         }

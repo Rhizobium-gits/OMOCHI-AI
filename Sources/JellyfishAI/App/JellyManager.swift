@@ -103,8 +103,7 @@ final class JellyManager {
         a.informativeText = L("前面のウィンドウを Mac の中で読むために使います（どこにも送りません）。") + "\n\n" + DesktopControl.screenRecordingHint
         a.addButton(withTitle: L("🔐 権限の画面を開く"))
         a.addButton(withTitle: L("あとで"))
-        NSApp.activate(ignoringOtherApps: true)
-        if a.runModal() == .alertFirstButtonReturn { showPermissions() }
+        if ActiveSpace.runModal(a) == .alertFirstButtonReturn { showPermissions() }
     }
 
     func stopAllWatching() {
@@ -435,8 +434,7 @@ final class JellyManager {
             a.alertStyle = .warning
             a.addButton(withTitle: L("許可する"))
             a.addButton(withTitle: L("キャンセル"))
-            NSApp.activate(ignoringOtherApps: true)
-            guard a.runModal() == .alertFirstButtonReturn else { return }
+            guard ActiveSpace.runModal(a) == .alertFirstButtonReturn else { return }
         }
         updateSettings { $0.allowAPIBilling = on }
         BillingGuard.allowAPI = on
@@ -540,8 +538,7 @@ final class JellyManager {
                 + L("npm（Node.js）も Homebrew も見つからないため、ここからは入れられません。公式の案内に従って入れてから、もう一度ログインしてください。")
             a.addButton(withTitle: L("公式の案内を開く"))
             a.addButton(withTitle: L("閉じる"))
-            NSApp.activate(ignoringOtherApps: true)
-            if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(e.setupURL) }
+            if ActiveSpace.runModal(a) == .alertFirstButtonReturn { NSWorkspace.shared.open(e.setupURL) }
             return
         }
         let whereNote: String
@@ -557,8 +554,7 @@ final class JellyManager {
         a.addButton(withTitle: L("入れてログイン"))
         a.addButton(withTitle: L("公式の案内を開く"))
         a.addButton(withTitle: L("キャンセル"))
-        NSApp.activate(ignoringOtherApps: true)
-        switch a.runModal() {
+        switch ActiveSpace.runModal(a) {
         case .alertFirstButtonReturn:
             guard EngineInstall.open(plan, allowAPI: settings.allowAPIBilling) else { NSSound.beep(); return }
             let via: String
@@ -868,8 +864,7 @@ final class JellyManager {
         let a = NSAlert()
         a.messageText = title
         a.informativeText = text
-        NSApp.activate(ignoringOtherApps: true)
-        a.runModal()
+        ActiveSpace.runModal(a)
     }
 
     /// 「過去のセッション」の一覧から外す / 戻す（Claude Code のセッションファイルには触れない）
@@ -891,39 +886,52 @@ final class JellyManager {
         controllers.first { runtimes[$0.record.id]?.sessionID == id }?.record.number
     }
 
+    /// 作業中のクラゲを消すときの確認の吹き出し（クラゲごと）
+    private var removeBubbles: [UUID: WatchBubble] = [:]
+
     /// 長押しで消す。実行中なら、勝手にキャンセルせず確認する。
+    /// 確認はクラゲの上の吹き出しで聞く（どのスペース・ほかのアプリのフル画面の上にも出て、入力先を奪わない）。
+    /// モーダルの確認の窓だと、ほかのアプリのフル画面を見ているときなどに見えないスペースに出て、
+    /// 答えるまでクラゲを押しても何も起きず、アプリの終了もできなくなっていた
     func requestRemove(_ c: JellyController) {
         guard let rt = runtimes[c.record.id], rt.isRunning else {
             remove(c)
             return
         }
-        let a = NSAlert()
-        a.messageText = L("%@ はまだ作業中です", c.record.title)
-        a.informativeText = L("クラゲを消しても、作業はバックグラウンドで最後まで続けられます。結果は履歴（ログ）に残ります。")
-        a.addButton(withTitle: L("作業は続けて、クラゲだけ消す"))
-        a.addButton(withTitle: L("作業をキャンセルして消す"))
-        a.addButton(withTitle: L("やめる"))
-        NSApp.activate(ignoringOtherApps: true)
-        switch a.runModal() {
-        case .alertFirstButtonReturn:
-            rt.onState = nil
-            rt.onUpdate = nil
-            detached.append(rt)
-            rt.onState = { [weak self, weak rt] s in
-                if s.isTerminal || s == .error { self?.detached.removeAll { $0 === rt } }
+        c.avatar.pressCancelled()
+        let id = c.record.id
+        guard removeBubbles[id] == nil else { return }
+        let finish: (String) -> Void = { [weak self, weak c] choice in
+            guard let self, self.removeBubbles.removeValue(forKey: id) != nil else { return }
+            guard let c, self.controllers.contains(where: { $0 === c }) else { return }
+            AppLog.write("remove confirm: agent \(c.record.number) \(choice)")
+            switch choice {
+            case "keep":
+                // 動いている作業は remove が最後まで持っておく（終わったら手放す）
+                self.remove(c)
+            case "cancel":
+                self.runtimes[id]?.cancel()
+                self.remove(c)
+            default:
+                break
             }
-            remove(c)
-        case .alertSecondButtonReturn:
-            rt.cancel()
-            remove(c)
-        default:
-            c.avatar.pressCancelled()
         }
+        let text = WatchBubble.Text(title: L("%@ はまだ作業中です", c.record.title),
+                                    detail: L("クラゲを消しても、作業はバックグラウンドで最後まで続けられます。結果は履歴（ログ）に残ります。"),
+                                    show: L("作業は続けて、クラゲだけ消す"), closeTip: "", ignore: L("作業をキャンセルして消す"),
+                                    note: nil, detailLines: 4, closeTitle: L("やめる"), stacked: true)
+        // 答えないまま 60 秒たったら「やめる」と同じ（消さない）
+        let b = WatchBubble(text, accent: c.record.color.nsColor, near: c.panel.frame, autoClose: 60,
+                            onShow: { finish("keep") }, onDismiss: { finish("dismiss") }, onIgnoreApp: { finish("cancel") })
+        removeBubbles[id] = b
+        b.present()
+        AppLog.write("remove confirm: agent \(c.record.number) asked (still working)")
     }
 
     /// クラゲを削除する。
     /// Phase 2: 実行中タスクがある場合はキャンセルするか継続するかを確認し、勝手にキャンセルしない。
     func remove(_ c: JellyController) {
+        removeBubbles.removeValue(forKey: c.record.id)?.close()
         team?.removeAgent(c.record.id)
         if let chat = chats.removeValue(forKey: c.record.id) {
             chat.dismiss()
@@ -990,13 +998,12 @@ final class JellyManager {
         a.addButton(withTitle: L("変更"))
         a.addButton(withTitle: L("キャンセル"))
         a.window.initialFirstResponder = f
-        NSApp.activate(ignoringOtherApps: true)
-        guard a.runModal() == .alertFirstButtonReturn else { return }
+        guard ActiveSpace.runModal(a) == .alertFirstButtonReturn else { return }
         if let err = rename(c, to: f.stringValue) {
             let e = NSAlert()
             e.messageText = L("名前を変えられませんでした")
             e.informativeText = err
-            e.runModal()
+            ActiveSpace.runModal(e)
         }
     }
 

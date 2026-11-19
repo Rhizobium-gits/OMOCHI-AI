@@ -12,9 +12,13 @@ final class ConnectorsWindowController: NSObject, NSWindowDelegate {
     init(manager: JellyManager?, preview: ConnectorSettings? = nil) {
         self.manager = manager
         self.preview = preview
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: ConnectorsWindowController.width, height: 600), styleMask: [.titled, .closable],
-                          backing: .buffered, defer: false)
+        window = ActiveSpace.make {
+            NSWindow(contentRect: NSRect(x: 0, y: 0, width: ConnectorsWindowController.width, height: 600), styleMask: [.titled, .closable],
+                     backing: .buffered, defer: false)
+        }
         super.init()
+        // 今いるスペース（ほかのアプリのフル画面でも）に出す
+        window.collectionBehavior.insert(.moveToActiveSpace)
         window.title = L("コネクタ")
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -23,6 +27,7 @@ final class ConnectorsWindowController: NSObject, NSWindowDelegate {
     func show() {
         rebuild()
         window.center()
+        ActiveSpace.bringHere(window)
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }

@@ -15,6 +15,9 @@ final class WatchBubble: NSObject {
         var detailLines: Int = 2
         /// 閉じるボタンの文字（コネクタの確認は「やめる」）
         var closeTitle: String = "✕"
+        /// ボタンを縦に、幅いっぱいで並べる（文言の長い 3 択。作業中のクラゲを消すときの確認）。
+        /// 上から「show」「ignore」（普通のボタンにする）「閉じる」の順
+        var stacked: Bool = false
 
         static func watch(appName: String, snippet: String) -> Text {
             Text(title: L("エラーっぽいのが出たよ、見る？"), detail: "\(appName)：\(snippet)")
@@ -79,17 +82,26 @@ final class WatchBubble: NSObject {
         show.keyEquivalent = "\r"
         let close = NSButton(title: text.closeTitle, target: self, action: #selector(dismissTapped))
         close.bezelStyle = .rounded
-        close.toolTip = text.closeTip
+        close.toolTip = text.closeTip.isEmpty ? nil : text.closeTip
         let ignore = NSButton(title: text.ignore, target: self, action: #selector(ignoreTapped))
-        ignore.isBordered = false
-        ignore.font = .systemFont(ofSize: 10.5)
-        ignore.contentTintColor = .secondaryLabelColor
-        // 右の小さなボタンは、文字があるときだけ（コネクタの確認には無い）
-        let buttons = NSStackView(views: text.ignore.isEmpty ? [show, close, NSView()] : [show, close, NSView(), ignore])
+        let buttons: NSStackView
+        if text.stacked {
+            ignore.bezelStyle = .rounded
+            buttons = NSStackView(views: [show, ignore, close])
+            buttons.orientation = .vertical
+            buttons.spacing = 4
+            for b in [show, ignore, close] { b.widthAnchor.constraint(equalTo: buttons.widthAnchor).isActive = true }
+        } else {
+            ignore.isBordered = false
+            ignore.font = .systemFont(ofSize: 10.5)
+            ignore.contentTintColor = .secondaryLabelColor
+            // 右の小さなボタンは、文字があるときだけ（コネクタの確認には無い）
+            buttons = NSStackView(views: text.ignore.isEmpty ? [show, close, NSView()] : [show, close, NSView(), ignore])
+            buttons.orientation = .horizontal
+            buttons.spacing = 6
+        }
         showButton = show
         closeButton = close
-        buttons.orientation = .horizontal
-        buttons.spacing = 6
 
         var rows: [NSView] = [title, detail, buttons]
         if let n = text.note {

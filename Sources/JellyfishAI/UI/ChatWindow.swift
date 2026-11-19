@@ -211,9 +211,13 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     init(jelly: JellyController, runtime: AgentRuntime, size: NSSize) {
         self.jelly = jelly
         self.runtime = runtime
-        window = NSWindow(contentRect: NSRect(origin: .zero, size: size),
-                          styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-                          backing: .buffered, defer: false)
+        // ほかのアプリのフル画面のスペースにも出せる窓として作る（ほかのチャットが出ていて普通のアプリのときに作った窓は、
+        // フル画面のアプリを見ていても普通のデスクトップに回され、開くたびに画面ごとそこへ切り替わっていた）
+        window = ActiveSpace.make {
+            NSWindow(contentRect: NSRect(origin: .zero, size: size),
+                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                     backing: .buffered, defer: false)
+        }
         super.init()
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
@@ -442,8 +446,12 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         if front?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = front; contextApp = front }
         if window.isMiniaturized { window.deminiaturize(nil) }
         if !window.isVisible && !isFullScreen { placeIfNeeded(near: jelly) }
-        // 窓を出す前に普通のアプリ（Dock・⌘Tab・メニューバーあり）にしておく。出したあとでは、
-        // まだ窓が無いと数えて Dock に出ないアプリのままになり、閉じる・しまう・フル画面の操作や戻る道が無くなっていた
+        // いま見ているスペース（ほかのアプリのフル画面でも）に先に出す。先にアプリを前面にすると、
+        // 窓が残っている別のスペースへ画面ごと切り替わり、最初に開いたスペースでしか開けなかった
+        // （フル画面のチャットは自分のスペースにいるので、今までどおりそのスペースへ切り替える）
+        if !isFullScreen { ActiveSpace.bringHere(window) }
+        // 窓を出したら必ず普通のアプリ（Dock・⌘Tab・メニューバーあり）にする（showing: 窓を数えずに）。
+        // Dock に出ないアプリのままだと、閉じる・しまう・フル画面の操作や戻る道が無くなっていた
         manager?.chatWindowVisibilityChanged(showing: true)
         lastActive = Date()
         guard activate else {
@@ -998,7 +1006,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
                 + "\n\n" + DesktopControl.scopeNote
             a.addButton(withTitle: L("🔐 権限の画面を開く"))
             a.addButton(withTitle: L("あとで"))
-            if a.runModal() == .alertFirstButtonReturn { manager?.showPermissions() }
+            if ActiveSpace.runModal(a) == .alertFirstButtonReturn { manager?.showPermissions() }
         }
         refresh()
     }

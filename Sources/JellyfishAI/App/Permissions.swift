@@ -103,9 +103,13 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
 
     init(manager: JellyManager) {
         self.manager = manager
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 520), styleMask: [.titled, .closable, .miniaturizable],
-                          backing: .buffered, defer: false)
+        window = ActiveSpace.make {
+            NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 520), styleMask: [.titled, .closable, .miniaturizable],
+                     backing: .buffered, defer: false)
+        }
         super.init()
+        // 今いるスペース（ほかのアプリのフル画面でも）に出す
+        window.collectionBehavior.insert(.moveToActiveSpace)
         window.title = L("🔐 権限（Full Access）")
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -178,6 +182,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
     func show() {
         refresh()
         window.center()
+        ActiveSpace.bringHere(window)
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         timer?.invalidate()
@@ -234,8 +239,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
         a.informativeText = text
         a.addButton(withTitle: L("許可する"))
         a.addButton(withTitle: L("キャンセル"))
-        NSApp.activate(ignoringOtherApps: true)
-        guard a.runModal() == .alertFirstButtonReturn else { return }
+        guard ActiveSpace.runModal(a) == .alertFirstButtonReturn else { return }
         if !reset.isEmpty, let cmd = AppPermission.command("grant", services: reset) {
             waitingForGrant = true
             if !runInTerminal(cmd, name: "permissions") { waitingForGrant = false; NSSound.beep() }
@@ -269,8 +273,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
         a.alertStyle = .warning
         a.addButton(withTitle: L("取り消す"))
         a.addButton(withTitle: L("キャンセル"))
-        NSApp.activate(ignoringOtherApps: true)
-        guard a.runModal() == .alertFirstButtonReturn else { return }
+        guard ActiveSpace.runModal(a) == .alertFirstButtonReturn else { return }
         manager?.disableAllPrivileges()
         if !runInTerminal(cmd, name: "permissions") { NSSound.beep() }
         AppLog.write("permissions: revoke all")
@@ -286,8 +289,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
             + L("署名のときに macOS が「codesign がキーを使おうとしています」と聞くので、「許可」を選んでください（「常に許可」にすると、ほかのプログラムも確認なしでこの証明書を使えるようになります）。入れ替えたあと、もう一度だけ「まとめて許可する」をしてください。")
         a.addButton(withTitle: L("署名して入れ替える"))
         a.addButton(withTitle: L("キャンセル"))
-        NSApp.activate(ignoringOtherApps: true)
-        guard a.runModal() == .alertFirstButtonReturn else { return }
+        guard ActiveSpace.runModal(a) == .alertFirstButtonReturn else { return }
         if manager?.anyAgentBusy == true {
             UpdateChecker.fallback(L("作業中のクラゲがいます。終わってからもう一度試してください。"), offerPage: false)
             return

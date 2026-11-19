@@ -441,7 +441,8 @@ final class UpdateSession: NSObject, URLSessionTaskDelegate {
     // MARK: 画面
 
     private func showPanel() {
-        let p = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 380, height: 120), styleMask: [.titled], backing: .buffered, defer: false)
+        // ほかのアプリのフル画面を見ていても、今のスペースに出す（ActiveSpace）
+        let p = ActiveSpace.make { NSPanel(contentRect: NSRect(x: 0, y: 0, width: 380, height: 120), styleMask: [.titled], backing: .buffered, defer: false) }
         p.title = L("Jellyfish AI のアップデート")
         p.isReleasedWhenClosed = false
         let label = NSTextField(wrappingLabelWithString: L("%@ をダウンロードしています…", release.version))
@@ -461,6 +462,7 @@ final class UpdateSession: NSObject, URLSessionTaskDelegate {
         bar.widthAnchor.constraint(equalToConstant: 340).isActive = true
         p.contentView = stack
         p.center()
+        ActiveSpace.bringHere(p)
         NSApp.activate(ignoringOtherApps: true)
         p.makeKeyAndOrderFront(nil)
         panel = p

@@ -53,8 +53,7 @@ enum AppInfo {
         """, newJellyKey)
         a.addButton(withTitle: L("AI にログインする"))
         a.addButton(withTitle: L("使い方（README）"))
-        NSApp.activate(ignoringOtherApps: true)
-        let r = a.runModal()
+        let r = ActiveSpace.runModal(a)
         if r == .alertSecondButtonReturn { NSWorkspace.shared.open(repoURL) }
         // 初めての起動：Claude・ChatGPT・Gemini のログインの画面を出す
         manager.showAccounts()
@@ -117,20 +116,19 @@ enum UpdateChecker {
                 let a = NSAlert()
                 a.icon = NSApp.applicationIconImage
                 let current = AppInfo.version
-                NSApp.activate(ignoringOtherApps: true)
                 guard let tag, status == 200 else {
                     a.messageText = L("アップデートを確認できませんでした")
                     a.informativeText = err?.localizedDescription ?? (status == 404 ? L("まだリリースがありません。") : L("GitHub から応答がありません（%ld）。", status))
                     a.addButton(withTitle: L("リリースのページを開く"))
                     a.addButton(withTitle: L("閉じる"))
-                    if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
+                    if ActiveSpace.runModal(a) == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
                     return
                 }
                 guard AppVersion.isNewer(tag, than: current) else {
                     a.messageText = L("最新のバージョンです")
                     a.informativeText = "Jellyfish AI \(current)"
                     a.addButton(withTitle: "OK")
-                    a.runModal()
+                    ActiveSpace.runModal(a)
                     return
                 }
                 a.messageText = L("新しいバージョン %@ があります", tag)
@@ -163,7 +161,7 @@ enum UpdateChecker {
                     if command != nil { a.addButton(withTitle: L("ターミナルでアップデート")) }
                     a.addButton(withTitle: L("ダウンロードページを開く"))
                     a.addButton(withTitle: L("あとで"))
-                    let r = a.runModal().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+                    let r = ActiveSpace.runModal(a).rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
                     switch (r, command) {
                     case (0, _): UpdateSession.start(release, manager: manager)
                     case (1, let c?):
@@ -178,7 +176,7 @@ enum UpdateChecker {
                     a.informativeText = L("いまのバージョンは %@ です。ダウンロードページから .dmg を入れ直してください（設定・クラゲ・会話はそのまま残ります）。", current)
                     a.addButton(withTitle: L("ダウンロードページを開く"))
                     a.addButton(withTitle: L("あとで"))
-                    if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
+                    if ActiveSpace.runModal(a) == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
                 }
             }
         }
@@ -208,7 +206,6 @@ enum UpdateChecker {
         a.informativeText = message
         if offerPage { a.addButton(withTitle: L("ダウンロードページを開く")) }
         a.addButton(withTitle: L("閉じる"))
-        NSApp.activate(ignoringOtherApps: true)
-        if a.runModal() == .alertFirstButtonReturn, offerPage { NSWorkspace.shared.open(AppInfo.releasesURL) }
+        if ActiveSpace.runModal(a) == .alertFirstButtonReturn, offerPage { NSWorkspace.shared.open(AppInfo.releasesURL) }
     }
 }
