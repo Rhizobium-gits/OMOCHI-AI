@@ -185,12 +185,12 @@ extension JellyManager {
         clone.show(animated: false)
         clone.avatar.dragBegan()
         c.avatar.dragBegan()
-        slide([(clone, dest)], duration: 0.55, timing: { t in t * t * (3 - 2 * t) }) { [weak self] in
+        slide([(clone, dest)], duration: 0.55, done: { [weak self] in
             guard let self else { return }
             self.tearState = nil
             c.avatar.dragEnded()
             self.finishTear(c, clone, openChat: open)
-        }
+        }, timing: { t in t * t * (3 - 2 * t) })
     }
 
     /// ちぎっている途中の糸（TeamCoordinator.refresh が描く）
@@ -385,7 +385,7 @@ extension JellyManager {
     // MARK: - 動かす（なめらかに置き直す）
 
     /// おもちを、それぞれの場所へなめらかに動かす（ease-out。動かし終わったら位置を保存）
-    func slide(_ moves: [(JellyController, NSPoint)], duration: Double, timing: ((Double) -> Double)? = nil, done: (() -> Void)? = nil) {
+    func slide(_ moves: [(JellyController, NSPoint)], duration: Double, done: (() -> Void)? = nil, timing: ((Double) -> Double)? = nil) {
         let starts = moves.map { ($0.0, $0.0.panel.frame.origin, $0.1) }
         guard duration > 0 else {
             for (c, _, to) in starts { c.moveTo(to, persist: true) }
