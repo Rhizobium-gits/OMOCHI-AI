@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-11-24
+
 ### 変更
 
 - **お餅の動きを滑らかにした**：いままでは形をマス単位で 1 秒に 8 回描き替えていたので、ふくらむたびに段がついて見えた。呼吸・ふくらむ・しぼむ・跳ねるを、足元を基準にした伸び縮みと上下の動き（Core Animation。画面の速さで補間され、アプリの負荷はほぼ増えない）にした
@@ -346,6 +348,7 @@
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[1.3.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.2
 [1.3.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.1
 [1.3.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.0
 [1.2.5]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.5
