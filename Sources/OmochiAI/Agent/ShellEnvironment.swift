@@ -92,6 +92,8 @@ struct ClaudeInstall {
     /// `--tools` と `--setting-sources` があるか
     var supportsToolsFlag = false
     var supportsSettingSources = false
+    /// ちぎる（分岐）に使う `--fork-session` があるか
+    var supportsForkSession = false
 }
 
 /// claude 実行ファイルを探す。候補（PATH・標準インストール先・VS Code / Cursor 拡張に同梱）すべての
@@ -199,7 +201,8 @@ enum ClaudeLocator {
                              supportsNoSessionPersistence: help.contains("--no-session-persistence"),
                              permissionModes: permissionModes(fromHelp: help),
                              supportsToolsFlag: help.range(of: #"(?m)^\s+--tools\s"#, options: .regularExpression) != nil,
-                             supportsSettingSources: help.contains("--setting-sources"))
+                             supportsSettingSources: help.contains("--setting-sources"),
+                             supportsForkSession: help.contains("--fork-session"))
     }
 
     /// 「--permission-mode <mode> ... (choices: "acceptEdits", "auto", ...)」から choices を読む

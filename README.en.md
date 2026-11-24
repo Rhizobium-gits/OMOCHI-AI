@@ -29,6 +29,7 @@
 
 <p align="center">
   <a href="#key-features">Key features</a>
+  &nbsp;·&nbsp; <a href="#mochi-moves">🍡 Mochi moves</a>
   &nbsp;·&nbsp; <a href="#teams-across-ais">Teams across AIs</a>
   &nbsp;·&nbsp; <a href="#queue-line-up-the-next-prompts-while-it-works">⏭ Queue</a>
   &nbsp;·&nbsp; <a href="#download-and-install">Install</a>
@@ -47,7 +48,7 @@
 > [!NOTE]
 > This is an unofficial app made by an individual. It is not affiliated with Anthropic, OpenAI or Google. Claude and Claude Code belong to Anthropic; ChatGPT and Codex belong to OpenAI; Gemini belongs to Google.
 
-**From jellyfish to omochi**: OMOCHI AI started out as Jellyfish AI, with jellyfish agents drifting on your desktop. Since then it has grown far beyond the original idea — teams that link when you bring agents together and unlink when you pull them apart, work split across AIs, queued and chained prompts — so the agents became **omochi** (since 1.3) and the app is now called **OMOCHI AI**. Coming from Jellyfish AI? See [Upgrading from Jellyfish AI](#upgrading-from-jellyfish-ai).
+**From jellyfish to omochi**: OMOCHI AI started out as Jellyfish AI, with jellyfish agents drifting on your desktop. Since then it has grown far beyond the original idea — teams that link when you bring agents together and unlink when you pull them apart, work split across AIs, queued and chained prompts — — and the agents now spend their time **sticking together, coming apart, stretching and merging**. A stretchy, tearable, sticky, puffy **mochi** describes that far better than a drifting jellyfish. The old look also resembled Claude Code's mascot, so 1.3 replaced it with an original mochi, and 2.0 renames the app **OMOCHI AI** and turns the properties of mochi into the controls ([Mochi moves](#mochi-moves)). Coming from Jellyfish AI? See [Upgrading from Jellyfish AI](#upgrading-from-jellyfish-ai).
 
 ## Key features
 
@@ -56,7 +57,8 @@
 | **⌘L for an instant agent** | From any app, ⌘L brings out a new omochi and you can type your instruction right away. The omochi shows “thinking, working, done, error” through its movement, and tapping it opens the result and a chat to continue |
 | **Choose your AI** | Claude (Claude Code), ChatGPT (Codex CLI) and Gemini (Gemini CLI). Choose the AI, model and thinking effort per omochi. You sign in on each one's official screen, and an AI that isn't installed can be installed, all the way through sign-in, once you allow it |
 | **Divide work as a team** | Bring omochi close to each other to link them, and they split the work by asking teammates or bringing out new ones. **Across AIs**, a Claude omochi can bring out ChatGPT teammates and a ChatGPT omochi can bring out Claude teammates. Requests and results travel back and forth along the lines as light |
-| **Autonomous organization mode** | For each request, the agent decides on the team's shape and assembles it on its own, then learns from the results and 👍👎 to evolve how it chooses an organization |
+| **🍡 Mochi moves** | **⌘-drag to tear off** a clone that shares the conversation (try another approach in parallel) · **stick two together** to merge (keep the better one or combine both) · links are **stretchy mochi strings** · a **dango skewer** runs a pipeline (save it as a recipe) · put one on another's head for a **kagami mochi** leader · omochi **puff up** as the context grows, **char** near the limit and **go stiff** when idle (warm them up again) · a **mochi toss** sends one prompt to several omochi to compare · drop files to make a **daifuku** whose anko the omochi always refers to |
+| **Autonomous organization mode** | For each request, the agent decides on the team's shape and assembles it on its own, then learns from the results and 👍👎 to evolve how it chooses an organization. The shape it picks shows up as a skewer or a kagami mochi |
 | **Chat** | Like the ChatGPT, Claude and Gemini apps, **tables, math, diagrams and charts, and highlighted code** are shown as they are. Images and PDFs appear as thumbnails, web pages with their cover and title. 🎙 Mac Dictation, 🎧 system audio transcription, screen and file attachments, ↑↓ for previous instructions |
 | **⏭ Queue & chain** | Type your next prompt while an omochi is working and press Enter to queue it. Edit or reorder it until it's sent; it goes out as soon as the task finishes. Send a step to another omochi to pass along the previous result — research → summarize → review. **■ Stop (⌘.)** interrupts |
 | **PC control** | Only omochi you allow can look at the screen, click and type (Claude). The edges of the screen glow while it's in control, and Esc stops it |
@@ -67,6 +69,26 @@
 | **No surprise charges** | Doesn't handle API keys, and doesn't use AIs signed in on pay-as-you-go (Claude included) |
 | **Updates** | From the app, from Terminal, or with a single command. Checks the checksum, contents and signature before replacing the app. Choose to check for new versions **every day, week or month, or never** (never by default) |
 | **日本語, English, 简体中文** | Menus and the guidance given to agents are in the language you choose |
+
+## Mochi moves
+
+<p align="center">
+  <img src="docs/media/demo-mochi.gif" width="820" alt="Omochi joined by a mochi string, a clone torn off with ⌘-drag, puffing up and charring as the context grows, going stiff and warmed up again, becoming a daifuku from a dropped file, stacked into a kagami mochi, put on a dango skewer, a mochi toss, and two omochi sticking together">
+</p>
+
+Omochi behave like mochi (since 2.0).
+
+| Mochi property | How | What happens |
+|---|---|---|
+| **✂️ Tear off** | **⌘-drag** an omochi (or right-click › ✂️ Tear off) | A mochi string stretches and necks down, then snaps: you get a **clone with the same conversation**. Ask the clone for a different approach and try both in parallel. The clone can use another AI too (ChatGPT and Gemini clones start with the conversation handed to them) |
+| **🍡 Stick together** | **Drop one omochi onto another** (or right-click › 🍡 Stick together) | Choose “combine into one (take in the other's result)”, “keep this one” or “keep that one”. One melts away and the other absorbs it; links, subordinates, anko and skewer position carry over |
+| **Stretch** | Link two omochi | Links are pulled mochi strings: thinner the farther apart, sagging when idle and **pulled taut** while work flows or waits. Requests and results travel as **mochi lumps** inside the string |
+| **🍡 Dango skewer** | Menu bar or right-click › 🍡 Dango skewer | Choose which omochi does what at each step and put them on a skewer; the result of each step flows to the next (e.g. research → summarize → check). **Save it as a recipe** to run it again with fresh omochi (“Mitarashi” and “Three-color dango” are built in). The first omochi's chat also gets “🍡 Run down the skewer” |
+| **🍊 Kagami mochi** | **Drop an omochi on another's head** | The top one becomes the leader (with a daidai orange), the one below a subordinate. The leader hands out work; subordinates report back. Moving the leader moves the stack. Autonomous organization lays out its teams as a skewer (pipelines) or a kagami mochi (everything else) |
+| **🫓 Puff up · 🔥 Char** | (automatic) | The more the conversation (context) grows, the more the omochi puffs up; near the limit it chars (Claude omochi). **🧽 Scrape off the char** compacts the conversation (Claude Code's `/compact`) |
+| **🧊 Go stiff** | (automatic) | After 30 minutes without work it starts to stiffen, after an hour it is stiff (cracks, shallow breathing — the prompt cache has expired, so the next prompt re-reads the conversation). **♨️ Warm up again** has it re-read the files it needs (steam rises) |
+| **🎊 Mochi toss** | Menu bar › 🎊 Mochi toss | Toss one prompt to new Claude, ChatGPT and Gemini omochi and to existing ones at once. The answers sit side by side; **🙌 Pick** the best one and the other omochi made for the toss are cleared away |
+| **🫘 Daifuku** | **Drop files or folders** on an omochi › Make it anko | The omochi becomes a daifuku (anko shows through) and the material stays in every prompt as **its area of expertise**. Remove items from 🫘 at the top of the chat (choose “attach to the next prompt” for one-off files) |
 
 ## Teams across AIs
 
@@ -156,6 +178,8 @@ Below that are New omochi, Hide / Show all, past sessions and the list of agents
 | Appearance, Size | Pixel (Omochi) / Realistic omochi, and size |
 | Screen awareness | Which display is captured when you say “this screen” (the display with the app you were using / all displays) |
 | 🔑 Accounts & AI | Sign-in status, AI to use (default), sign in, install & sign in, and allowing use with API keys |
+| 🍡 Dango skewer | New skewer, run a recipe, current skewers |
+| 🎊 Mochi toss | Toss one prompt to several omochi and compare the answers side by side |
 | 🔌 Connectors | Current rules, one-touch presets, and the Connectors window (set per AI and model) |
 | 🧠 Model (default) | The default model for each AI |
 | Execution policy | The rules for running each AI without asking, and the location and version of the CLIs in use |
@@ -183,10 +207,12 @@ The chat window that opens when you tap an omochi is a normal Mac window (minimi
 | **Tap** | Open the chat window (Enter to send — queues while working / ⇧Enter for a new line / ⌘. to stop the task / Esc to close) |
 | **↑ / ↓** (input field) | Recall instructions sent earlier in that session (↑ on the first line, ↓ on the last line; includes instructions typed in VS Code or Terminal) |
 | **Long-press** | Remove that omochi (if it's working, asks you to choose “Keep Working, Remove Only the Omochi” or “Cancel Work and Remove”) |
-| **Drag** | Move it anywhere (the position is saved). Drop it near another omochi to link them |
+| **Drag** | Move it anywhere (the position is saved). Drop it near another omochi to link them · **drop it on top to stick together** · **drop it on another's head for a kagami mochi** |
+| **⌘-drag** | **Tear off** a clone that shares the conversation |
+| **Drop files** | Choose **make it anko** (daifuku: always-referenced material) or attach to the next prompt |
 | **⇧-drag** | Move the whole team connected by lines |
-| **Hold ⌥ when releasing** | Cut all of that omochi's links |
-| **Right-click** | Chat, name, connect / disconnect, cancel, hide, reset position, delete |
+| **Hold ⌥ when releasing** | Cut all of that omochi's links and its kagami stack |
+| **Right-click** | Chat, name, connect / disconnect, ✂️ tear off, 🍡 stick together, 🍊 kagami mochi, 🍡 dango skewer, 🫘 anko, ♨️ warm up again, 🧽 scrape off the char, cancel, hide, reset position, delete |
 | **⌥⌘L** / menu bar | Hide / show all (work continues while hidden) |
 
 ### What you can do in the chat
@@ -197,7 +223,8 @@ The chat window that opens when you tap an omochi is a normal Mac window (minimi
   - Only **URLs in instructions you typed yourself** are loaded automatically. Pages that come up in an agent's reply or in a request from a teammate are loaded only when you press “Show cover” (so that if instructions hidden in a page it read make the agent write a URL containing secrets, nothing is sent on its own)
 - **Speak to type**: **🎙** or Edit › **Start Dictation** in the menu starts the Mac's Dictation in the input field. It's the macOS feature, not AI transcription (System Settings › Keyboard › Dictation; the shortcut set there works too)
 - **Works while looking at your screen**: when you clearly point at the screen, as in “this screen”, “the error that's showing”, or “screenshot”, it captures the screen at send time and passes it along (OMOCHI AI's own windows are not captured, and an ordinary instruction doesn't trigger a capture). Images are scaled down to at most 1568px on the long side, so each one costs about 1,800 tokens
-- **Hand over files**: drop a file on an omochi or the chat window to attach it (the 📎 button works too)
+- **Hand over files**: drop a file on the chat window to attach it (the 📎 button works too). Drop it on an omochi to choose between attaching it and making it **anko** (daifuku: always-referenced material)
+- **See the conversation's state**: the top line shows “🫓 Conversation 35k (4%)” (🔥 near the limit) and “🧊 Stiff” after a while; **♨️ Warm up again** and **🧽 Scrape off the char** fix it on the spot. The first omochi on a skewer shows **🍡 Run down the skewer**
 - **Open files and pages**: ask “open the X document on my Desktop”, and it finds it and opens it in the Mac's default app (Preview, Finder, a browser, etc.). Ask “what does it say?” and it answers in the chat
 - **Give them names**: right-click “Rename…” or use “Name” in the chat. Agents call each other by these names. An omochi without a name is “Agent N” (a number), and the smallest free number is reused
 - **Kept on record**: Claude conversations are saved as Claude Code's own sessions (`~/.claude/projects`), so you can continue them from VS Code or Terminal (“Open in Claude Code” opens them in Terminal with `claude --resume`). With “Open past session” in the menu bar, you can also bring up sessions created in VS Code or Terminal as omochi (hold ⌥ while choosing one to archive it). ChatGPT and Gemini conversations are kept in each CLI's own records

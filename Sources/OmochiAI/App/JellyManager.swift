@@ -13,11 +13,11 @@ final class JellyManager {
     private var pointerTimer: Timer?
     private var lastDragMods: NSEvent.ModifierFlags = []
     /// おもちごとのエージェント（セッション・プロセス・履歴）
-    private var runtimes: [UUID: AgentRuntime] = [:]
+    var runtimes: [UUID: AgentRuntime] = [:]
     /// おもちを消しても実行中なら最後まで動かすためのもの
     private var detached: [AgentRuntime] = []
     /// おもちごとのチャットウィンドウ
-    private var chats: [UUID: AgentChatController] = [:]
+    var chats: [UUID: AgentChatController] = [:]
     /// エージェント同士の分業（つながり・依頼・受け渡しの表示）
     private(set) var team: TeamCoordinator?
     /// チャットの予約（いまの作業が終わったら送る指示。ほかのおもちへつなげることもできる）
@@ -30,6 +30,18 @@ final class JellyManager {
     private var listener: (agent: UUID, object: AnyObject)?
     /// 直近の文字起こしファイル（エージェントごと）
     private(set) var lastTranscript: [UUID: URL] = [:]
+
+    // MARK: お餅の性質（MochiActions.swift）
+    /// ちぎっている途中（⌘ ドラッグ）：元のおもちと、引っぱり出している分身
+    var tearState: (origin: UUID, clone: UUID)?
+    /// 串だんご（串に刺さっているおもちの並び）と、保存したレシピ
+    lazy var skewers: [Skewer] = store.load([Skewer].self, name: "skewers.json") ?? []
+    lazy var recipes: [DangoRecipe] = store.load([DangoRecipe].self, name: "recipes.json") ?? []
+    var lookTimer: Timer?
+    var dangoWindow: DangoWindowController?
+    var makiWindow: MochiMakiWindowController?
+    /// 動かしている途中のおもち（なめらかに置き直す）
+    var moveTimer: Timer?
 
     private var lastPointer = NSPoint(x: -1, y: -1)
     private var pointerIdleTicks = 0
@@ -55,6 +67,7 @@ final class JellyManager {
             for c in controllers where !c.record.hidden { c.show(animated: true) }
         }
         startPointerTracking()
+        startLookTimer()
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
                                                object: nil, queue: .main) { [weak self] _ in
             self?.ensureOnScreen()
@@ -250,7 +263,7 @@ final class JellyManager {
         AppLog.write("language: \(lang.rawValue) -> \(L10n.current.rawValue)")
     }
 
-    private func makeRecord() -> JellyRecord {
+    func makeRecord() -> JellyRecord {
         let ci = JellyManager.lowestFree(Set(controllers.map { $0.record.colorIndex }), from: 0)
         // 番号も色と同じく、今いるおもちで空いている一番小さいものを使う（消した番号は使い回すので増え続けない）
         let n = JellyManager.lowestFree(Set(controllers.map { $0.record.number }), from: 1)
@@ -290,7 +303,7 @@ final class JellyManager {
         AppLog.write("renumber: \(map.count) agents")
     }
 
-    private func addController(_ r: JellyRecord) -> JellyController {
+    func addController(_ r: JellyRecord) -> JellyController {
         let avatar = AvatarFactory.make(settings.avatarStyle, record: r, scale: settings.jellyScale,
                                         maxFPS: settings.maxFPS, calmFPS: settings.calmFPS)
         let c = JellyController(record: r, avatar: avatar, manager: self)
@@ -656,7 +669,13 @@ final class JellyManager {
         rt.defaultEngine = { [weak self] in self?.settings.engine ?? .claude }
         rt.onState = { [weak self, weak c] s in
             c?.setState(s)
+            if let c { self?.refreshLook(c) }
             self?.onChange?()
+        }
+        rt.onLook = { [weak self, weak c] in
+            guard let self, let c else { return }
+            self.refreshLook(c)
+            self.chats[c.record.id]?.refresh()
         }
         rt.onUpdate = { [weak self, weak c] in
             guard let self, let c else { return }
@@ -871,7 +890,7 @@ final class JellyManager {
         return (url.path, Array(lines.dropFirst(max(0, sinceLine))), listener?.agent == id)
     }
 
-    private func alert(_ title: String, _ text: String) {
+    func alert(_ title: String, _ text: String) {
         let a = NSAlert()
         a.messageText = title
         a.informativeText = text
@@ -886,7 +905,7 @@ final class JellyManager {
         }
     }
 
-    /// ファイルをおもちに落としたとき：チャットを開いて添付に加える
+    /// ファイルをおもちに落としたとき：チャットを開いて添付に加える（大福にするかは filesDropped で聞く）
     func attachFiles(_ urls: [URL], to c: JellyController) {
         openChat(for: c)
         chats[c.record.id]?.addAttachments(urls)
@@ -943,6 +962,7 @@ final class JellyManager {
     /// Phase 2: 実行中タスクがある場合はキャンセルするか継続するかを確認し、勝手にキャンセルしない。
     func remove(_ c: JellyController) {
         removeBubbles.removeValue(forKey: c.record.id)?.close()
+        mochiRemoved(c.record.id)
         team?.removeAgent(c.record.id)
         queues.agentRemoved(c.record.id)
         if let chat = chats.removeValue(forKey: c.record.id) {
@@ -1050,7 +1070,7 @@ final class JellyManager {
     }
 
     /// 隣（体 1 つ分）の空いている場所。左 → 斜め → 上下の順に探す
-    private func adjacentOrigin(near p: JellyController) -> NSPoint {
+    func adjacentOrigin(near p: JellyController) -> NSPoint {
         let L = layout
         let size = L.size
         let o = p.panel.frame.origin
@@ -1185,6 +1205,7 @@ final class JellyManager {
             chats[r.id]?.attach(jelly: n)
             if !settings.allHidden && !r.hidden { n.show(animated: true) }
         }
+        refreshAllLooks()
         team?.refresh()
         save()
         onChange?()
@@ -1213,7 +1234,7 @@ final class JellyManager {
         return out
     }
 
-    private func freeSlotOrigin(excluding me: JellyController?, among: [JellyController]? = nil) -> NSPoint {
+    func freeSlotOrigin(excluding me: JellyController?, among: [JellyController]? = nil) -> NSPoint {
         guard let screen = NSScreen.screens.first else { return .zero }
         let others = (among ?? controllers).filter { $0 !== me && !$0.record.hidden }.map { $0.panel.frame.origin }
         let minDist = windowSize.width * 0.45
@@ -1391,7 +1412,7 @@ final class JellyManager {
         onChange?()
     }
 
-    private func scheduleSave() {
+    func scheduleSave() {
         guard !saveScheduled else { return }
         saveScheduled = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -1461,6 +1482,10 @@ final class JellyManager {
         if let rt = runtimes[c.record.id], rt.isRunning {
             items.append(ClosureMenuItem(L("作業をキャンセル")) { [weak rt] in rt?.cancel() })
         }
+        // お餅の性質（ちぎる・くっつく・鏡餅・串だんご・あんこ・温め直す）
+        items.append(.separator())
+        items += mochiMenuItems(for: c)
+        items.append(.separator())
         let preview = NSMenuItem(title: L("状態プレビュー"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         for s in AgentState.allCases {
@@ -1503,6 +1528,13 @@ extension JellyManager: PromptQueueHost {
     }
 
     func queueCancel(_ id: UUID) { runtimes[id]?.cancel() }
+
+    /// 予約・串だんごで結果を次のおもちへ渡した：渡した側の色の塊が、串（または糸）をたどって届く
+    func queueHandoff(from: UUID, to: UUID) {
+        guard let a = controller(id: from), let b = controller(id: to), a.isVisible, b.isVisible else { return }
+        team?.overlay.sendPackets(along: [a.anchorPoint, b.anchorPoint], color: a.record.color.nsColor)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { b.avatar.absorb() }
+    }
 
     func queuesChanged(_ agents: Set<UUID>) {
         for id in agents { chats[id]?.refresh() }

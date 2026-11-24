@@ -74,6 +74,12 @@ protocol PromptQueueHost: AnyObject {
     func queueCancel(_ id: UUID)
     /// 予約が変わった（表示を更新する）。agents = 予約の持ち主と、送り先として関わるおもち
     func queuesChanged(_ agents: Set<UUID>)
+    /// 前の手順の結果を、別のおもちへ渡した（見た目：塊が渡っていく）
+    func queueHandoff(from: UUID, to: UUID)
+}
+
+extension PromptQueueHost {
+    func queueHandoff(from: UUID, to: UUID) {}
 }
 
 /// すべてのおもちの予約を動かす。
@@ -289,6 +295,7 @@ final class PromptQueues {
             q.sent += 1
             queues[o] = q
             AppLog.write("queue \(o.uuidString.prefix(8)): send \(item.id.uuidString.prefix(6)) to \(target.uuidString.prefix(8)) pass=\(item.passResult && q.lastResult != nil)")
+            let handoffFrom = item.passResult ? q.lastResult?.agent : nil
             if case .refused(let why) = host.queueSubmit(prompt, to: target) {
                 // 送れなかった：行を戻して止める
                 var back = queues[o] ?? q
@@ -298,6 +305,8 @@ final class PromptQueues {
                 back.pause = .refused(why)
                 queues[o] = back
                 AppLog.write("queue \(o.uuidString.prefix(8)): refused (\(why ?? "-"))")
+            } else if let f = handoffFrom, f != target {
+                host.queueHandoff(from: f, to: target)
             }
             changed(o, also: [target])
         }

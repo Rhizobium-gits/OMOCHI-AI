@@ -378,6 +378,80 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             AppLog.write("app policy=\(policy) active=\(NSApp.isActive) hidden=\(NSApp.isHidden) menus=[\(menus.joined(separator: " | "))]")
             for line in manager.debugChatLines() { AppLog.write(line) }
             for line in manager.debugQueueLines() { AppLog.write(line) }
+            for line in manager.debugMochiLines() { AppLog.write(line) }
+        // お餅の性質（自動化のときだけ。デモの録画とテスト用）
+        case "tear":
+            // omochi://tear?agent=1[&engine=codex]：ちぎって分身を作る（メニューと同じ動き）
+            if let c = agent { manager.tearOff(c, engine: param("engine").flatMap(AgentEngine.init(rawValue:)), openChat: param("chat") == "1") }
+        case "merge":
+            // omochi://merge?a=2&b=1&do=combine|keep|keepA|menu：a を b にくっつける
+            if let a = param("a").flatMap(Int.init).flatMap({ manager.controller(number: $0) }),
+               let b = param("b").flatMap(Int.init).flatMap({ manager.controller(number: $0) }) {
+                switch param("do") ?? "menu" {
+                case "combine": manager.merge(keep: b, drop: a, combine: true, openChat: param("chat") == "1")
+                case "keep": manager.merge(keep: b, drop: a, combine: false, openChat: false)
+                case "keepA": manager.merge(keep: a, drop: b, combine: false, openChat: false)
+                default: manager.dropForMerge(a, onto: b)
+                }
+            }
+        case "stack":
+            // omochi://stack?top=1&bottom=2：鏡餅（top がリーダー）。unstack=1 でくずす
+            if let t = param("top").flatMap(Int.init).flatMap({ manager.controller(number: $0) }) {
+                if param("unstack") == "1" { manager.unstack(t) }
+                else if let b = param("bottom").flatMap(Int.init).flatMap({ manager.controller(number: $0) }) { manager.stack(t, on: b) }
+            }
+        case "anko":
+            // omochi://anko?agent=1&path=~/x.md[&do=remove]
+            if let c = agent, let p = param("path") {
+                let path = (p as NSString).expandingTildeInPath
+                if param("do") == "remove" { manager.removeAnko(path, from: c) } else { manager.addAnko([URL(fileURLWithPath: path)], to: c) }
+            }
+        case "warm":
+            if let c = agent { manager.warmUp(c) }
+        case "compact":
+            if let c = agent { manager.scrapeChar(c) }
+        case "skewer":
+            // omochi://skewer?agents=1,2,3&titles=調べる|まとめる|確かめる[&run=…]：串に刺す（run で流す）
+            let cs = (param("agents") ?? "").split(separator: ",").compactMap { Int($0) }.compactMap { manager.controller(number: $0) }
+            let titles = (param("titles") ?? "").split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+            if let sk = manager.makeSkewer(cs, steps: cs.indices.map { DangoStep(title: $0 < titles.count ? titles[$0] : "") }),
+               let text = param("run") {
+                AppLog.write("skewer run -> \(manager.runSkewer(sk, input: text) ?? "ok")")
+            }
+        case "dango":
+            // omochi://dango?recipe=0&input=…：レシピで流す（新しいおもちを作る）。input が無ければ画面を出す
+            let rs = manager.allRecipes
+            if let i = param("recipe").flatMap(Int.init), i >= 0, i < rs.count {
+                if let text = param("input") { AppLog.write("recipe run -> \(manager.runRecipe(rs[i], input: text, near: agent) ?? "ok")") }
+                else { manager.showDango(recipe: rs[i]) }
+            } else {
+                manager.showDango(for: agent)
+            }
+        case "maki":
+            // omochi://maki?agent=1[&text=…&engines=claude,codex&agents=2,3]：餅まきの画面（text があれば、まく）。pick=2 で拾う。
+            // demo=1：画面を出さず、見えているおもちへお餅を投げる動きだけ（デモの録画用。何も送らない）
+            if param("demo") == "1" { manager.demoToss(); break }
+            manager.showMaki(from: agent)
+            if let text = param("text") {
+                let es = (param("engines") ?? "").split(separator: ",").compactMap { AgentEngine(rawValue: String($0)) }
+                let ids = (param("agents") ?? "").split(separator: ",").compactMap { Int($0) }.compactMap { manager.controller(number: $0)?.record.id }
+                manager.makiWindow?.debugThrow(text: text, engines: es, agents: ids)
+            }
+            if let p = param("pick").flatMap(Int.init).flatMap({ manager.controller(number: $0) }) { manager.makiWindow?.debugPick(p.record.id) }
+        case "look":
+            // omochi://look?agent=1&full=0.6&char=1&hard=2&anko=1&crown=1&warm=1（見た目だけ。録画用。clear=1 で戻す）
+            if let c = agent {
+                if param("clear") == "1" { manager.refreshLook(c) } else {
+                    var l = MochiLook()
+                    l.fullness = param("full").flatMap(Double.init) ?? 0
+                    l.char = param("char").flatMap(Int.init) ?? 0
+                    l.hard = param("hard").flatMap(Int.init) ?? 0
+                    l.anko = param("anko") == "1"
+                    l.crown = param("crown") == "1"
+                    l.warming = param("warm") == "1"
+                    c.avatar.setLook(l)
+                }
+            }
         case "style":
             if let st = param("v").flatMap(AvatarStyle.init(rawValue:)) { manager.setStyle(st) }
         case "login":

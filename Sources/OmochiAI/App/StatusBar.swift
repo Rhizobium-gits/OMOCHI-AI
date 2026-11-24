@@ -286,6 +286,34 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         return item
     }
 
+    /// 🍡 串だんご：新しい串・レシピで流す・いまの串
+    private func dangoMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(title: L("🍡 串だんご（順番に仕事を流す）"), action: nil, keyEquivalent: "")
+        let dm = NSMenu()
+        dm.autoenablesItems = false
+        dm.addItem(ClosureMenuItem(L("新しい串を作る…")) { [weak self] in self?.manager.showDango() })
+        dm.addItem(.separator())
+        dm.addItem(.header(L("レシピで流す")))
+        for r in manager.allRecipes {
+            dm.addItem(ClosureMenuItem(L("▶ %@…", r.name)) { [weak self] in self?.manager.showDango(recipe: r) })
+        }
+        let user = manager.skewers.filter { !$0.org }
+        if !user.isEmpty {
+            dm.addItem(.separator())
+            dm.addItem(.header(L("いまの串")))
+            for s in user {
+                let names = s.members.compactMap { manager.controller(id: $0)?.record.title }.joined(separator: " → ")
+                let first = s.members.first.flatMap { manager.controller(id: $0) }
+                dm.addItem(ClosureMenuItem(L("▶ %@…", names)) { [weak self] in self?.manager.showDango(for: first) })
+            }
+        }
+        dm.addItem(.separator())
+        dm.addItem(.header(L("・段ごとに、どのおもちが何をするかを決める。前の段の結果が次の段に渡る")))
+        dm.addItem(.header(L("・名前を付けて保存すると、レシピとして何度でも使える")))
+        item.submenu = dm
+        return item
+    }
+
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
         let s = manager.settings
@@ -310,6 +338,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         if let hk = shortcuts.activeToggle { applyShortcut(hk, to: toggle) }
         menu.addItem(toggle)
         menu.addItem(ClosureMenuItem(L("右端に並べ直す")) { [weak self] in self?.manager.arrangeAll() })
+        menu.addItem(dangoMenuItem())
+        menu.addItem(ClosureMenuItem(L("🎊 餅まき（1 つの指示を何体にもまいて比べる）…")) { [weak self] in self?.manager.showMaki() })
 
         // 過去の Claude Code セッション（VS Code やターミナルで作ったものも含む）を呼び出す
         let past = NSMenuItem(title: L("過去のセッションを開く"), action: nil, keyEquivalent: "")

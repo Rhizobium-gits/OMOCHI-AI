@@ -26,10 +26,12 @@ final class MochiAvatar: Avatar {
     static func cell(scale: Double) -> Double { (6.0 * scale).rounded() }
     static let topMarginCells: CGFloat = 2.0
     static let bottomMarginCells: CGFloat = 0.5
+    /// 左右の余白（会話が大きくなってふくらんでも、窓の端で切れないように）
+    static let sideMarginCells: CGFloat = 1.0
 
     static func windowSize(scale: Double) -> CGSize {
         let P = CGFloat(cell(scale: scale))
-        return CGSize(width: CGFloat(MochiSprite.cols) * P,
+        return CGSize(width: (CGFloat(MochiSprite.cols) + 2 * sideMarginCells) * P,
                       height: (CGFloat(MochiSprite.rows) + topMarginCells + bottomMarginCells) * P)
     }
 
@@ -45,6 +47,8 @@ final class MochiAvatar: Avatar {
     private let root = CALayer()
     private let shadowLayer = CALayer()
     private let floatLayer = CALayer()
+    /// 会話の大きさでふくらむ（足元を基準にゆっくり大きく）
+    private let growLayer = CALayer()
     private let breathLayer = CALayer()
     private let hopLayer = CALayer()
     private let spriteLayer = CALayer()
@@ -71,6 +75,8 @@ final class MochiAvatar: Avatar {
     private var pressing = false
     private var landEnd = 0.0
     private let seed: Double
+    /// 会話の大きさ・硬さ・あんこ・鏡餅・温め直し
+    private(set) var look = MochiLook()
 
     init(record: JellyRecord, scale: Double, art: Art = .pixel) {
         P = CGFloat(MochiAvatar.cell(scale: scale))
@@ -92,13 +98,13 @@ final class MochiAvatar: Avatar {
         floatLayer.frame = root.bounds
         // 伸び縮み・拡大縮小は足元（床の線）を基準に
         let footY = MochiAvatar.bottomMarginCells * P + P * 1.0
-        for l in [breathLayer, hopLayer] {
+        for l in [growLayer, breathLayer, hopLayer] {
             l.bounds = root.bounds
             l.anchorPoint = CGPoint(x: 0.5, y: footY / size.height)
             l.position = CGPoint(x: size.width / 2, y: footY)
         }
 
-        spriteLayer.frame = CGRect(x: 0, y: MochiAvatar.bottomMarginCells * P,
+        spriteLayer.frame = CGRect(x: MochiAvatar.sideMarginCells * P, y: MochiAvatar.bottomMarginCells * P,
                                    width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
         // ドット絵は補間しない。リアルな絵はなめらかに
         let filter: CALayerContentsFilter = self.art == .real ? .linear : .nearest
@@ -124,10 +130,11 @@ final class MochiAvatar: Avatar {
         root.addSublayer(shadowLayer)
         root.addSublayer(floatLayer)
         root.addSublayer(markLayer)
-        floatLayer.addSublayer(breathLayer)
+        floatLayer.addSublayer(growLayer)
+        growLayer.addSublayer(breathLayer)
         breathLayer.addSublayer(hopLayer)
         hopLayer.addSublayer(spriteLayer)
-        [root, floatLayer, breathLayer, hopLayer].forEach { $0.actions = ["transform": NSNull(), "opacity": NSNull(), "position": NSNull()] }
+        [root, floatLayer, growLayer, breathLayer, hopLayer].forEach { $0.actions = ["transform": NSNull(), "opacity": NSNull(), "position": NSNull()] }
 
         pose = basePose(for: state, now: CACurrentMediaTime())
         render(force: true)
@@ -153,6 +160,10 @@ final class MochiAvatar: Avatar {
     /// 状態ごとの形と表情（形が変わるのは完了・エラー・キャンセルだけ。呼吸や跳ねは Core Animation）
     private func basePose(for s: AgentState, now: Double) -> JellyPose {
         var p = JellyPose()
+        p.char = look.char
+        p.hard = look.hard
+        p.anko = look.anko
+        p.crown = look.crown
         switch s {
         case .idle, .thinking, .working: break
         case .completed: p.eyes = .happy; p.mark = .check; p.puff = 2
@@ -170,10 +181,12 @@ final class MochiAvatar: Avatar {
         let jitter = (seed * 0.37).truncatingRemainder(dividingBy: 1) * 0.5
         switch state {
         case .idle:
-            // ゆっくり呼吸。4 回に 1 回は大きく吸う
-            setBreath(loop(period: (4.0 + jitter) * 4,
-                           y: [1, 1.045, 1, 1.045, 1, 1.045, 1, 1.09, 1],
-                           x: [1, 0.985, 1, 0.985, 1, 0.985, 1, 0.975, 1],
+            // ゆっくり呼吸。4 回に 1 回は大きく吸う。硬くなるほど息が浅い（硬いお餅はふくらまない）
+            let amp: CGFloat = look.hard >= 2 ? 0.2 : (look.hard == 1 ? 0.55 : 1)
+            func a(_ v: [CGFloat]) -> [CGFloat] { v.map { 1 + ($0 - 1) * amp } }
+            setBreath(loop(period: (4.0 + jitter) * 4 * (look.hard > 0 ? 1.4 : 1),
+                           y: a([1, 1.045, 1, 1.045, 1, 1.045, 1, 1.09, 1]),
+                           x: a([1, 0.985, 1, 0.985, 1, 0.985, 1, 0.975, 1]),
                            times: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1],
                            timing: Array(repeating: .easeInEaseOut, count: 8)))
             setHop(nil)
@@ -389,6 +402,9 @@ final class MochiAvatar: Avatar {
             break
         }
 
+        // 温め直し中：頭から湯気
+        if look.warming && (state == .thinking || state == .working) { p.mark = .steam(Int(now / 0.3) % 4) }
+
         // まばたき（終了状態以外）
         if !state.isTerminal && state != .error {
             if now > nextBlink {
@@ -443,7 +459,7 @@ final class MochiAvatar: Avatar {
         }
         let sw = CGFloat(MochiSprite.shadowHalfWidth(pose))
         let half = P / 2
-        let frame = CGRect(x: (7 - sw) * P, y: MochiAvatar.bottomMarginCells * P + half, width: (2 * sw + 1) * P, height: half)
+        let frame = CGRect(x: (7 - sw + MochiAvatar.sideMarginCells) * P, y: MochiAvatar.bottomMarginCells * P + half, width: (2 * sw + 1) * P, height: half)
         shadowLayer.bounds = CGRect(origin: .zero, size: frame.size)
         shadowLayer.position = CGPoint(x: frame.midX, y: frame.midY)
     }
@@ -460,8 +476,9 @@ final class MochiAvatar: Avatar {
         let base = MochiAvatar.bottomMarginCells * P
         let rows = CGFloat(MochiSprite.rows)
         // スプライト本体（キャンバスの列 2..12、行 3..10）を少し広めに
-        let rect = CGRect(x: 1.5 * P, y: base + (rows - 11) * P - 0.5 * P + dy,
-                          width: 12 * P, height: 9 * P)
+        let g = growScale
+        let rect = CGRect(x: size.width / 2 - 6 * P * g, y: base + (rows - 11) * P - 0.5 * P + dy,
+                          width: 12 * P * g, height: 9 * P * g)
         return rect.contains(p)
     }
 
@@ -540,6 +557,80 @@ final class MochiAvatar: Avatar {
         hopLayer.add(g, forKey: "land")
         startTimer()
         tick()
+    }
+
+    // MARK: - 会話の大きさ・硬さ・あんこ・鏡餅・温め直し
+
+    private var growScale: CGFloat { MochiPlay.growScale(look.fullness) }
+
+    func setLook(_ l: MochiLook) {
+        guard l != look else { return }
+        let old = look
+        look = l
+        if abs(old.fullness - l.fullness) > 0.001 {
+            // ゆっくりふくらむ・しぼむ（いまの大きさから）
+            let from = (growLayer.presentation()?.value(forKeyPath: "transform.scale") as? CGFloat) ?? MochiPlay.growScale(old.fullness)
+            let to = growScale
+            growLayer.transform = CATransform3DMakeScale(to, to, 1)
+            let a = CABasicAnimation(keyPath: "transform.scale")
+            a.fromValue = from
+            a.toValue = to
+            a.duration = 0.9
+            a.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            growLayer.add(a, forKey: "grow")
+        }
+        // 硬さが変わったら、息の深さを変える
+        if old.hard != l.hard, active, state == .idle { applyStateMotion(transition: false) }
+        pose = basePose(for: state, now: CACurrentMediaTime())
+        render(force: true)
+        if l.warming && !old.warming { startTimer() }
+        if active { tick() }
+    }
+
+    /// くっつく：相手を取り込んで、横にむにっと広がってからぷくっとまとまる
+    func absorb() {
+        let sx = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        sx.values = [1, 1.32, 0.9, 1.06, 1]
+        let sy = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        sy.values = [1, 0.72, 1.22, 0.96, 1]
+        for a in [sx, sy] {
+            a.keyTimes = [0, 0.28, 0.58, 0.82, 1]
+            a.timingFunctions = timings([.easeOut, .easeInEaseOut, .easeInEaseOut, .easeInEaseOut])
+        }
+        let g = CAAnimationGroup()
+        g.animations = [sx, sy]
+        g.duration = 0.75
+        hopLayer.add(g, forKey: "absorb")
+        startTimer()
+    }
+
+    /// くっついて溶ける（消えるときに、横に平たく広がりながら薄くなる）
+    func melt(_ done: @escaping () -> Void) {
+        stopTimer()
+        CATransaction.begin()
+        CATransaction.setCompletionBlock(done)
+        let sx = CABasicAnimation(keyPath: "transform.scale.x")
+        sx.toValue = 1.45
+        let sy = CABasicAnimation(keyPath: "transform.scale.y")
+        sy.toValue = 0.18
+        let fade = CABasicAnimation(keyPath: "opacity")
+        fade.toValue = 0
+        let g = CAAnimationGroup()
+        g.animations = [sx, sy, fade]
+        g.duration = 0.3
+        g.timingFunction = CAMediaTimingFunction(name: .easeIn)
+        g.fillMode = .forwards
+        g.isRemovedOnCompletion = false
+        hopLayer.add(g, forKey: "melt")
+        for l in [shadowLayer, markLayer] {
+            let f = CABasicAnimation(keyPath: "opacity")
+            f.toValue = 0
+            f.duration = 0.2
+            f.fillMode = .forwards
+            f.isRemovedOnCompletion = false
+            l.add(f, forKey: "melt")
+        }
+        CATransaction.commit()
     }
 
     // MARK: - 出現・消滅・表示

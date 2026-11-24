@@ -1,0 +1,91 @@
+{
+ "region": [
+  1060,
+  40,
+  860,
+  620
+ ],
+ "scale": 2,
+ "fps": 20,
+ "dataDir": ".build/demo-data/mochi",
+ "background": [
+  "#000000",
+  "#000000",
+  "#000000"
+ ],
+ "steps": [
+  {
+   "delay": 1.0,
+   "mark": "link",
+   "url": "omochi://move?agent=2&dx=-80&dy=0&t=1.0"
+  },
+  {
+   "delay": 2.8,
+   "mark": "tear",
+   "url": "omochi://tear?agent=1"
+  },
+  {
+   "delay": 2.6,
+   "mark": "puff",
+   "url": "omochi://look?agent=6&full=0.75"
+  },
+  {
+   "delay": 1.8,
+   "mark": "char",
+   "url": "omochi://look?agent=6&full=0.95&char=2"
+  },
+  {
+   "delay": 2.4,
+   "mark": "hard",
+   "url": "omochi://look?agent=3&hard=2"
+  },
+  {
+   "delay": 2.2,
+   "mark": "warm",
+   "url": "omochi://state?agent=3&s=thinking"
+  },
+  {
+   "delay": 0.05,
+   "url": "omochi://look?agent=3&warm=1"
+  },
+  {
+   "delay": 2.6,
+   "mark": "warmed",
+   "url": "omochi://state?agent=3&s=completed"
+  },
+  {
+   "delay": 0.05,
+   "url": "omochi://look?agent=3&clear=1"
+  },
+  {
+   "delay": 1.8,
+   "mark": "anko",
+   "url": "omochi://anko?agent=4&path=%2Ftmp%2Fomochi-demo-anko"
+  },
+  {
+   "delay": 2.6,
+   "mark": "stack",
+   "url": "omochi://move?agent=5&dx=240&dy=45&t=1.2"
+  },
+  {
+   "delay": 3.2,
+   "mark": "skewer",
+   "url": "omochi://skewer?agents=1,2&titles=%E8%AA%BF%E3%81%B9%E3%82%8B%7C%E3%81%BE%E3%81%A8%E3%82%81%E3%82%8B"
+  },
+  {
+   "delay": 2.8,
+   "mark": "toss",
+   "url": "omochi://maki?demo=1"
+  },
+  {
+   "delay": 2.6,
+   "mark": "merge",
+   "url": "omochi://merge?a=6&b=1&do=keep"
+  },
+  {
+   "delay": 2.4,
+   "mark": "end",
+   "stop": true
+  }
+ ]
+}

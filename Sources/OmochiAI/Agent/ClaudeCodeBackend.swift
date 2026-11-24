@@ -41,6 +41,7 @@ final class ClaudeCodeBackend: AgentBackend {
 
     var engine: AgentEngine { .claude }
     var assignsSessionID: Bool { false }
+    var canFork: Bool { install.supportsForkSession }
     var displayName: String { "Claude Code" }
     var defaultModel: String? { model }
 
@@ -63,7 +64,12 @@ final class ClaudeCodeBackend: AgentBackend {
         args += ["--output-format", "stream-json", "--verbose",
                     "--permission-mode", permissionMode]
         if install.supportsPermissionPrompts { args += ["--permission-prompts", "none"] }
-        args += resume ? ["--resume", sessionID] : ["--session-id", sessionID]
+        if let src = options.forkFrom, UUID(uuidString: src) != nil, install.supportsForkSession {
+            // ちぎる：元の会話を写して、このおもちの ID の新しい会話として続ける（元の会話は変わらない）
+            args += ["--resume", src, "--fork-session", "--session-id", sessionID]
+        } else {
+            args += resume ? ["--resume", sessionID] : ["--session-id", sessionID]
+        }
         // 「自動」は AgentRuntime が依頼ごとに選んだモデルに置き換えている。万一残っていても claude には渡さない
         if let m = options.model ?? model, m != ModelRouter.auto, ModelName.isSafe(m) { args += ["--model=" + m] }
         if let e = options.effort, install.supportsEffort { args += ["--effort", e] }
@@ -198,11 +204,23 @@ final class StreamJSONParser {
               let type = obj["type"] as? String else { return }
         switch type {
         case "system":
+            // /compact（焦げを落とす）：縮めたあとの大きさ
+            if (obj["subtype"] as? String) == "compact_boundary",
+               let post = ((obj["compact_metadata"] as? [String: Any])?["post_tokens"] as? NSNumber)?.intValue {
+                emit(.context(tokens: post, window: nil))
+            }
             if (obj["subtype"] as? String) == "init" {
                 emit(.started(session: obj["session_id"] as? String, model: obj["model"] as? String,
                               permissionMode: obj["permissionMode"] as? String))
             }
         case "assistant":
+            // 会話の大きさ：いちばん外側の会話（サブエージェントの中ではない）の、最後の呼び出しで読んだ量
+            if obj["parent_tool_use_id"] == nil || obj["parent_tool_use_id"] is NSNull,
+               let u = (obj["message"] as? [String: Any])?["usage"] as? [String: Any] {
+                func n(_ k: String) -> Int { (u[k] as? NSNumber)?.intValue ?? 0 }
+                let total = n("input_tokens") + n("cache_read_input_tokens") + n("cache_creation_input_tokens") + n("output_tokens")
+                if total > 0 { emit(.context(tokens: total, window: nil)) }
+            }
             let content = ((obj["message"] as? [String: Any])?["content"] as? [[String: Any]]) ?? []
             for c in content {
                 switch c["type"] as? String {
@@ -224,6 +242,9 @@ final class StreamJSONParser {
         case "result":
             // モデルごとの使ったトークン（使用量の表示用）
             if let mu = obj["modelUsage"] as? [String: Any] {
+                // そのモデルの文脈の上限（いちばん大きいもの = 会話の本体のモデル）
+                let windows = mu.values.compactMap { (($0 as? [String: Any])?["contextWindow"] as? NSNumber)?.intValue }
+                if let w = windows.max(), w > 0 { emit(.context(tokens: nil, window: w)) }
                 for (m, v) in mu.sorted(by: { $0.key < $1.key }) {
                     guard let u = v as? [String: Any] else { continue }
                     func n(_ k: String) -> Int { (u[k] as? NSNumber)?.intValue ?? 0 }

@@ -162,6 +162,10 @@ struct JellyRecord: Codable, Identifiable {
     var depth: Int?
     /// 自律組織モードで form_team が作った仲間（仕事が変わって要らなくなったら片付ける）
     var orgSpawned: Bool?
+    /// ちぎって（分岐して）作った分身なら、ちぎった元のおもち
+    var forkOf: UUID?
+    /// 鏡餅：このおもちの上に載っているおもち（リーダー）。nil なら上には何も載っていない
+    var leaderID: UUID?
 
     var color: JellyColor { Palette.color(colorIndex) }
     var title: String { name ?? "Agent \(number)" }
@@ -266,6 +270,16 @@ final class Store {
     func save(_ jellies: [JellyRecord]) {
         write(jellies, to: jelliesURL)
     }
+
+    /// データフォルダの JSON（串だんご・レシピなど）
+    func load<T: Decodable>(_ type: T.Type, name: String) -> T? {
+        guard let data = try? Data(contentsOf: dir.appendingPathComponent(name)) else { return nil }
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .iso8601
+        return try? dec.decode(type, from: data)
+    }
+
+    func save<T: Encodable>(_ value: T, name: String) { write(value, to: dir.appendingPathComponent(name)) }
 
     private func write<T: Encodable>(_ value: T, to url: URL) {
         let enc = JSONEncoder()

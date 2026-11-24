@@ -165,6 +165,13 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     private let dictationButton = NSButton(title: "🎙", target: nil, action: nil)
     /// 見守り（画面のエラーっぽい表示に気づいたら聞く。Mac の中だけで読む）
     private let watchButton = NSButton(title: "👀", target: nil, action: nil)
+    /// ♨️ 温め直す（硬くなったとき）・🧽 焦げを落とす（会話が大きいとき。Claude だけ）・🍡 串に流す（串の 1 段目のとき）
+    private let warmButton = NSButton(title: L("♨️ 温め直す"), target: nil, action: nil)
+    private let scrapeButton = NSButton(title: L("🧽 焦げを落とす"), target: nil, action: nil)
+    private let dangoButton = NSButton(title: L("🍡 串に流す"), target: nil, action: nil)
+    /// 大福のあんこ（いつも参照する資料）の一覧
+    private let ankoRow = NSStackView()
+    private var shownAnko: [String]?
     private var listenTimer: Timer?
     /// 会話の表示（表・数式・図・コードの色分け。アプリの中の HTML を WKWebView で）
     private let transcriptView = ChatTranscriptView(frame: NSRect(x: 0, y: 0, width: 500, height: 100))
@@ -265,12 +272,22 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         stateLabel.lineBreakMode = .byTruncatingTail
         stateLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         dot.imageScaling = .scaleNone
-        for b in [cancelButton, retryButton, folderButton, terminalButton, renameButton, pcButton, listenButton] {
+        for b in [cancelButton, retryButton, folderButton, terminalButton, renameButton, pcButton, listenButton, warmButton, scrapeButton, dangoButton] {
             b.bezelStyle = .accessoryBarAction
             b.controlSize = .small
             b.font = .systemFont(ofSize: 11.5)
             b.target = self
         }
+        warmButton.action = #selector(warmUp)
+        warmButton.toolTip = L("温め直す：しばらく使っていない会話の続きに必要なファイルを読み直してもらう（変わったところも教えてくれる）")
+        scrapeButton.action = #selector(scrapeChar)
+        scrapeButton.toolTip = L("焦げを落とす：会話を要約して軽くする（Claude Code の /compact）。会話が文脈の上限に近づくと、おもちに焦げ目が付きます")
+        dangoButton.setButtonType(.pushOnPushOff)
+        dangoButton.action = #selector(dangoToggled)
+        dangoButton.toolTip = L("オンにすると、送った指示を串の 1 段目に渡し、結果を順に次の段へ流します")
+        ankoRow.orientation = .horizontal
+        ankoRow.spacing = 4
+        ankoRow.isHidden = true
         cancelButton.action = #selector(cancelTask)
         cancelButton.contentTintColor = .systemRed
         cancelButton.toolTip = L("いまの作業を止める（⌘.）。予約があれば一時停止します")
@@ -356,7 +373,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         effortPopup.action = #selector(effortChanged)
         modelPopup.toolTip = L("このおもちが使うモデル。自動は依頼ごとに Haiku・Sonnet・Opus・Fable から選ぶ。既定はメニューバーの「🧠 モデル（既定）」に従う（次の指示から反映）")
         effortPopup.toolTip = L("考える強さ（--effort。次の指示から反映）")
-        let controlsRow = NSStackView(views: [screenPopup, attachButton, dictationButton, pcButton, listenButton, watchButton, folderButton, NSView(), terminalButton])
+        let controlsRow = NSStackView(views: [screenPopup, attachButton, dictationButton, pcButton, listenButton, watchButton, dangoButton, warmButton, scrapeButton, folderButton, NSView(), terminalButton])
         controlsRow.orientation = .horizontal
         controlsRow.spacing = 6
         // 幅が足りないときはウィンドウを広げず、フォルダ名・ポップアップの文字を省略して縮める
@@ -427,7 +444,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         inputRow.orientation = .horizontal
         inputRow.alignment = .top
         inputRow.spacing = 6
-        let stack = NSStackView(views: [titleRow, infoRow, transcriptView, orgRow, attachRow, queueView, inputRow, controlsRow, footer])
+        let stack = NSStackView(views: [titleRow, infoRow, transcriptView, orgRow, ankoRow, attachRow, queueView, inputRow, controlsRow, footer])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -448,7 +465,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         ]
         attachRow.isHidden = true
         queueView.isHidden = true
-        for v in [titleRow, infoRow, transcriptView, orgRow, attachRow, queueView, inputRow, controlsRow, footer] as [NSView] {
+        for v in [titleRow, infoRow, transcriptView, orgRow, ankoRow, attachRow, queueView, inputRow, controlsRow, footer] as [NSView] {
             cs.append(v.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -32))
         }
         NSLayoutConstraint.activate(cs)
@@ -568,6 +585,17 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
             st += "  ·  " + L("👥 %@ とチーム", shown)
         }
         if running, !runtime.externalLoaded.isEmpty { st += "  ·  🧩 " + runtime.externalLoaded.joined(separator: L("・")) }
+        // お餅の性質：会話の大きさ（ふくらみ・焦げ目）と硬さ、ちぎった分身・鏡餅・串
+        let ratio = MochiPlay.contextRatio(tokens: runtime.contextTokens, window: runtime.contextWindow)
+        if let t = runtime.contextTokens, t > 0 {
+            let k = t >= 10_000 ? "\(t / 1000)k" : "\(t)"
+            st += "  ·  " + (MochiPlay.charLevel(ratio) > 0 ? "🔥 " : "🫓 ") + L("会話 %@（%ld%%）", k, Int((ratio * 100).rounded()))
+        }
+        let hard = runtime.sessionStarted && !running ? MochiPlay.hardness(lastActive: runtime.lastActiveAt) : 0
+        if hard > 0 { st += "  ·  " + (hard >= 2 ? L("🧊 硬くなっています（1 時間以上たちました。次は会話を読み直すので少し遅く・使用量が多めに）") : L("🧊 少し硬くなってきました")) }
+        if let f = runtime.forkSource, !runtime.sessionStarted { st += "  ·  " + L("✂️ %@ の分身（最初の指示で会話を引き継ぎます）", f.name) }
+        if let l = r.leaderID.flatMap({ manager?.controller(id: $0) }) { st += "  ·  " + L("🍊 %@ の部下", l.record.title) }
+        if let subs = manager?.subordinates(of: r.id), !subs.isEmpty { st += "  ·  " + L("🍊 リーダー（部下: %@）", subs.map(\.record.title).joined(separator: L("・"))) }
         if running, let o = manager?.team?.orgStatus(for: r.id) { st += "  ·  " + o }
         if !running, let e = manager?.team?.orgFeedback(for: r.id) {
             let g = OrgGenome(key: e.usedKey)?.label ?? e.usedKey
@@ -633,6 +661,14 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         pcButton.title = runtime.pcControl ? L("🖱 PC 操作: オン") : L("🖱 PC 操作")
         stateLabel.stringValue = st
         cancelButton.isHidden = !running
+        warmButton.isHidden = hard == 0
+        warmButton.isEnabled = !running
+        scrapeButton.isHidden = !(eng == .claude && runtime.sessionStarted && MochiPlay.charLevel(ratio) > 0)
+        scrapeButton.isEnabled = !running
+        let headsSkewer = manager?.skewer(containing: r.id).map { !$0.org && $0.members.first == r.id } ?? false
+        dangoButton.isHidden = !headsSkewer
+        if !headsSkewer { dangoButton.state = .off }
+        refreshAnko()
         let last = runtime.lastTurn
         retryButton.isHidden = running || last == nil || last?.state == .completed
         // Claude：同じ会話をターミナルで。Gemini：このフォルダで Gemini を開く（フォルダの信頼もここで）。Codex：出さない
@@ -765,6 +801,25 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
                     text = String(text[..<r.lowerBound])
                     notes.append("📎 " + names.joined(separator: ", "))
                 }
+                // ちぎった分身の最初の指示（元のおもちの会話を添えた）・くっついたおもちの結果・あんこ（Gemini）
+                if !fromTeammate, let r = text.range(of: MochiPlay.forkMarker) {
+                    let from = MochiPlay.forkedFrom(text) ?? ""
+                    text = String(text[..<r.lowerBound])
+                    notes.insert(L("✂️ %@ の会話を引き継ぎました", from), at: 0)
+                }
+                if let r = text.range(of: MochiPlay.ankoMarker) {
+                    text = String(text[..<r.lowerBound])
+                    notes.append(L("🫘 あんこを添えました"))
+                }
+                if !fromTeammate, let r = text.range(of: MochiPlay.mergeMarker) {
+                    let from = MochiPlay.mergedFrom(text) ?? ""
+                    text = L("🍡 %@ とくっつきました。結果を比べて 1 つにまとめてもらいます。", from)
+                    notes.insert(L("🍡 %@ の結果を受け取りました", from), at: 0)
+                    _ = r
+                    cap = L("🍡 くっつく")
+                }
+                if !fromTeammate, text.hasPrefix(MochiPlay.warmPrefix) { cap = L("♨️ 温め直し"); text = String(text.dropFirst(MochiPlay.warmPrefix.count)) }
+                if !fromTeammate, text.hasPrefix(MochiPlay.dangoPrefix) { cap = L("🍡 串だんご") }
                 // 予約で、前の手順の結果を添えて送った指示
                 if !fromTeammate, let r = text.range(of: PromptQueues.resultMarker) {
                     let from = PromptQueues.passedFrom(text) ?? ""
@@ -783,6 +838,14 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
             case .tool:
                 add("tool", text: "⚙︎ " + m.text)
             }
+        }
+        // 分身の最初の指示の前：元の会話を引き継ぐことの案内
+        if let f = runtime.forkSource, !runtime.sessionStarted, !runtime.isRunning {
+            add("tool", text: L("✂️ %@ からちぎれた分身です。最初の指示で、%@ のここまでの会話を引き継いで始めます（元の会話は変わりません）。", f.name, f.name))
+        }
+        // 焦げを落とした（/compact）
+        if let last = runtime.lastTurn, last.prompt == MochiPlay.compactCommand {
+            add("tool", text: last.state == .completed ? L("🧽 焦げを落としました（会話を要約して軽くしました）") : L("🧽 焦げを落としています…"))
         }
         if let last = runtime.lastTurn, last.state == .error || last.state == .cancelled, let e = last.error, !e.isEmpty {
             add("error", caption: last.state == .error ? L("エラー") : L("キャンセル済み"), style: "error", text: e)
@@ -810,7 +873,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     /// 指示のうち、本人が打った部分（添付・画面の欄の前まで）
     static func typedText(_ prompt: String) -> String {
         var t = prompt
-        for m in [attachMarker, ScreenContext.marker, PromptQueues.resultMarker] { if let r = t.range(of: m) { t = String(t[..<r.lowerBound]) } }
+        for m in [attachMarker, ScreenContext.marker, PromptQueues.resultMarker] + MochiPlay.suffixMarkers { if let r = t.range(of: m) { t = String(t[..<r.lowerBound]) } }
         return t.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -843,7 +906,9 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         for r in raw {
             if r.hasPrefix(TeamCoordinator.requestMarker) { continue }
             var t = r
-            for m in [ScreenContext.marker, attachMarker, PromptQueues.resultMarker] {
+            // OMOCHI AI が送った指示（温め直し・くっつく・焦げを落とす）は、↑ の履歴に出さない
+            if r.hasPrefix(MochiPlay.warmPrefix) || r.hasPrefix(MochiPlay.mergePrefix) || r.trimmingCharacters(in: .whitespacesAndNewlines) == MochiPlay.compactCommand { continue }
+            for m in [ScreenContext.marker, attachMarker, PromptQueues.resultMarker] + MochiPlay.suffixMarkers {
                 if let range = t.range(of: m) { t = String(t[..<range.lowerBound]) }
             }
             t = t.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -890,6 +955,12 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
                 self.manager?.queues.enqueue(owner: id, text: text, suffix: suffix.isEmpty ? nil : suffix)
                 self.refresh()
             }
+            return
+        }
+        // 🍡 串に流す：送った指示を串の 1 段目に渡し、結果を順に次の段へ
+        if dangoButton.state == .on, !dangoButton.isHidden, let m = manager, let sk = m.skewer(containing: id) {
+            if let err = m.runSkewer(sk, input: prompt) { setInputHint(err); NSSound.beep() }
+            refresh()
             return
         }
         guard wantScreen else { send(prompt); return }
@@ -1103,6 +1174,51 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         submit()
     }
     @objc private func renameAgent() { if let j = jelly { manager?.promptRename(j) } }
+
+    @objc private func warmUp() { if let j = jelly { manager?.warmUp(j) } }
+    @objc private func scrapeChar() { if let j = jelly { manager?.scrapeChar(j) } }
+    @objc private func dangoToggled() {
+        dangoButton.title = dangoButton.state == .on ? L("🍡 串に流す: オン") : L("🍡 串に流す")
+        window.makeFirstResponder(input)
+    }
+
+    /// あんこの一覧（✕ で外す・＋ で足す）
+    private func refreshAnko() {
+        let list = runtime.anko
+        guard list != shownAnko else { return }
+        shownAnko = list
+        ankoRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        ankoRow.isHidden = list.isEmpty
+        guard !list.isEmpty else { return }
+        let label = NSTextField(labelWithString: L("🫘 あんこ:"))
+        label.font = .systemFont(ofSize: 11.5, weight: .medium)
+        label.toolTip = L("大福のあんこ：このおもちがいつも参照する資料。毎回の案内に入り、関係する依頼ではまずここを読みます")
+        ankoRow.addArrangedSubview(label)
+        for p in list {
+            let b = NSButton(title: (p as NSString).lastPathComponent + " ✕", target: self, action: #selector(removeAnko(_:)))
+            b.bezelStyle = .accessoryBarAction
+            b.controlSize = .small
+            b.font = .systemFont(ofSize: 11)
+            b.toolTip = L("外す: %@", p)
+            b.identifier = NSUserInterfaceItemIdentifier(p)
+            (b.cell as? NSButtonCell)?.lineBreakMode = .byTruncatingMiddle
+            b.setContentCompressionResistancePriority(.init(200), for: .horizontal)
+            ankoRow.addArrangedSubview(b)
+        }
+        let add = NSButton(title: "＋", target: self, action: #selector(addAnko))
+        add.bezelStyle = .accessoryBarAction
+        add.controlSize = .small
+        add.toolTip = L("あんこを足す…")
+        ankoRow.addArrangedSubview(add)
+        ankoRow.addArrangedSubview(NSView())
+    }
+
+    @objc private func removeAnko(_ b: NSButton) {
+        guard let p = b.identifier?.rawValue, let j = jelly else { return }
+        manager?.removeAnko(p, from: j)
+    }
+
+    @objc private func addAnko() { if let j = jelly { manager?.chooseAnko(for: j) } }
 
     @objc private func toggleListen() {
         if let j = jelly { manager?.toggleListening(j) }

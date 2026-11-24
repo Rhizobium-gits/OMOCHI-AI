@@ -1,6 +1,6 @@
 """recorder の出力（frame-*.png + timeline.json）から README 用の GIF を作る。
 
-    python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link crossai connectors]
+    python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link crossai connectors mochi]
 
 - 字幕・タップの輪は録画時の events（手順の時刻・おもちの位置・状態の変化）から付ける
 - 再生速度は実時間のまま。AI の返事を待つだけの長い間だけ早送りし、右上に「早送り ×3」を出す
@@ -248,6 +248,22 @@ if want("link"):
             (ev["cut"]["t"], "Option を押しながら離す → 切り離し"),
             (ev["scissors"]["t"], "線の ✂ でも切れる")]
     render("link", "demo-link.gif", ev["drag1"]["t"] - 0.8, ev["end"]["t"], caps)
+
+# ---- 5.5 お餅の性質（ちぎる・ふくらむ・硬くなる・大福・鏡餅・串だんご・餅まき・くっつく） ----------
+if want("mochi"):
+    d, tl, ev = load("mochi")
+    caps = [(0, "つながりは のびるお餅の糸（離すほど細く、仕事中はぴんと張る）"),
+            (ev["tear"]["t"], "Command を押しながら引っぱると ちぎれて分身（同じ会話から別のやり方を）"),
+            (ev["puff"]["t"], "会話がたまるほど ふくらむ"),
+            (ev["char"]["t"], "上限が近いと 焦げ目 → 焦げを落とす（会話を要約）"),
+            (ev["hard"]["t"], "しばらく使わないと 硬くなる"),
+            (ev["warm"]["t"], "温め直すと 必要なファイルを読み直して やわらかく"),
+            (ev["anko"]["t"], "ファイルを落とすと 大福に（あんこ＝いつも参照する資料）"),
+            (ev["stack"]["t"], "頭に載せると 鏡餅（上がリーダー・下が部下）"),
+            (ev["skewer"]["t"], "串に刺すと 順番に仕事が流れる（串だんご）"),
+            (ev["toss"]["t"], "餅まき：1 つの指示を何体にもまいて 答えを比べる"),
+            (ev["merge"]["t"], "重ねると くっつく（良いほうを残す・まとめる）")]
+    render("mochi", "demo-mochi.gif", ev["link"]["t"] - 0.6, ev["end"]["t"], caps)
 
 # ---- 6. 予約（作業中に次の指示を積む・ほかのおもちへつなぐ） ----------------------------
 if want("queue"):

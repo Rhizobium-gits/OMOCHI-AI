@@ -30,6 +30,12 @@ protocol Avatar: AnyObject {
     var anchor: CGPoint { get }
     /// 名前ラベルを置く高さ（ウィンドウローカル pt）
     var labelY: CGFloat { get }
+    /// 会話の大きさ（ふくらみ・焦げ目）・硬さ・あんこ（大福）・鏡餅のだいだい・温め直しの湯気
+    func setLook(_ look: MochiLook)
+    /// くっつく：相手を取り込む
+    func absorb()
+    /// くっついて溶けて消える
+    func melt(_ done: @escaping () -> Void)
 }
 
 extension Avatar {

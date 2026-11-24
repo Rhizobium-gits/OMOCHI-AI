@@ -1,0 +1,14 @@
+{
+ "newJellyHotKey": {
+  "keyCode": 64,
+  "modifiers": 6912
+ },
+ "fallbackHotKey": {
+  "keyCode": 79,
+  "modifiers": 6912
+ },
+ "toggleVisibilityHotKey": {
+  "keyCode": 80,
+  "modifiers": 6912
+ }
+}

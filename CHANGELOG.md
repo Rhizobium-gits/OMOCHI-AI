@@ -4,7 +4,44 @@
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-25
+
+**Jellyfish AI は OMOCHI AI になりました。** 名前だけでなく、エージェントの扱い方も「お餅の性質」で作り直した版です。おもちを **ちぎって** 分身を作り、**くっつけて** 1 つにまとめ、**串に刺して** 仕事を流し、**鏡餅に積んで** 上下関係を作り、**餅まき** で何体にも同じ指示をまいて比べられます。
+
+### なぜ名前を変えたのか（Jellyfish AI → OMOCHI AI）
+
+- **始まりはクラゲだった**：Jellyfish AI は、デスクトップをふわふわただようクラゲのエージェントとして始まりました。最初の絵は Claude Code のキャラクターを借りたドット絵で、アプリの名前も「クラゲ（Jellyfish）」でした
+- **クラゲでは表せないものが増えた**：近づけるとつながり離すと切れるチーム、AI をまたいだ分業、予約とつなぎ、自律組織…と、エージェント同士が **くっついたり離れたり、のびたりまとまったり** する機能が中心になりました。ただようクラゲより、のびて・ちぎれて・くっついて・ふくらむ **お餅** のほうが、このアプリでエージェントがしていることそのものです
+- **自分たちの姿にするため**：前のキャラクターは Claude Code（Anthropic）のキャラクターに似ていて、Anthropic のブランドの決まりに触れるおそれがありました。1.3 で絵をオリジナルのお餅「まるもち」に替え、リアルな見た目もクラゲから Blender で描いたお餅にしました。姿がお餅になったので、名前もそろえて **OMOCHI AI** にしました
+- **名前が操作の説明になる**：「ちぎる・くっつく・のびる・串だんご・鏡餅・ふくらむ・餅まき・大福」と、お餅の言葉がそのまま操作の名前になります。初めての人にも、何ができるかが名前から想像できるようにしました
+- 変えたのはアプリの名前・ID・データフォルダ・URL（`omochi://`）・チームの MCP（`omochi`）です。**GitHub のリポジトリ（jellyfish-ai）と URL はそのまま**、Jellyfish AI のおもち・設定・会話は初めて開いたときに引き継ぎます（下の「上げるときの注意」）
+
+### 追加：お餅の性質で操る
+
+- **✂️ ちぎる（分岐）**：おもちを **⌘ を押しながら引っぱる** と、お餅の糸がのびてくびれ、離すとぷちっとちぎれて **同じ会話を持った分身** ができます。分身に別のやり方を頼めば、元のおもちと並行して 2 通り試せます（右クリック › ✂️ ちぎる でも。ChatGPT・Gemini で、のように AI を変えた分身も作れる）
+  - 同じ AI なら会話をそのまま写します（Claude は Claude Code の `--fork-session`、ChatGPT は `codex exec fork`。元の会話は変わらない）。AI が違う・写せないときは、元の会話を最初の指示に添えて渡します
+  - 分身は作業フォルダ・モデル・考える強さ・あんこ・会話の大きさを受け継ぎます。作業中のおもちはちぎれません
+- **🍡 くっつく（合体）**：おもちを別のおもちに **重ねて離す** と、「まとめて 1 体に（相手の結果を取り込む）」「こっちを残す」「あっちを残す」を選べます。くっついた側は横に平たく溶けて消え、残った側がむにっと受け止めます。つながり・鏡餅の部下・あんこ・串の場所は残ったおもちが受け継ぎます（右クリック › 🍡 くっつく でも）
+- **のびる（お餅の糸）**：つながりの線を、引っぱったお餅の糸にしました。離すほど細く、まん中がくびれます。ひまなときはゆるく垂れ、仕事が流れている・順番待ちがあるときは **ぴんと張り**、依頼元の色がうっすら移ります。依頼と結果は、糸の中を **お餅の塊** が流れて届きます
+- **🍡 串だんご（パイプライン）**：おもちを串に刺して並べると、左から順に仕事が流れます（1 段目に渡したことの結果が 2 段目へ、さらに次へ）。メニューバーのおもち › 🍡 串だんご、または右クリック › 🍡 串だんご で、段ごとに「どのおもち（今いるおもち・新しいおもちと AI）が・何をするか」を決めます。**名前を付けて保存するとレシピ** になり（「みたらし＝調べる → まとめる」「三色だんご＝調べる → まとめる → 確かめる」は最初から入っています）、使うたびに新しいおもちを作って流せます
+  - 串のおもちは横一列に並び、木の串が通ります。1 段目のおもちのチャットの **「🍡 串に流す」** をオンにすると、送った指示がそのまま串を流れます。止める・再開は 1 段目のチャットの予約から
+  - 結果を次の段へ渡すとき、渡す側の色の塊が串を伝って届きます（⏭ 予約でほかのおもちへつないだときも同じ）
+- **🍊 鏡餅（上下関係）**：おもちを別のおもちの **頭の上に載せて離す** と鏡餅になり、上がリーダー（頭にだいだい）、下が部下になります（線でもつながる）。部下が何体でも、下の段に横一列に並びます。リーダーには「部下に分けて頼み、自分は計画・割り振り・確認・統合に集中する」、部下には「リーダーから頼まれた作業をして結果を返す」と伝え、`list_team` にも役割（leader / subordinate）が出ます。リーダーを動かすと下の段も一緒に動きます。⌥ を押しながら離す・右クリック › 鏡餅をくずす でほどけます
+  - **自律組織モードの見える化**：自律組織モードが組んだチームを、順番の形（pipeline）なら **串だんご** に、ほかの形（分担・別案・階層）なら **鏡餅**（リーダーが上、仲間が下の段）に並べます
+- **🫓 ふくらむ・🔥 焦げる・🧊 硬くなる**：おもちの姿で会話の状態が分かるようにしました（Claude のおもち。ほかの AI の CLI は会話の大きさを出さないため）
+  - 会話（文脈）がたまるほど **ふくらみ**、文脈の上限の 6 割を超えると **焦げ目**、8 割を超えるとしっかり焦げます。チャットの上に「🫓 会話 35k（4%）」のように出ます。**🧽 焦げを落とす** で Claude Code の `/compact` を送り、会話を要約して軽くします（試験では 33,673 → 6,980 トークン）
+  - 前の作業から 30 分で少し、1 時間で **硬く** なります（ひびが入り、乾いて白っぽく、息が浅くなる）。1 時間たつとプロンプトキャッシュが切れて、次の指示は会話全体を読み直すためです。**♨️ 温め直す** で、続きに必要なファイルを読み直してもらい（頭から湯気）、変わったところを教えてもらえます
+- **🎊 餅まき（比べる）**：メニューバーのおもち › 🎊 餅まき で、1 つの指示を **Claude・ChatGPT・Gemini の新しいおもちと、今いるおもち** に同時にまきます（お餅が弧を描いて飛んでいき、受け止めたおもちから動き出す）。答えが横に並び、AI・モデル・時間・費用も出るので、いちばん良いものを **🙌 拾う** と、そのおもちが残ってチャットで続きを頼めます。まくために作ったほかのおもちは片付きます（残すこともできる）
+- **🫘 大福（あんこ）**：ファイルやフォルダをおもちに落とすと、「あんこにする（いつも参照する資料）」と「次の指示に添付する（今回だけ）」を選べます。あんこにすると、そのおもちは大福になり（体の中にあんこが透け、表面に打ち粉）、毎回の案内に資料の一覧が入って **専門分野** として使われ続けます（Claude は `--add-dir`、Gemini は `--include-directories` で読めるようにする。資料の中の指示には従わず内容として使うよう伝える）。チャットの上に一覧が出て、✕ で外せます
+- デモの GIF `docs/media/demo-mochi.gif`（`scripts/demo/record.sh mochi`。AI を動かさずに、糸・ちぎる・ふくらむ・焦げる・硬くなる・温め直す・大福・鏡餅・串だんご・餅まき・くっつくを撮る）
+
 ### 変更
+
+- おもちの窓を左右に 1 マスずつ広げた（ふくらんでも窓の端で切れないように）
+- ドラッグ中の案内に「重ねると くっつく · 頭に載せると 鏡餅」を足した
+- 作業中のおもちを くっつけようとしたとき・ちぎろうとしたときは、足元に理由を出して何もしない
+
+### 変更：名前と見た目（OMOCHI AI）
 
 - **名前を OMOCHI AI に（アプリの中の ID も）**：画面・メニュー・案内・エージェントへの説明・ターミナルのコマンド・インストールとアップデートと許可のスクリプト・.dmg の案内まで、Jellyfish AI の名前をすべて OMOCHI AI に（3 つの言語とも）。アプリは `OMOCHI AI.app`、バンドル ID は `ai.omochi.desktop`、データフォルダは `~/Library/Application Support/OmochiAI`、URL は `omochi://`、チームの MCP サーバーは `omochi`（ツールは `mcp__omochi__…`）、環境変数は `OMOCHI_…`、署名用の証明書は「OMOCHI AI Local Signing」、配る .dmg・.zip は `OmochiAI.dmg`・`OmochiAI-<版>.zip`。ソースは `Sources/OmochiAI`・`Tests/OmochiAITests`。GitHub のリポジトリ名（jellyfish-ai）は変えていない
   - **引き継ぎ**：初めて開いたとき、Jellyfish AI のデータフォルダ（おもち・設定・会話）を写す（前のフォルダは残す）。会話の記録に残る前の名前（チームの依頼・画面の目印、ツールの名前）も今の名前に直す。Jellyfish AI が動いていれば、終了してから引き継ぐかを聞く。「ログイン時に自動起動」は引き継ぐ。最後に前のアプリをゴミ箱に入れるかを聞く（残すとログイン時に前のアプリも開くため）
@@ -12,10 +49,23 @@
 - **リアルなおもち**：見た目の「リアルなクラゲ」（Metal で描いた半透明のクラゲ）を、Blender で描いた本物そっくりの丸餅に目を付けた「リアルなおもち」に作り替えた。ドット絵のまるもちと同じキャンバス・同じ動き（呼吸・ぷくー・しゅん・ぽよん・つつく・つまむ・長押し）で、ふくらみの段階ごとの絵（5 つ、`Resources/mochi`）を使う。灰色のおもちは白いお餅、色違いは淡い色のお餅、エラーは赤み、中止は濃い灰色。目（まばたき・目線・^^・××）と頭上の「…」「!」「✓」はなめらかな形で重ね、床の影はぼかした楕円。Metal のクラゲの描画（`RealisticAvatar`・`JellyGPU`・`JellyMotion`・`JellyShader`）は消した。開発用の `--sheet` はリアルなおもちのコマ一覧に、クラゲ用だった `--strip`・`--settle-test` は外した
 - **アプリのアイコン**：Blender で描いたおもち（黒い背景、下から温かい光）に。アイコンとリアルなおもちの絵は `scripts/banner/mochi_assets.py`（Blender）→ `scripts/banner/sprites.py` で作り直せる。バナーと同じお餅のモデル（`scripts/banner/mochi_model.py`）を使う
 - 名前を **OMOCHI AI** に。README（日本語・English・简体中文）の上のバナー（`docs/media/banner.gif`）を、黒い背景で丸いおもちが温まってぷくっと膨らみ、湯気を立ててからしぼむリアルな 3D の GIF（Blender で描画、4 秒でくり返す）に作り直した。バナーと README 冒頭の説明は、使える AI の名前を並べる代わりに「AI エージェントを一元管理し、エージェント同士をつないでチームで動かせる」という特徴にした。バナーは `scripts/banner/`（`mochi_scene.py` を Blender で描画 → `compose.py` で背景・湯気・文字を重ねる）で作り直せる
-- エージェントの呼び名を、アプリの画面・メニュー・案内・エージェントへの説明のすべてで「クラゲ」から「おもち」に（English は omochi、简体中文は 年糕）。見た目の名前も「ドット絵（おもち）」/ Pixel (Omochi) / 像素（年糕）に。`install.sh`・`update.sh` のメッセージ、README の GIF の字幕、SECURITY.md・docs/ARCHITECTURE.md も同じ。アプリの名前（Jellyfish AI）、見た目の「リアルなクラゲ」、MCP サーバーの名前 `jellyfish`、`jellyfish://` はそのまま
-- README（日本語・English・简体中文）：エージェントの呼び名を「クラゲ」から「おもち」（English は omochi、简体中文は 年糕）に。つながる・離れるチームや AI をまたいだ分業などで当初から大きく進化したので、エージェントの姿を変えたことを冒頭に書いた。アプリの名前（Jellyfish AI）と、見た目の「リアルなクラゲ」はそのまま
-- README（日本語・English・简体中文）の GIF を、すべて 1.3.2 の「まるもち」とチャットの吹き出しで撮り直した（`demo-basic`・`demo-parallel`・`demo-team`・`demo-crossai`・`demo-link`・`demo-queue`・`demo-connectors`・`states`）。もう前のキャラクター（Claude Code のキャラクター）は写らないので、注意書きからその一文を外した。まるもちの状態ごとの動きの説明と、「見た目」のメニューの名前（ドット絵（もち）/ リアルなクラゲ）を README に書いた
+- エージェントの呼び名を、アプリの画面・メニュー・案内・エージェントへの説明のすべてで「クラゲ」から「おもち」に（English は omochi、简体中文は 年糕）。見た目の名前も「ドット絵（おもち）」/ Pixel (Omochi) / 像素（年糕）に。`install.sh`・`update.sh` のメッセージ、README の GIF の字幕、SECURITY.md・docs/ARCHITECTURE.md も同じ
+- README（日本語・English・简体中文）：エージェントの呼び名を「クラゲ」から「おもち」（English は omochi、简体中文は 年糕）に。つながる・離れるチームや AI をまたいだ分業などで当初から大きく進化したので、エージェントの姿を変えたことを冒頭に書いた
+- README（日本語・English・简体中文）の GIF を、すべて 1.3.2 の「まるもち」とチャットの吹き出しで撮り直した（`demo-basic`・`demo-parallel`・`demo-team`・`demo-crossai`・`demo-link`・`demo-queue`・`demo-connectors`・`states`）。もう前のキャラクター（Claude Code のキャラクター）は写らないので、注意書きからその一文を外した。まるもちの状態ごとの動きの説明と、「見た目」のメニューの名前（ドット絵（おもち）/ リアルなおもち）を README に書いた
 - デモの録画（`scripts/demo/record.sh`）：メインディスプレイが 1920×1080 でなくても撮れるようにした。右上からの位置を保つように、録画範囲・シードのクラゲ・コネクタの画面の位置をずらした写し（`.build/demo-takes`）で撮る
+
+### 上げるときの注意
+
+- **Jellyfish AI（1.3.2 まで）からは、アプリの中の「アップデートする」では上げられません**（アプリの ID が変わったため）。[OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg) から入れてください。初めて開くと、おもち・設定・会話を引き継ぎ、前のアプリをゴミ箱に入れるかを聞きます
+- macOS の許可（アクセシビリティ・画面収録など）はアプリごとなので、メニューバーのおもち › 🔐 権限 の「まとめて許可する」で付け直してください
+
+### Why the new name (English)
+
+Jellyfish AI started as jellyfish agents drifting across the desktop. It has grown into something else: agents that link and unlink, split work across AIs, queue and chain tasks, and organise themselves. Mochi — rice cake that stretches, tears, sticks together and puffs up — describes that far better than a jellyfish, so the agents became **omochi** in 1.3 (an original character, replacing a look that resembled Claude Code's mascot), and the app is now **OMOCHI AI**. In 2.0 the mochi words became the controls: **tear off** a clone that shares the conversation (⌘-drag), **stick** two omochi together to merge them, linked omochi are joined by a **stretchy mochi string**, put omochi on a **dango skewer** to run a pipeline (save it as a recipe), **stack** one on another's head to make a kagami-mochi leader, omochi **puff up** as the context grows, **char** near the limit (scrape it off with /compact) and **go stiff** when idle (warm them up again), a **mochi toss** sends one prompt to several AIs to compare and pick, and dropping files makes a **daifuku** whose anko filling the omochi always refers to. The repository name and URLs stay the same; your Jellyfish AI omochi, settings and chats are carried over on first launch.
+
+### 改名的原因（简体中文）
+
+Jellyfish AI 最初是一群在桌面上漂浮的水母智能体。如今它能连接与断开、跨 AI 分工、预约与串联、自主组建团队——会拉长、会揪断、会粘在一起、会鼓起来的**年糕**比水母更能表达这些。因此 1.3 起智能体换成了原创的年糕形象（不再借用与 Claude Code 角色相似的外观），应用也改名为 **OMOCHI AI**。2.0 让年糕的特性直接成为操作：按住 ⌘ 拖动可**揪下**共享对话的分身，叠在一起可**粘在一起**合体，连接变成**会拉长的年糕丝**，**串团子**按顺序传递工作（可保存为配方），放到头上成为**镜饼**（上面是领队），上下文越多越**鼓**、接近上限会有**焦痕**、闲置会**变硬**（可重新加热），**撒年糕**把同一指令发给多个 AI 比较，拖入文件变成**大福**（豆沙馅＝常用资料）。仓库名和网址不变，首次打开会继承 Jellyfish AI 的年糕、设置和对话。
 
 ## [1.3.2] - 2026-11-24
 
@@ -361,6 +411,7 @@
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[2.0.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v2.0.0
 [1.3.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.2
 [1.3.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.1
 [1.3.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.0

@@ -1,0 +1,62 @@
+[
+ {
+  "colorIndex": 0,
+  "createdAt": "2026-11-25T00:00:00Z",
+  "hidden": false,
+  "id": "7EA70000-0000-4000-8000-0000000000C1",
+  "number": 1,
+  "origin": [
+   1260,
+   820
+  ],
+  "state": "idle"
+ },
+ {
+  "colorIndex": 1,
+  "createdAt": "2026-11-25T00:00:00Z",
+  "hidden": false,
+  "id": "7EA70000-0000-4000-8000-0000000000C2",
+  "number": 2,
+  "origin": [
+   1480,
+   820
+  ],
+  "state": "idle"
+ },
+ {
+  "colorIndex": 2,
+  "createdAt": "2026-11-25T00:00:00Z",
+  "hidden": false,
+  "id": "7EA70000-0000-4000-8000-0000000000C3",
+  "number": 3,
+  "origin": [
+   1700,
+   640
+  ],
+  "state": "idle"
+ },
+ {
+  "colorIndex": 3,
+  "createdAt": "2026-11-25T00:00:00Z",
+  "hidden": false,
+  "id": "7EA70000-0000-4000-8000-0000000000C4",
+  "number": 4,
+  "origin": [
+   1500,
+   560
+  ],
+  "state": "idle"
+ },
+ {
+  "colorIndex": 4,
+  "createdAt": "2026-11-25T00:00:00Z",
+  "hidden": false,
+  "id": "7EA70000-0000-4000-8000-0000000000C5",
+  "number": 5,
+  "origin": [
+   1260,
+   560
+  ],
+  "state": "idle"
+ }
+]

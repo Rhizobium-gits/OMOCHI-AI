@@ -11,6 +11,8 @@ enum AgentEvent {
     case finished(success: Bool, result: String, costUSD: Double?, durationMs: Int?)
     /// 使ったトークン（モデルごと。CLI が出したものだけ。model が nil なら CLI の既定のモデル）
     case usage(model: String?, input: Int, output: Int, cached: Int)
+    /// いまの会話の大きさ（文脈のトークン数）と、そのモデルの上限。分かったほうだけ（おもちのふくらみ・焦げ目に使う）
+    case context(tokens: Int?, window: Int?)
 }
 
 /// ターンごとの実行オプション（おもちごとにチャット画面から変えられる）
@@ -43,6 +45,9 @@ struct AgentRunOptions {
     var mcpTools: [String] = []
     /// Codex の developer_instructions に入れるチームの案内（Gemini は MCP の instructions で渡す）
     var instructions: String? = nil
+    /// ちぎる（分岐）：この会話（sessionID）を写して、新しい会話として続ける。
+    /// Claude は --resume <元> --fork-session --session-id <新>、Codex は exec fork <元>
+    var forkFrom: String? = nil
 }
 
 /// 実行中の 1 ターン
@@ -65,6 +70,8 @@ protocol AgentBackend {
     var defaultModel: String? { get }
     /// 実際に適用される権限ポリシーの説明（ユーザーが確認できるように UI に出す）
     var policyDescription: String { get }
+    /// 会話を写して新しい会話にできるか（ちぎる）。できなければ、元の会話を指示に添えて渡す
+    var canFork: Bool { get }
 
     /// 1 ターン実行する。onEvent / onExit はメインスレッドで呼ばれる。
     func run(prompt: String,
@@ -75,4 +82,8 @@ protocol AgentBackend {
              options: AgentRunOptions,
              onEvent: @escaping (AgentEvent) -> Void,
              onExit: @escaping (_ status: Int32, _ stderrTail: String) -> Void) throws -> AgentHandle
+}
+
+extension AgentBackend {
+    var canFork: Bool { false }
 }

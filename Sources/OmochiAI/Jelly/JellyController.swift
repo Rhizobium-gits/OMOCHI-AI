@@ -43,7 +43,8 @@ final class JellyHostView: NSView {
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let urls = fileURLs(sender)
         guard !urls.isEmpty, let c = controller else { return false }
-        c.manager?.attachFiles(urls, to: c)
+        // あんこにする（大福）か、次の指示に添付するかを聞く
+        c.manager?.filesDropped(urls, on: c)
         return true
     }
 
@@ -68,6 +69,8 @@ final class JellyController: NSObject {
     private var longPressFired = false
     static let longPressDuration = 0.65
     private(set) var isDragging = false
+    /// ⌘ を押してドラッグを始めた：自分は動かず、分身を引っぱり出している（ちぎる）
+    private var tearing = false
     /// 押しただけでなく実際に動かしている
     var isBeingDragged: Bool { isDragging && dragged }
     private(set) var isVisible = false
@@ -216,10 +219,18 @@ final class JellyController: NSObject {
         if !dragged {
             pressTimer?.invalidate()
             avatar.pressCancelled()
-            avatar.dragBegan()
-            manager?.jellyDragBegan(self, origin: dragStartOrigin)
+            // ⌘ を押したまま引っぱると、ちぎって分身を作る
+            tearing = NSEvent.modifierFlags.contains(.command) && (manager?.tearBegan(self) ?? false)
+            if !tearing {
+                avatar.dragBegan()
+                manager?.jellyDragBegan(self, origin: dragStartOrigin)
+            }
         }
         dragged = true
+        if tearing {
+            manager?.tearDragged(self, to: NSPoint(x: dragStartOrigin.x + dx, y: dragStartOrigin.y + dy))
+            return
+        }
         panel.setFrameOrigin(NSPoint(x: dragStartOrigin.x + dx, y: dragStartOrigin.y + dy))
         manager?.jellyDragged(self, mods: NSEvent.modifierFlags)
     }
@@ -231,6 +242,11 @@ final class JellyController: NSObject {
         defer { dragStartMouse = nil }
         if longPressFired { return }
         avatar.pressCancelled()
+        if tearing {
+            tearing = false
+            manager?.tearEnded(self)
+            return
+        }
         if dragged {
             avatar.dragEnded()
             update { $0.origin = panel.frame.origin }

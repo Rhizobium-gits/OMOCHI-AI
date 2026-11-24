@@ -197,9 +197,13 @@ final class TeamCoordinator {
         let start: NSPoint
         /// 同じチームの仲間の、ドラッグ開始時の位置（⇧ で一緒に動かす）
         let mates: [UUID: NSPoint]
+        /// 鏡餅の下の段（リーダーを動かすと、いつも一緒に動く）
+        var followers: [UUID: NSPoint] = [:]
         var group = false
         var cutting = false
         var candidate: UUID?
+        /// 置いたら何が起きるか（つながる・くっつく・上に載る）
+        var kind: MochiPlay.DropKind?
     }
     private var drag: DragSession?
     /// 置いたあと滑らせている間も「つながる先」の表示を残す
@@ -221,6 +225,16 @@ final class TeamCoordinator {
             if let mc = controller(m), mc.isVisible { mates[m] = mc.panel.frame.origin }
         }
         drag = DragSession(id: id, start: origin, mates: mates)
+        // 鏡餅：リーダーを動かすと、下の段（とその下）も一緒に動く
+        var followers: [UUID: NSPoint] = [:]
+        var stack = [id]
+        while let x = stack.popLast() {
+            for sub in manager?.subordinates(of: x) ?? [] where followers[sub.record.id] == nil && sub.record.id != id && sub.isVisible {
+                followers[sub.record.id] = sub.panel.frame.origin
+                stack.append(sub.record.id)
+            }
+        }
+        drag?.followers = followers
     }
 
     /// ドラッグ中（動くたび・修飾キーが変わるたび）
@@ -239,11 +253,17 @@ final class TeamCoordinator {
             }
         }
         s.group = group
-        // ⌥：離すとこのおもちのつながりを全部切る
-        s.cutting = mods.contains(.option) && !neighbors(id).isEmpty
-        let cand = s.cutting ? nil : adjacentCandidate(for: c, excluding: group ? Set(s.mates.keys) : [])
-        if let cand, cand.record.id != s.candidate { cand.avatar.poke() }
-        s.candidate = cand?.record.id
+        // ⌥：離すとこのおもちのつながり（と鏡餅の上下）を全部切る
+        s.cutting = mods.contains(.option) && (!neighbors(id).isEmpty || c.record.leaderID != nil || !s.followers.isEmpty)
+        // 鏡餅の下の段はいつも一緒に動く（⌥ で切り離すときは置いていく）
+        for (m, p) in s.followers where !(group && s.mates[m] != nil) {
+            controller(m)?.panel.setFrameOrigin(s.cutting ? p : NSPoint(x: p.x + dx, y: p.y + dy))
+        }
+        let skip = (group ? Set(s.mates.keys) : []).union(s.cutting ? [] : Set(s.followers.keys))
+        let found = s.cutting ? nil : dropCandidate(for: c, excluding: skip, group: group)
+        if let cand = found?.0, cand.record.id != s.candidate || found?.1 != s.kind { cand.avatar.poke() }
+        s.candidate = found?.0.record.id
+        s.kind = found?.1
         drag = s
         refresh()
     }
@@ -262,10 +282,22 @@ final class TeamCoordinator {
                 movers.append(mc)
             }
         }
+        for m in s.followers.keys where !(s.group && s.mates[m] != nil) {
+            if let mc = controller(m) { mc.moveTo(mc.panel.frame.origin, persist: true); movers.append(mc) }
+        }
         if s.cutting {
             unlinkAll(id)
+            manager?.unstack(c)
             refresh()
             return
+        }
+        // くっつく・上に載る
+        if let tid = s.candidate, let t = controller(tid), let m = manager {
+            switch s.kind {
+            case .merge?: refresh(); m.dropForMerge(c, onto: t); return
+            case .stack?: m.stack(c, on: t); return
+            default: break
+            }
         }
         guard let tid = s.candidate, let t = controller(tid), canLink(id, tid) else {
             if let tid = s.candidate { AppLog.write("link refused: \(name(id)) — \(name(tid))") }
@@ -289,6 +321,39 @@ final class TeamCoordinator {
             controller(b)?.avatar.poke()
         } else {
             refresh()
+        }
+    }
+
+    /// 置いたら何が起きるかと、その相手：真上に重なる → くっつく、相手の頭の上 → 上に載る（鏡餅）、近く → つながる。
+    /// ⇧ でチームごと動かしているときは、つながるだけ
+    private func dropCandidate(for c: JellyController, excluding: Set<UUID>, group: Bool) -> (JellyController, MochiPlay.DropKind)? {
+        guard let m = manager else { return nil }
+        let p = c.anchorPoint
+        let w = c.panel.frame.width
+        var best: (JellyController, MochiPlay.DropKind, CGFloat)?
+        let rank: [MochiPlay.DropKind: Int] = [.merge: 0, .stack: 1, .link: 2]
+        for o in m.controllers where o !== c && o.isVisible && !excluding.contains(o.record.id) {
+            let dx = p.x - o.anchorPoint.x, dy = p.y - o.anchorPoint.y
+            guard var k = MochiPlay.dropKind(dx: dx, dy: dy, width: w) else { continue }
+            if group && k != .link { k = .link }
+            if k == .link && (!m.settings.teamEnabled || isLinked(o.record.id, c.record.id)) { continue }
+            if k == .stack && o.record.leaderID == c.record.id && hypot(dx, dy) < w { continue }
+            let d = hypot(dx, dy)
+            if let b = best, (rank[b.1]!, b.2) <= (rank[k]!, d) { continue }
+            best = (o, k, d)
+        }
+        return best.map { ($0.0, $0.1) }
+    }
+
+    /// 少しのあいだ、おもちの足元にヒントを出す
+    private var flash: (id: UUID, text: String)?
+    func flashHint(on c: JellyController, _ text: String) {
+        flash = (c.record.id, text)
+        refresh()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            guard let self, self.flash?.text == text else { return }
+            self.flash = nil
+            self.refresh()
         }
     }
 
@@ -381,25 +446,57 @@ final class TeamCoordinator {
         if !m.settings.allHidden {
             for c in m.controllers where c.isVisible {
                 let id = c.record.id
-                guard hovered == id || !neighbors(id).isEmpty || running[id] != nil else { continue }
-                labels.append(.init(id: id, text: c.record.title, at: c.labelPoint, color: c.record.color.nsColor))
+                let step = m.skewerStepLabel(id)
+                let leader = m.controllers.contains { $0.record.leaderID == id }
+                guard hovered == id || !neighbors(id).isEmpty || running[id] != nil || step != nil || leader else { continue }
+                // 串の段は短く（隣どうしがくっついているので）。ポインタを載せると名前
+                let text = step.map { hovered == id ? $0 + " · " + c.record.title : $0 } ?? ((leader ? "🍊 " : "") + c.record.title)
+                labels.append(.init(id: id, text: text, at: c.labelPoint, color: c.record.color.nsColor))
             }
+        }
+        // 仕事が流れている・詰まっている糸はぴんと張る（依頼の道の上の糸と、順番待ちのいる相手への糸）
+        var taut: Set<JellyLink> = []
+        for t in tasks.values where t.status == .running || t.status == .queued {
+            if let p = path(from: t.from, to: t.to) { for (x, y) in zip(p, p.dropFirst()) { taut.insert(JellyLink(x, y)) } }
         }
         var preview: LinkOverlay.Preview?
         var pills: [LinkOverlay.Pill] = []
         var warn: Set<JellyLink> = []
         let pair = drag.flatMap { s in s.candidate.map { (s.id, $0) } } ?? pendingLink
         if let (a, b) = pair, let ca = controller(a), let cb = controller(b), ca.isVisible, cb.isVisible {
-            let ok = pendingLink != nil || canLink(a, b)
+            let kind = pendingLink != nil ? .link : (drag?.kind ?? .link)
+            let busy = [a, b].contains { id in controller(id).flatMap { m.runtime(for: $0) }?.isRunning == true }
+            let ok: Bool
+            switch kind {
+            case .link: ok = pendingLink != nil || canLink(a, b)
+            case .merge: ok = !busy
+            case .stack: ok = isLinked(a, b) || canLink(a, b)
+            }
             let color = ca.record.color.nsColor
-            preview = .init(from: ca.anchorPoint, to: cb.anchorPoint, color: color, ok: ok, radius: cb.panel.frame.width * 0.62)
+            preview = .init(from: ca.anchorPoint, to: cb.anchorPoint, color: color, ok: ok, radius: cb.panel.frame.width * 0.62,
+                            kind: kind == .merge ? .merge : (kind == .stack ? .stack : .link))
             if drag != nil {
                 // 吹き出しは 2 体の頭より上（線の重ね窓はおもちより下に描くので、体に隠れない位置に置く）
                 let top = max(ca.panel.frame.maxY, cb.panel.frame.maxY) + 16
-                let text = ok ? L("🔗 離すと %@ とつながる", cb.record.title) : L("チームは %ld 体まで", TeamCoordinator.maxTeamSize)
+                let text: String
+                switch kind {
+                case .link: text = ok ? L("🔗 離すと %@ とつながる", cb.record.title) : L("チームは %ld 体まで", TeamCoordinator.maxTeamSize)
+                case .merge: text = ok ? L("🍡 離すと %@ とくっつく", cb.record.title) : L("作業中のおもちは くっつけません")
+                case .stack: text = ok ? L("🍊 離すと %@ の上に載る（リーダーになる）", cb.record.title) : L("チームは %ld 体まで", TeamCoordinator.maxTeamSize)
+                }
                 pills.append(.init(id: "candidate", text: text, at: CGPoint(x: (ca.anchorPoint.x + cb.anchorPoint.x) / 2, y: top),
                                    color: ok ? color : LinkOverlay.warnColor))
             }
+        }
+        // ちぎっている途中
+        let tear = m.tearPreview()
+        if let t = tear, let tid = m.tearState?.clone, let clone = controller(tid) {
+            pills.append(.init(id: "tear", text: t.ready ? L("✂️ 離すと ちぎれる") : L("✂️ もっと引っぱると ちぎれる"),
+                               at: CGPoint(x: (t.from.x + t.to.x) / 2, y: max(clone.panel.frame.maxY, t.from.y + clone.panel.frame.height / 2) + 16),
+                               color: t.color))
+        }
+        if let f = flash, let c = controller(f.id), c.isVisible {
+            pills.append(.init(id: "flash", text: f.text, at: CGPoint(x: c.anchorPoint.x, y: c.labelPoint.y - 19), color: LinkOverlay.warnColor))
         }
         if let s = drag, let c = controller(s.id), c.isVisible {
             // 名前ラベル（足元）のさらに下
@@ -412,13 +509,15 @@ final class TeamCoordinator {
                 pills.append(.init(id: "hint", text: L("👥 チームごと移動中"), at: at, color: color))
             } else if !neighbors(s.id).isEmpty {
                 pills.append(.init(id: "hint", text: L("⇧ チームごと移動 · ⌥ 切り離す"), at: at, color: color))
-            } else if s.candidate == nil, links.isEmpty, m.settings.teamEnabled,
+            } else if s.candidate == nil, m.settings.teamEnabled,
                       m.controllers.contains(where: { $0 !== c && $0.isVisible }) {
-                // まだ一度もつないでいない人向けの案内
-                pills.append(.init(id: "hint", text: L("ほかのおもちの近くで離すと つながる"), at: at, color: color))
+                // まだ慣れていない人向けの案内
+                pills.append(.init(id: "hint", text: links.isEmpty ? L("近くで離すと つながる · 重ねると くっつく") : L("重ねると くっつく · 頭に載せると 鏡餅"), at: at, color: color))
             }
         }
-        overlay.update(segments: segs, labels: labels, preview: preview, pills: pills, warn: warn)
+        let bodyW = m.controllers.first?.panel.frame.width ?? m.windowSize.width
+        overlay.update(segments: segs, labels: labels, preview: preview, pills: pills, warn: warn, taut: taut,
+                       bodyWidth: bodyW, sticks: m.skewerSticks(), tear: tear)
     }
 
     /// ポインタ追跡（30Hz）から：おもちの上なら名前を出し、線の近くなら ✂︎ を出す
@@ -908,6 +1007,26 @@ final class TeamCoordinator {
         }
         let genome = TeamCoordinator.inferGenome(formation: args["formation"] as? String, members: members)
         if let ep, activeEpisode[caller]?.id == ep { org.setUsed(ep, genome) }
+        // 見える化：順番の形（pipeline）は串だんごに、ほかの形は鏡餅（リーダーが上、仲間が下の段）に並べる。
+        // 動かすのは form_team で作った仲間だけ（ユーザーが自分で置いたおもちは動かさない）
+        let orgPairs = order.compactMap { i -> (JellyController, DangoStep)? in
+            guard let c = targets[members[i].name.lowercased()], c.record.orgSpawned == true else { return nil }
+            return (c, DangoStep(title: members[i].role ?? members[i].name))
+        }
+        let orgMembers = orgPairs.map(\.0)
+        if !orgMembers.isEmpty {
+            m.skewers.removeAll { $0.org && $0.members.contains(where: { id in orgMembers.contains { $0.record.id == id } }) }
+            if genome.shape == .pipeline {
+                for c in orgMembers where c.record.leaderID == caller { c.update { $0.leaderID = nil } }
+                m.makeSkewer(orgMembers, steps: orgPairs.map(\.1), org: true)
+            } else {
+                for c in orgMembers { c.update { $0.leaderID = caller } }
+                m.saveSkewers()
+                m.arrangeKagami(me)
+            }
+            m.refreshAllLooks()
+            refresh()
+        }
         AppLog.write("org: form_team \(genome.key) members=\(members.count) dissolved=\(dissolved.count)")
         var obj: [String: Any] = ["formation": genome.key, "members": out,
                                   "note": L("wait_for_tasks で結果を受け取ってください。after のある人は、前の人が終わってから始まります。")]
@@ -959,7 +1078,21 @@ final class TeamCoordinator {
         let handoff = (leadHandoff[id] ?? running[id].flatMap { tasks[$0]?.handoff }).map {
             L("受け渡し用のフォルダ（この依頼のチームで共有。どの AI の仲間も読み書きできる）: %@\n大きなデータ・途中の成果物はここにファイルで置き、依頼文と結果にはそのパスを書く。最終的な成果物はユーザーの作業フォルダなど頼まれた場所に保存する（受け渡し用のフォルダは 7 日で片付けられる）。", $0.path)
         } ?? ""
-        return [base, engines, handoff].filter { !$0.isEmpty }.joined(separator: "\n\n")
+        return [base, engines, handoff, kagamiNote(for: c)].filter { !$0.isEmpty }.joined(separator: "\n\n")
+    }
+
+    /// 鏡餅（上に載ったおもち＝リーダー、下＝部下）の案内
+    func kagamiNote(for c: JellyController) -> String {
+        guard let m = manager else { return "" }
+        var lines: [String] = []
+        let subs = m.subordinates(of: c.record.id)
+        if !subs.isEmpty {
+            lines.append(L("🍊 あなたは鏡餅のいちばん上（リーダー）です。下の部下: %@。作業は部下に分けて assign_task で頼み、wait_for_tasks で集めてまとめてください。全部を自分でやらず、自分は計画・割り振り・確認・統合に集中してください。", subs.map(\.record.title).joined(separator: L("・"))))
+        }
+        if let l = c.record.leaderID.flatMap({ m.controller(id: $0) }) {
+            lines.append(L("🍊 あなたは鏡餅の下の段（%@ の部下）です。%@ から頼まれた作業をし、結果は %@ に返してください。ユーザーが直接頼んだときは、その指示に従ってください。", l.record.title, l.record.title, l.record.title))
+        }
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - ターンの終了
@@ -1182,11 +1315,13 @@ final class TeamCoordinator {
             formTeam(args, caller: caller, me: me, reply: reply)
         case "list_team":
             let mates = team(of: caller).dropFirst().compactMap { controller($0) }
+            let myRole = !m.subordinates(of: caller).isEmpty ? "leader" : (me.record.leaderID != nil ? "subordinate" : "peer")
             ok([
-                "you": ["name": me.record.title, "color": me.record.color.name],
+                "you": ["name": me.record.title, "color": me.record.color.name, "role": myRole],
                 "teammates": mates.map { c -> [String: Any] in
                     let rt = m.runtime(for: c)
-                    var d: [String: Any] = ["name": c.record.title, "color": c.record.color.name,
+                    let role = c.record.leaderID == caller ? "subordinate" : (me.record.leaderID == c.record.id ? "leader" : "peer")
+                    var d: [String: Any] = ["name": c.record.title, "color": c.record.color.name, "role": role,
                                             "state": c.record.state.rawValue, "busy": rt?.isRunning ?? false,
                                             "linked_directly": isLinked(caller, c.record.id),
                                             "queued_tasks": queues[c.record.id]?.count ?? 0,

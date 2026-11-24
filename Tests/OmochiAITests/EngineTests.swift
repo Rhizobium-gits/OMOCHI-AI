@@ -13,6 +13,7 @@ func describe(_ e: AgentEvent) -> String {
     case .toolFinished(let err): return "done \(err ? "error" : "ok")"
     case .finished(let ok, let r, _, _): return "finished \(ok) \(r)"
     case .usage(let m, let i, let o, let c): return "usage \(m ?? "-") \(i)/\(o)/\(c)"
+    case .context(let t, let w): return "context \(t.map(String.init) ?? "-")/\(w.map(String.init) ?? "-")"
     }
 }
 

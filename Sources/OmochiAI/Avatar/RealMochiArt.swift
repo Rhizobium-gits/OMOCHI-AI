@@ -187,6 +187,10 @@ enum RealMochiArt {
         ctx.translateBy(x: -centerX, y: -floorY)
         ctx.draw(base, in: CGRect(x: 0, y: 0, width: CGFloat(MochiSprite.cols), height: CGFloat(MochiSprite.rows)))
         ctx.restoreGState()
+        let b0 = box(lv)
+        let bodyRect = CGRect(x: centerX + (b0.minX - centerX) * s.width, y: floorY + lift + (b0.minY - floorY) * s.height,
+                              width: b0.width * s.width, height: b0.height * s.height)
+        drawSurface(ctx, pose, body: bodyRect)
 
         // 目：体の正面、少し下。ふくらむと目の間も広がる
         let b = box(lv)
@@ -201,6 +205,85 @@ enum RealMochiArt {
     }
 
     static let eyeColor = CGColor(srgbRed: 0.10, green: 0.08, blue: 0.07, alpha: 1)
+
+    /// 体の表面（あんこ・打ち粉・焦げ目・ひび・乾き）と頭のだいだい。体の上にだけ描く（sourceAtop）
+    private static func drawSurface(_ ctx: CGContext, _ p: JellyPose, body r: CGRect) {
+        guard p.anko || p.char > 0 || p.hard > 0 || p.crown else { return }
+        let space = CGColorSpace(name: CGColorSpace.sRGB)!
+        func blob(_ c: CGPoint, _ rx: CGFloat, _ ry: CGFloat, _ rgb: SIMD3<Double>, _ a: CGFloat) {
+            let g = CGGradient(colorSpace: space, colorComponents: [CGFloat(rgb.x), CGFloat(rgb.y), CGFloat(rgb.z), a,
+                                                                     CGFloat(rgb.x), CGFloat(rgb.y), CGFloat(rgb.z), 0],
+                               locations: [0, 1], count: 2)!
+            ctx.saveGState()
+            ctx.translateBy(x: c.x, y: c.y)
+            ctx.scaleBy(x: rx, y: ry)
+            ctx.drawRadialGradient(g, startCenter: .zero, startRadius: 0, endCenter: .zero, endRadius: 1, options: [])
+            ctx.restoreGState()
+        }
+        ctx.saveGState()
+        ctx.setBlendMode(.sourceAtop)
+        // 乾いて白っぽく（硬い）
+        if p.hard > 0 {
+            ctx.setFillColor(CGColor(srgbRed: 0.97, green: 0.96, blue: 0.93, alpha: 0.16 * CGFloat(p.hard)))
+            ctx.fill(r.insetBy(dx: -1, dy: -1))
+        }
+        // あんこ：上のほうに透ける、ぼんやりした濃いところ
+        if p.anko {
+            blob(CGPoint(x: r.midX, y: r.minY + r.height * 0.62), r.width * 0.24, r.height * 0.2, SpriteColors.ankoColor, 0.42)
+            ctx.setFillColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.85))
+            for (dx, dy) in [(-0.3, 0.93), (-0.05, 0.97), (0.22, 0.9), (0.36, 0.84), (-0.4, 0.82), (0.08, 0.86)] as [(CGFloat, CGFloat)] {
+                let c = CGPoint(x: r.midX + dx * r.width, y: r.minY + dy * r.height)
+                ctx.fillEllipse(in: CGRect(x: c.x - 0.09, y: c.y - 0.09, width: 0.18, height: 0.18))
+            }
+        }
+        // 焦げ目：上の面のこんがりした斑点
+        if p.char > 0 {
+            var spots: [(CGFloat, CGFloat, CGFloat, Bool)] = [(-0.22, 0.9, 0.11, false), (0.2, 0.86, 0.1, false), (0.02, 0.95, 0.07, false)]
+            if p.char >= 2 {
+                spots += [(-0.05, 0.92, 0.13, true), (-0.36, 0.72, 0.09, true), (0.36, 0.7, 0.1, false),
+                          (-0.3, 0.12, 0.1, false), (0.28, 0.1, 0.11, true)]
+            }
+            for (dx, dy, rad, deep) in spots {
+                blob(CGPoint(x: r.midX + dx * r.width, y: r.minY + dy * r.height), rad * r.width, rad * r.width * 0.55,
+                     deep ? SpriteColors.charDeep : SpriteColors.char, p.char >= 2 ? 0.85 : 0.7)
+            }
+        }
+        // ひび
+        if p.hard > 0 {
+            ctx.setStrokeColor(CGColor(srgbRed: 0.35, green: 0.32, blue: 0.3, alpha: 0.6))
+            ctx.setLineWidth(0.09)
+            ctx.setLineJoin(.round)
+            ctx.move(to: CGPoint(x: r.minX + r.width * 0.12, y: r.minY + r.height * 0.78))
+            ctx.addLine(to: CGPoint(x: r.minX + r.width * 0.2, y: r.minY + r.height * 0.7))
+            ctx.addLine(to: CGPoint(x: r.minX + r.width * 0.24, y: r.minY + r.height * 0.6))
+            if p.hard >= 2 {
+                ctx.addLine(to: CGPoint(x: r.minX + r.width * 0.32, y: r.minY + r.height * 0.52))
+                ctx.move(to: CGPoint(x: r.maxX - r.width * 0.1, y: r.minY + r.height * 0.66))
+                ctx.addLine(to: CGPoint(x: r.maxX - r.width * 0.18, y: r.minY + r.height * 0.58))
+                ctx.addLine(to: CGPoint(x: r.maxX - r.width * 0.2, y: r.minY + r.height * 0.5))
+            }
+            ctx.strokePath()
+        }
+        ctx.restoreGState()
+        // だいだい（体の外、上にのせる）
+        if p.crown {
+            let c = CGPoint(x: r.midX, y: r.maxY + 0.78)
+            let g = CGGradient(colorSpace: space, colorComponents: [1.0, 0.72, 0.30, 1, 0.93, 0.46, 0.06, 1, 0.78, 0.34, 0.02, 1],
+                               locations: [0, 0.6, 1], count: 3)!
+            ctx.saveGState()
+            ctx.addEllipse(in: CGRect(x: c.x - 1.25, y: c.y - 0.95, width: 2.5, height: 1.9))
+            ctx.clip()
+            ctx.drawRadialGradient(g, startCenter: CGPoint(x: c.x - 0.45, y: c.y + 0.4), startRadius: 0,
+                                   endCenter: c, endRadius: 1.45, options: [.drawsAfterEndLocation])
+            ctx.restoreGState()
+            ctx.saveGState()
+            ctx.setFillColor(CGColor(srgbRed: 0.28, green: 0.58, blue: 0.22, alpha: 1))
+            ctx.translateBy(x: c.x + 0.32, y: c.y + 1.02)
+            ctx.rotate(by: 0.5)
+            ctx.fillEllipse(in: CGRect(x: -0.55, y: -0.19, width: 1.1, height: 0.38))
+            ctx.restoreGState()
+        }
+    }
 
     private static func drawEyes(_ ctx: CGContext, _ eyes: JellyPose.Eyes, at centers: [CGPoint]) {
         ctx.saveGState()
@@ -271,6 +354,18 @@ enum RealMochiArt {
             ctx.fillPath()
             let d = pt(13, 2.6)
             ctx.fillEllipse(in: CGRect(x: d.x - 0.38, y: d.y - 0.38, width: 0.76, height: 0.76))
+        case .steam(let phase):
+            // 湯気：3 本のゆらゆらした白い線
+            ctx.setStrokeColor(CGColor(srgbRed: 0.86, green: 0.87, blue: 0.9, alpha: 0.9))
+            ctx.setLineWidth(0.32)
+            ctx.setLineCap(.round)
+            for (k, x0) in [5.2, 7.5, 9.8].enumerated() {
+                let sway = CGFloat((phase + k) % 2 == 0 ? 0.35 : -0.35)
+                let x = CGFloat(x0)
+                ctx.move(to: pt(x, 2.9))
+                ctx.addCurve(to: pt(x, 0.3), control1: pt(x + sway, 2.0), control2: pt(x - sway, 1.2))
+                ctx.strokePath()
+            }
         case .check:
             ctx.setStrokeColor(markColor)
             ctx.setLineWidth(0.62)

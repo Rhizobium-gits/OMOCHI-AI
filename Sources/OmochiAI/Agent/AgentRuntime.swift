@@ -32,6 +32,25 @@ final class AgentRuntime {
     var pcControl: Bool = false { didSet { saveMeta() } }
     /// 見守り（画面のエラーっぽい表示に気づいたら聞く）。既定はオフ
     var watchScreen: Bool = false { didSet { saveMeta() } }
+    /// 大福の「あんこ」：このおもちがいつも参照するファイル・フォルダ（落としたもの。専門分野として毎回の案内に入る）
+    var anko: [String] = [] { didSet { if anko != oldValue { saveMeta(); onLook?() } } }
+    /// ちぎった（分岐した）元の会話。最初の指示で、その会話を写した新しい会話として始める
+    struct ForkSource: Codable, Equatable {
+        /// 元の会話の ID（AI の CLI の会話）
+        var session: String
+        /// 元の会話を作った AI
+        var engine: String
+        /// 元のおもちの名前（チャットの表示用）
+        var name: String
+        /// 元の会話の作業フォルダ（Claude Code の会話はフォルダごとに保存されるので、違うフォルダでは写せない）
+        var cwd: String? = nil
+    }
+    private(set) var forkSource: ForkSource?
+    /// いまの会話の大きさ（トークン）と、モデルの文脈の上限（分かったものだけ）
+    private(set) var contextTokens: Int?
+    private(set) var contextWindow: Int?
+    /// 見た目（ふくらみ・焦げ目・あんこ）にかかわる値が変わった
+    var onLook: (() -> Void)?
 
     /// 現在の動作の 1 行説明（「Bash: npm test」など）
     private(set) var activity: String?
@@ -84,6 +103,10 @@ final class AgentRuntime {
     var onUsage: ((AgentEngine, String?, Int, Int, Int) -> Void)?
     /// いまのターンの CLI が会話の ID を自分で決めるか（Codex）
     private var adoptSession = false
+    /// いまのターンは、ちぎった元の会話を写して始めている
+    private var runningForked = false
+    /// AI が違う分身に渡す、元のおもちの会話（ちぎったときに書いておく）
+    var forkContextFile: URL { dir.appendingPathComponent("fork-context.md") }
     /// いまのターンのエンジン
     private(set) var runningEngine: AgentEngine?
 
@@ -116,6 +139,10 @@ final class AgentRuntime {
         watchScreen = meta?.watchScreen ?? false
         engine = meta?.engine.flatMap(AgentEngine.init(rawValue:))
         externalMCPSession = meta?.externalMCPSession
+        anko = meta?.anko ?? []
+        forkSource = meta?.fork
+        contextTokens = meta?.contextTokens
+        contextWindow = meta?.contextWindow
         turns = AgentRuntime.loadTurns(dir)
         // 前回アプリ終了時に実行中だったターンは中断扱い
         if let last = turns.last, !last.state.isTerminal && last.state != .error {
@@ -128,6 +155,13 @@ final class AgentRuntime {
     }
 
     var lastTurn: AgentTurn? { turns.last }
+
+    /// 最後に作業した時刻（硬さの目安）。履歴が無い（過去のセッションを呼び出した）ときは会話の記録の更新時刻
+    var lastActiveAt: Date? {
+        if let t = turns.last { return t.endedAt ?? t.startedAt }
+        guard let f = sessionFile else { return nil }
+        return (try? f.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+    }
 
     /// 指示の添付の欄（添付ファイル・画面の画像）にある、実在するファイル
     static func attachedFiles(in text: String) -> [URL] {
@@ -148,7 +182,7 @@ final class AgentRuntime {
     /// 指示を送る（実行中なら何もしない）
     @discardableResult
     func submit(_ prompt: String) -> Bool {
-        let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        var text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isRunning else { return false }
         guard let backend = backendProvider(engine) else {
             refuse(text, L("%@ が見つかりません。メニューバーのおもち › 🔑 アカウントと AI で、入っているか・ログインしているかを確かめてください", (engine ?? defaultEngine?() ?? .claude).cliTitle))
@@ -168,9 +202,27 @@ final class AgentRuntime {
             cachedTitle = nil
             model = nil
             effort = nil
+            contextTokens = nil
+            contextWindow = nil
             if !backend.engine.supportsOmochiTools { pcControl = false }
             AppLog.write("agent \(agentID.uuidString.prefix(8)) engine \(se.rawValue) -> \(backend.engine.rawValue): new session")
         }
+        // ちぎった分身の最初の指示：同じ AI なら元の会話を写して続ける（Claude --fork-session・Codex exec fork）。
+        // AI が違う・その CLI で写せないときは、元の会話を指示に添えて渡す
+        var forkFrom: String?
+        if let f = forkSource, !sessionStarted {
+            if f.engine == backend.engine.rawValue, backend.canFork,
+               f.cwd.map({ URL(fileURLWithPath: $0).standardizedFileURL == cwd.standardizedFileURL }) ?? true {
+                forkFrom = f.session
+            } else {
+                text += MochiPlay.forkContextBlock(name: f.name, transcript: (try? String(contentsOf: forkContextFile, encoding: .utf8)) ?? "")
+                forkSource = nil
+                try? FileManager.default.removeItem(at: forkContextFile)
+            }
+        }
+        // 大福のあんこ（Gemini には system prompt を足すオプションが無いので指示に添える）
+        let ankoNote = MochiPlay.ankoNote(anko)
+        if backend.engine == .gemini, let n = ankoNote { text += MochiPlay.ankoMarker + "\n" + n }
         sessionEngine = backend.engine
         saveMeta()
         var turn = AgentTurn(prompt: text, startedAt: Date(), state: .thinking)
@@ -195,6 +247,7 @@ final class AgentRuntime {
         adoptSession = backend.assignsSessionID
         runningEngine = backend.engine
         var opts = AgentRunOptions(model: model, effort: effort)
+        opts.forkFrom = forkFrom
         let claude = backend.engine == .claude
         if !claude {
             // Codex・Gemini：おもちで選んだモデル（無ければ設定の既定、それも無ければ CLI の既定）。強さは Codex だけ。
@@ -241,9 +294,14 @@ final class AgentRuntime {
         // デスクトップのアプリとしての振る舞い（毎回同じ文なのでプロンプトキャッシュは崩れない）
         if claude { opts.appendSystemPrompt = [AgentRuntime.desktopNote, AgentRuntime.chatFormatNote, opts.appendSystemPrompt].compactMap { $0 }.joined(separator: "\n\n") }
         // Codex は developer_instructions に（Gemini はチームのツールの説明で渡す）
-        if backend.engine == .codex { opts.instructions = [AgentRuntime.chatFormatNote, opts.instructions].compactMap { $0 }.joined(separator: "\n\n") }
+        if backend.engine == .codex { opts.instructions = [AgentRuntime.chatFormatNote, opts.instructions, ankoNote].compactMap { $0 }.joined(separator: "\n\n") }
+        if claude, let n = ankoNote { opts.appendSystemPrompt = [opts.appendSystemPrompt, n].compactMap { $0 }.joined(separator: "\n\n") }
         // チームの受け渡し用のフォルダ（どの AI でも読み書きできるように渡す）
         opts.addDirs = extraDirs?() ?? []
+        // あんこの置き場所を読めるように（Claude --add-dir・Gemini --include-directories。Codex は書き込める場所を広げないので渡さない）
+        if backend.engine != .codex {
+            for d in MochiPlay.ankoDirs(anko) where !opts.addDirs.contains(d) && d.standardizedFileURL != cwd.standardizedFileURL { opts.addDirs.append(d) }
+        }
         // 添付（画面の画像・落としたファイル・システムの音の文字起こし）を、どの AI でも読めるように
         // 仲間からの依頼の文（エージェントが書いたもの）にある「- /パス」は添付として扱わない
         let files = text.hasPrefix(TeamCoordinator.requestMarker) ? [] : AgentRuntime.attachedFiles(in: text)
@@ -260,6 +318,7 @@ final class AgentRuntime {
             }
         case .claude: break
         }
+        runningForked = forkFrom != nil
         do {
             handle = try backend.run(prompt: text, sessionID: sessionID, resume: resume, cwd: cwd, logDir: dir,
                                      options: opts,
@@ -293,6 +352,12 @@ final class AgentRuntime {
         let i = turns.count - 1
         switch e {
         case .started(let session, let model, let mode):
+            // ちぎった会話が新しい会話として始まったら、元の会話の写しはもう要らない
+            if forkSource != nil, runningForked, session != nil {
+                forkSource = nil
+                try? FileManager.default.removeItem(at: forkContextFile)
+                saveMeta()
+            }
             if let s = session, s == sessionID { sessionStarted = true; saveMeta() }
             // Codex は会話の ID を自分で決めるので、受け取った ID（UUID の形のときだけ）を次の続きに使う
             else if adoptSession, let s = session, UUID(uuidString: s) != nil {
@@ -319,6 +384,11 @@ final class AgentRuntime {
             if pendingTools == 0 { setTurnState(.thinking) }
         case .usage(let m, let input, let output, let cached):
             onUsage?(runningEngine ?? effectiveEngine, m ?? activeModel ?? model, input, output, cached)
+            return
+        case .context(let tokens, let window):
+            if let t = tokens { contextTokens = t }
+            if let w = window { contextWindow = w }
+            onLook?()
             return
         case .finished(let success, let result, let cost, _):
             gotResult = true
@@ -419,9 +489,12 @@ final class AgentRuntime {
             cachedTitle = nil
             model = nil
             effort = nil
+            contextTokens = nil
+            contextWindow = nil
         }
         saveMeta()
         onUpdate?()
+        onLook?()
     }
 
     /// 動かさない理由をターンとして残す
@@ -433,6 +506,26 @@ final class AgentRuntime {
         onUpdate?()
     }
 
+    /// ちぎった分身にする：最初の指示で元の会話を写して始める。AI が違うときに渡す会話の写しも書いておく
+    func setForkSource(_ f: ForkSource?, transcript: String?) {
+        forkSource = f
+        if let t = transcript, !t.isEmpty {
+            try? t.write(to: forkContextFile, atomically: true, encoding: .utf8)
+        } else {
+            try? FileManager.default.removeItem(at: forkContextFile)
+        }
+        saveMeta()
+        onUpdate?()
+    }
+
+    /// 会話の大きさを写す（分身は元と同じ大きさから始まる）・忘れる（新しい会話）
+    func setContext(tokens: Int?, window: Int?) {
+        contextTokens = tokens
+        contextWindow = window
+        saveMeta()
+        onLook?()
+    }
+
     /// 作業フォルダを変える。Claude Code のセッションはフォルダ（プロジェクト）ごとに保存されるので新しいセッションになる
     func changeFolder(_ url: URL) {
         guard !isRunning, url.standardizedFileURL != cwd.standardizedFileURL else { return }
@@ -442,8 +535,10 @@ final class AgentRuntime {
         sessionEngine = nil
         cachedSessionFile = nil
         cachedTitle = nil
+        if forkSource == nil { contextTokens = nil; contextWindow = nil }
         saveMeta()
         onUpdate?()
+        onLook?()
     }
 
     /// 既存の Claude Code セッション（過去のプロジェクト）をこのおもちで続ける
@@ -471,6 +566,10 @@ final class AgentRuntime {
         var externalMCPSession: String?
         var engine: String?
         var sessionEngine: String?
+        var anko: [String]?
+        var fork: ForkSource?
+        var contextTokens: Int?
+        var contextWindow: Int?
     }
 
     private static func loadMeta(_ dir: URL) -> Meta? {
@@ -481,7 +580,8 @@ final class AgentRuntime {
     private func saveMeta() {
         let m = Meta(sessionID: sessionID, sessionStarted: sessionStarted, cwd: cwd.path, model: model, effort: effort,
                      pcControl: pcControl, watchScreen: watchScreen, externalMCPSession: externalMCPSession, engine: engine?.rawValue,
-                     sessionEngine: sessionEngine?.rawValue)
+                     sessionEngine: sessionEngine?.rawValue, anko: anko.isEmpty ? nil : anko, fork: forkSource,
+                     contextTokens: contextTokens, contextWindow: contextWindow)
         if let d = try? JSONEncoder().encode(m) { try? d.write(to: dir.appendingPathComponent("meta.json"), options: .atomic) }
     }
 

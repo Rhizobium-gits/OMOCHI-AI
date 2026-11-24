@@ -21,9 +21,9 @@ enum SnapshotTool {
             guard let i = args.firstIndex(of: k), i + 1 < args.count else { return nil }
             return args[i + 1]
         }
-        if let out = value("--sheet") { return pixelSheet(out, dark: value("--bg") != "light", art: .real) }
+        if let out = value("--sheet") { return pixelSheet(out, dark: value("--bg") != "light", art: .real, look: args.contains("--look")) }
         if let out = value("--connectors-window") { return connectorsWindow(out, preset: value("--preset"), dark: value("--bg") != "light") }
-        if let out = value("--pixel-sheet") { return pixelSheet(out, dark: value("--bg") != "light", art: .pixel) }
+        if let out = value("--pixel-sheet") { return pixelSheet(out, dark: value("--bg") != "light", art: .pixel, look: args.contains("--look")) }
         if let out = value("--icon") { return icon(out, source: value("--icon-source")) }
         if let out = value("--status-frames") { return statusFrames(out) }
         if let out = value("--account-menu") { return accountMenu(out) }
@@ -184,12 +184,31 @@ enum SnapshotTool {
         return a
     }
 
-    static func pixelSheet(_ out: String, dark: Bool, art: MochiAvatar.Art) -> Int32 {
+    /// お餅の性質（焦げ目・ひび・あんこ・だいだい・湯気）のコマ（--pixel-sheet out.png --look）
+    static func lookPoses() -> [(String, JellyPose)] {
+        func p(_ f: (inout JellyPose) -> Void) -> JellyPose { var x = JellyPose(); f(&x); return x }
+        return [
+            ("idle", JellyPose()),
+            ("char1", p { $0.char = 1 }),
+            ("char2", p { $0.char = 2; $0.puff = 2 }),
+            ("hard1", p { $0.hard = 1 }),
+            ("hard2", p { $0.hard = 2 }),
+            ("anko", p { $0.anko = true }),
+            ("anko+puff", p { $0.anko = true; $0.puff = 2 }),
+            ("crown", p { $0.crown = true }),
+            ("crown+anko", p { $0.crown = true; $0.anko = true }),
+            ("steam", p { $0.mark = .steam(0); $0.hard = 1 }),
+            ("all", p { $0.char = 2; $0.hard = 2; $0.anko = true; $0.crown = true }),
+            ("deflate+char", p { $0.puff = -1; $0.char = 2 }),
+        ]
+    }
+
+    static func pixelSheet(_ out: String, dark: Bool, art: MochiAvatar.Art, look: Bool = false) -> Int32 {
         if art == .real, !RealMochiArt.available {
             FileHandle.standardError.write("Resources/mochi の絵が見つかりません\n".data(using: .utf8)!)
             return 1
         }
-        let poses = pixelPoses()
+        let poses = look ? lookPoses() : pixelPoses()
         let colorsN = 6
         // リアルな絵は大きめに（細部が見えるように）
         let scale = art == .real ? 4.0 : 2.0

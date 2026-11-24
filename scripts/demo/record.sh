@@ -1,6 +1,6 @@
 #!/bin/zsh
 # README の GIF を撮り直す。
-#   scripts/demo/record.sh [basic parallel states team link crossai connectors queue]
+#   scripts/demo/record.sh [basic parallel states team link crossai connectors queue mochi]
 #
 # - 普段の OMOCHI AI を一度終了し、OMOCHI_DATA_DIR で空のデモ用データから起動して録画する
 #   （OMOCHI_AUTOMATION=1 で、指示の送信などデモ用の omochi:// 操作を受け付ける）
@@ -19,7 +19,7 @@
 set -e
 cd "$(dirname "$0")/../.."
 # zsh では ${@:-a b} が 1 語になるので、引数が無いときの一覧は別に書く
-if (( $# )); then takes=("$@"); else takes=(basic parallel states team link crossai connectors queue); fi
+if (( $# )); then takes=("$@"); else takes=(basic parallel states team link crossai connectors queue mochi); fi
 [[ -d "dist/OMOCHI AI.app" ]] || scripts/build.sh
 mkdir -p .build ~/omochi-demo
 swiftc -O scripts/demo/recorder.swift -o .build/recorder

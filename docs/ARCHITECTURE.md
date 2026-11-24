@@ -130,6 +130,19 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__omochi --app
 - Web を自動で読むのはユーザーのメッセージの URL だけ。エージェントの返答の URL は `omochi-preview:<URL>` の「表紙を見る」を出し、`textView(_:clickedOnLink:at:)` で押されたら `allow(link:)`（http / https だけ）で読みに行く。設定 `linkPreviews` で Web のプレビューを止める
 - 音声入力：🎙・編集 ›「音声入力を開始」は、入力欄を first responder にして `startDictation:` を送るだけ（macOS の音声入力）
 
+## 2.6.5 お餅の性質（App/MochiPlay.swift・MochiActions.swift・DangoWindow.swift・MochiMakiWindow.swift）
+
+- **考える部分は純粋な値の計算**（`MochiPlay`。テストは `Tests/OmochiAITests/MochiPlayTests.swift`）：目印（`forkMarker`・`mergeMarker`・`ankoMarker`・`warmPrefix`・`mergePrefix`・`dangoPrefix`。`typedText`・`typedPrompts` はこれらの欄を除く）、分身に渡す会話・くっつくときの指示・あんこの案内・串の段の指示、ドラッグで置いた先の判定（`dropKind`：真上に重なる → くっつく、相手の頭の上 → 鏡餅、近く → つながる）、鏡餅・串の並べ方、会話の割合 → ふくらみ（平方根）・焦げ目（6 割・8 割）、最後の作業からの時間 → 硬さ（30 分・1 時間）
+- **ちぎる**：`JellyController` が ⌘ を押してドラッグを始めたら `JellyManager.tearBegan` で分身（`makeClone`。`JellyRecord.forkOf`）を作り、自分は動かずに分身の窓を動かす（`tearDragged`）。体の幅の 1.3 倍を超えて離したら `finishTear`（`LinkOverlay.tearSnap`）、足りなければ吸い込まれて消える。分身の `AgentRuntime.forkSource`（元の会話の ID・AI・名前・作業フォルダ。meta.json）を、最初の `submit` で使う：同じ AI で `AgentBackend.canFork` なら `AgentRunOptions.forkFrom`（Claude は `--resume <元> --fork-session --session-id <新>`、Codex は `exec fork <元>`。`.started` を受けたら消す）、AI・作業フォルダが違えば `fork-context.md` の会話を `forkMarker` の欄で指示に添える
+- **くっつく**：`TeamCoordinator.jellyDropped` が `.merge` なら `JellyManager.dropForMerge`（NSMenu で 3 択）→ `merge(keep:drop:combine:)`：つながり・部下・あんこ・串の場所を keep に移し、drop を寄せて `melt` → `remove`、keep は `absorb`。combine なら `MochiPlay.mergePrompt` を keep に送る
+- **のびる**：`LinkOverlay.StringShape`（両端・垂れ・端の太さ・くびれ）を塗りつぶした輪郭で描く（`StringLayer`：体・照り・流れる塊）。`TeamCoordinator.refresh` が、依頼の道の上の糸（running / queued）を `taut` として渡す。受け渡しの塊（`sendPackets`）は糸と同じ垂れ方の曲線をたどる
+- **串だんご**：`JellyManager.skewers`（`skewers.json`。`Skewer` = おもちの並び・段・自律組織の串か）・`recipes`（`recipes.json`、組み込みの 2 つは `builtinRecipes`）。`runSkewer` は 1 段目に送り、2 段目からは 1 段目の `PromptQueues` に `target`・`passResult` 付きで積む（止める・再開・前の結果を渡すのは予約のしくみのまま。渡すときに `PromptQueueHost.queueHandoff` で塊を流す）。串は `LinkOverlay.Stick` として、おもちの中心を通る木の串で描く
+- **鏡餅**：`JellyRecord.leaderID`（上に載っているおもち）。`stack` はつなぎ・循環を外し・同じ串から抜いてから `arrangeKagami`（部下を下の段に横一列）。ドラッグ中はリーダーの下の段を `DragSession.followers` として一緒に動かす。チームの案内に `kagamiNote`、`list_team` に role（leader / subordinate / peer）。`form_team` で作った仲間は、pipeline なら串（`Skewer.org`）、ほかは鏡餅に並べる
+- **ふくらむ・焦げる・硬くなる**：`StreamJSONParser` が assistant の usage（サブエージェントの中は除く）から会話の大きさ、result の `modelUsage.contextWindow` から上限、`compact_boundary` の `post_tokens` から縮めたあとの大きさを `AgentEvent.context` で出し、`AgentRuntime.contextTokens/contextWindow`（meta.json）に。`JellyManager.refreshLook` が `MochiLook`（ふくらみ・焦げ目・硬さ・あんこ・だいだい・温め直し中）を作り、1 分ごとに見直す。`MochiAvatar` は `growLayer`（足元を基準に拡大）とポーズの `char`・`hard`・`anko`・`crown`・頭上の `.steam` で描く（窓は左右に 1 マスずつ広い）。硬いと待機の息が浅い
+- **餅まき**：`MochiMakiWindowController`。選んだ AI の新しいおもち（`まき <AI>`）と今いるおもちに同じ指示を送り、`LinkOverlay.throwPieces` で投げる。0.5 秒ごとにそれぞれのターン（まいたときの履歴の長さより後）を見て列に出す。拾うと、まくために作ったほかのおもちを片付ける
+- **大福**：`AgentRuntime.anko`（パス。meta.json、12 個まで）。`MochiPlay.ankoNote` を Claude は `--append-system-prompt`、Codex は `developer_instructions`、Gemini は指示の `ankoMarker` の欄に。`ankoDirs` を Claude `--add-dir`・Gemini `--include-directories` に。おもちに落とすと `filesDropped` が「あんこにする / 添付する」を聞く
+- **自動化**（合言葉つきのときだけ）：`omochi://tear|merge|stack|anko|warm|compact|skewer|dango|maki|look`。デモの録画は `scripts/demo/record.sh mochi`（AI を動かさない）
+
 ## 2.7 表示の言語（Localization/）
 
 - ソースには日本語をそのまま書き、`L("…")` / `L("…%@…", x)` で包む。`L10n.translate` が今の言語の表（`Strings+en.swift`・`Strings+zh.swift`、日本語 → 訳）を引き、無ければ日本語のまま
@@ -148,6 +161,7 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__omochi --app
 | `jellies.json` | おもち（番号・色・位置・状態・表示） |
 | `agents/<id>/meta.json` | セッション ID・作業フォルダ |
 | `links.json` | おもち同士のつながり |
+| `skewers.json`・`recipes.json` | 串だんごと、保存したレシピ |
 | `bus.sock` | チーム機能のソケット（0600） |
 | `agents/<id>/history.json` | 指示と結果の履歴 |
 | `agents/<id>/events.jsonl` | Claude Code の生イベント |

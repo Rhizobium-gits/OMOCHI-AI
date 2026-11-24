@@ -202,6 +202,7 @@ final class CodexBackend: AgentBackend {
     var policyDescription: String { "Codex · workspace-write" }
     /// Codex は会話の ID を自分で決める（thread.started で受け取る）
     var assignsSessionID: Bool { true }
+    var canFork: Bool { CodexBackend.supportsFork(install.url) }
 
     /// 引数（テストあり）。新しい会話は `exec`、続きは `exec resume <id>`。プロンプトは「--」のあと。
     /// 受け渡し用のフォルダは、サンドボックスで書けるフォルダ（sandbox_workspace_write.writable_roots）に足す
@@ -227,9 +228,11 @@ final class CodexBackend: AgentBackend {
 
     static func arguments(prompt: String, sessionID: String?, model: String?, effort: String? = nil, addDirs: [URL] = [],
                           mcp: (command: String, args: [String])? = nil, tools: [String] = [], instructions: String? = nil,
-                          images: [URL] = []) -> [String] {
+                          images: [URL] = [], forkFrom: String? = nil) -> [String] {
         var a = ["exec"]
-        if sessionID != nil { a.append("resume") }
+        // ちぎる（分岐）：exec fork <元の会話>（新しい会話の ID は thread.started で受け取る）
+        let fork = sessionID == nil ? forkFrom.flatMap { UUID(uuidString: $0) != nil ? $0 : nil } : nil
+        if sessionID != nil { a.append("resume") } else if fork != nil { a.append("fork") }
         a += ["--json", "--skip-git-repo-check",
               "--config", #"sandbox_mode="workspace-write""#,
               "--config", #"approval_policy="never""#]
@@ -257,9 +260,21 @@ final class CodexBackend: AgentBackend {
         // 画像（exec・exec resume の -i / --image。この Mac の Codex の --help で確かめたもの）
         for i in images { a += ["--image", i.path] }
         a.append("--")
-        if let s = sessionID { a.append(s) }
+        if let s = sessionID ?? fork { a.append(s) }
         a.append(prompt)
         return a
+    }
+
+    /// この Codex に exec fork があるか（--help で確かめ、場所ごとに覚える）
+    private static var forkSupport: [String: Bool] = [:]
+    static func supportsFork(_ url: URL) -> Bool {
+        imageLock.lock()
+        if let v = forkSupport[url.path] { imageLock.unlock(); return v }
+        imageLock.unlock()
+        let help = CLILocator.run(url, ["exec", "--help"], timeout: 15) ?? ""
+        let ok = help.range(of: #"(?m)^\s+fork\s"#, options: .regularExpression) != nil
+        imageLock.lock(); forkSupport[url.path] = ok; imageLock.unlock()
+        return ok
     }
 
     /// この Codex の exec・exec resume が --image を受け付けるか（--help で確かめ、場所ごとに覚える）
@@ -283,7 +298,8 @@ final class CodexBackend: AgentBackend {
         let args = CodexBackend.arguments(prompt: prompt, sessionID: resume ? sessionID : nil, model: m == ModelRouter.auto ? nil : m,
                                           effort: options.effort, addDirs: options.addDirs,
                                           mcp: options.mcpBridge, tools: options.mcpTools, instructions: options.instructions,
-                                          images: CodexBackend.supportsImages(install.url) ? options.images : [])
+                                          images: CodexBackend.supportsImages(install.url) ? options.images : [],
+                                          forkFrom: !resume && options.forkFrom != nil && CodexBackend.supportsFork(install.url) ? options.forkFrom : nil)
         return try CLIProcess.start(executable: install.url, args: args, cwd: cwd, env: ShellEnvironment.shared.agentEnvironment(),
                                     logDir: logDir, parser: CodexEventParser(onEvent: onEvent), onExit: onExit)
     }
