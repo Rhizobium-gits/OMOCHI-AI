@@ -5,46 +5,49 @@
 <text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">Downloads per day</text>
 <text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg + .zip + git clone · updated daily</text>
 <text x="788" y="32" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">Total</text>
-<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">468</text>
-<path d="M51.1,238.0V222.9Q51.1,219.9 54.1,219.9H68.1Q71.1,219.9 71.1,222.9V238.0Z" fill="#f2f2f2"/>
-<text x="61.1" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
-<text x="61.1" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
-<path d="M109.2,238.0V143.0Q109.2,140.0 112.2,140.0H126.2Q129.2,140.0 129.2,143.0V238.0Z" fill="#f2f2f2"/>
-<text x="119.2" y="133.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">119</text>
-<text x="119.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
-<path d="M167.4,238.0V197.4Q167.4,194.4 170.4,194.4H184.4Q187.4,194.4 187.4,197.4V238.0Z" fill="#f2f2f2"/>
-<text x="177.4" y="187.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">53</text>
-<text x="177.4" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
-<path d="M225.5,238.0V186.6Q225.5,183.6 228.5,183.6H242.5Q245.5,183.6 245.5,186.6V238.0Z" fill="#f2f2f2"/>
-<text x="235.5" y="176.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
-<text x="235.5" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
-<path d="M283.7,238.0V222.1Q283.7,219.1 286.7,219.1H300.7Q303.7,219.1 303.7,222.1V238.0Z" fill="#f2f2f2"/>
-<text x="293.7" y="212.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">23</text>
-<text x="293.7" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
-<path d="M341.8,238.0V231.1Q341.8,228.1 344.8,228.1H358.8Q361.8,228.1 361.8,231.1V238.0Z" fill="#f2f2f2"/>
-<text x="351.8" y="221.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">12</text>
-<text x="351.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
-<path d="M400.0,238.0V181.7Q400.0,178.7 403.0,178.7H417.0Q420.0,178.7 420.0,181.7V238.0Z" fill="#f2f2f2"/>
-<text x="410.0" y="171.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">72</text>
-<text x="410.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
-<path d="M458.2,238.0V219.6Q458.2,216.6 461.2,216.6H475.2Q478.2,216.6 478.2,219.6V238.0Z" fill="#f2f2f2"/>
-<text x="468.2" y="209.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">26</text>
-<text x="468.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/18</text>
-<path d="M516.3,238.0V223.7Q516.3,220.7 519.3,220.7H533.3Q536.3,220.7 536.3,223.7V238.0Z" fill="#f2f2f2"/>
-<text x="526.3" y="213.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">21</text>
-<text x="526.3" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/19</text>
-<path d="M574.5,238.0V209.7Q574.5,206.7 577.5,206.7H591.5Q594.5,206.7 594.5,209.7V238.0Z" fill="#f2f2f2"/>
-<text x="584.5" y="199.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">38</text>
-<text x="584.5" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/20</text>
-<path d="M632.6,238.0V228.6Q632.6,225.6 635.6,225.6H649.6Q652.6,225.6 652.6,228.6V238.0Z" fill="#f2f2f2"/>
-<text x="642.6" y="218.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">15</text>
-<text x="642.6" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/21</text>
-<path d="M690.8,238.0V238.0Q690.8,237.2 691.6,237.2H709.9Q710.8,237.2 710.8,238.0V238.0Z" fill="#f2f2f2"/>
-<text x="700.8" y="230.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">1</text>
-<text x="700.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/22</text>
-<text x="758.9" y="231.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
-<text x="758.9" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/23</text>
+<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">478</text>
+<path d="M49.0,238.0V222.9Q49.0,219.9 52.0,219.9H66.0Q69.0,219.9 69.0,222.9V238.0Z" fill="#f2f2f2"/>
+<text x="59.0" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
+<text x="59.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
+<path d="M103.0,238.0V143.0Q103.0,140.0 106.0,140.0H120.0Q123.0,140.0 123.0,143.0V238.0Z" fill="#f2f2f2"/>
+<text x="113.0" y="133.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">119</text>
+<text x="113.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/12</text>
+<path d="M157.0,238.0V197.4Q157.0,194.4 160.0,194.4H174.0Q177.0,194.4 177.0,197.4V238.0Z" fill="#f2f2f2"/>
+<text x="167.0" y="187.4" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">53</text>
+<text x="167.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/13</text>
+<path d="M211.0,238.0V186.6Q211.0,183.6 214.0,183.6H228.0Q231.0,183.6 231.0,186.6V238.0Z" fill="#f2f2f2"/>
+<text x="221.0" y="176.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
+<text x="221.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/14</text>
+<path d="M265.0,238.0V222.1Q265.0,219.1 268.0,219.1H282.0Q285.0,219.1 285.0,222.1V238.0Z" fill="#f2f2f2"/>
+<text x="275.0" y="212.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">23</text>
+<text x="275.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
+<path d="M319.0,238.0V231.1Q319.0,228.1 322.0,228.1H336.0Q339.0,228.1 339.0,231.1V238.0Z" fill="#f2f2f2"/>
+<text x="329.0" y="221.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">12</text>
+<text x="329.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/16</text>
+<path d="M373.0,238.0V181.7Q373.0,178.7 376.0,178.7H390.0Q393.0,178.7 393.0,181.7V238.0Z" fill="#f2f2f2"/>
+<text x="383.0" y="171.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">72</text>
+<text x="383.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
+<path d="M427.0,238.0V219.6Q427.0,216.6 430.0,216.6H444.0Q447.0,216.6 447.0,219.6V238.0Z" fill="#f2f2f2"/>
+<text x="437.0" y="209.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">26</text>
+<text x="437.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/18</text>
+<path d="M481.0,238.0V223.7Q481.0,220.7 484.0,220.7H498.0Q501.0,220.7 501.0,223.7V238.0Z" fill="#f2f2f2"/>
+<text x="491.0" y="213.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">21</text>
+<text x="491.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/19</text>
+<path d="M535.0,238.0V209.7Q535.0,206.7 538.0,206.7H552.0Q555.0,206.7 555.0,209.7V238.0Z" fill="#f2f2f2"/>
+<text x="545.0" y="199.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">38</text>
+<text x="545.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/20</text>
+<path d="M589.0,238.0V228.6Q589.0,225.6 592.0,225.6H606.0Q609.0,225.6 609.0,228.6V238.0Z" fill="#f2f2f2"/>
+<text x="599.0" y="218.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">15</text>
+<text x="599.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/21</text>
+<path d="M643.0,238.0V232.8Q643.0,229.8 646.0,229.8H660.0Q663.0,229.8 663.0,232.8V238.0Z" fill="#f2f2f2"/>
+<text x="653.0" y="222.8" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">10</text>
+<text x="653.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/22</text>
+<path d="M697.0,238.0V238.0Q697.0,237.2 697.8,237.2H716.2Q717.0,237.2 717.0,238.0V238.0Z" fill="#f2f2f2"/>
+<text x="707.0" y="230.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">1</text>
+<text x="707.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/23</text>
+<text x="761.0" y="231.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
+<text x="761.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/24</text>
 <line x1="32" y1="238.5" x2="788" y2="238.5" stroke="#2a2a2a" stroke-width="1"/>
-<text x="32" y="280" font-size="10.5" fill="#555555">Updated 2026-11-23 UTC</text>
+<text x="32" y="280" font-size="10.5" fill="#555555">Updated 2026-11-24 UTC</text>
 <text x="32" y="298" font-size="10.5" fill="#555555">* Daily .dmg/.zip are estimates (GitHub gives only totals; split in proportion to time) · recent clones not counted yet</text>
 </g></svg>
