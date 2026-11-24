@@ -216,10 +216,10 @@ fi
 WAS_RUNNING=0
 if [[ -n "$(app_pids)" ]]; then
   WAS_RUNNING=1
-  app_busy && fail "作業中のクラゲがいるので、入れ替えをやめました。終わってからもう一度実行してください"
+  app_busy && fail "作業中のおもちがいるので、入れ替えをやめました。終わってからもう一度実行してください"
   for p in $(app_pids); do kill -TERM "$p" 2>/dev/null || true; done
   for _ in $(seq 100); do [[ -z "$(app_pids)" ]] && break; /bin/sleep 0.1; done
-  [[ -z "$(app_pids)" ]] || fail "Jellyfish AI が終わらないので、入れ替えをやめました。メニューバーのクラゲから終了してから、もう一度実行してください"
+  [[ -z "$(app_pids)" ]] || fail "Jellyfish AI が終わらないので、入れ替えをやめました。メニューバーのおもちから終了してから、もう一度実行してください"
 fi
 
 say "入れ替えています…"

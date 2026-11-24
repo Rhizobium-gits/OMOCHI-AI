@@ -338,7 +338,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         enginePopup.action = #selector(engineChanged)
         // それぞれの AI の得意なこと（チームで分担するときの目安）
         for (i, e) in AgentEngine.allCases.enumerated() { enginePopup.item(at: i + 1)?.toolTip = e.teamStrengths }
-        enginePopup.toolTip = L("このクラゲが使う AI。変えると新しい会話になります（ログインはメニューバーのクラゲ › 🔑 アカウントと AI）")
+        enginePopup.toolTip = L("このおもちが使う AI。変えると新しい会話になります（ログインはメニューバーのおもち › 🔑 アカウントと AI）")
         screenPopup.action = #selector(screenModeChanged)
         screenPopup.toolTip = L("「この画面」などと書いたとき、送信時の画面を撮って添付する（Jellyfish のウィンドウは写りません）")
         for b in [attachButton, clearAttachButton] {
@@ -354,7 +354,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         attachLabel.textColor = .secondaryLabelColor
         attachLabel.lineBreakMode = .byTruncatingMiddle
         effortPopup.action = #selector(effortChanged)
-        modelPopup.toolTip = L("このクラゲが使うモデル。自動は依頼ごとに Haiku・Sonnet・Opus・Fable から選ぶ。既定はメニューバーの「🧠 モデル（既定）」に従う（次の指示から反映）")
+        modelPopup.toolTip = L("このおもちが使うモデル。自動は依頼ごとに Haiku・Sonnet・Opus・Fable から選ぶ。既定はメニューバーの「🧠 モデル（既定）」に従う（次の指示から反映）")
         effortPopup.toolTip = L("考える強さ（--effort。次の指示から反映）")
         let controlsRow = NSStackView(views: [screenPopup, attachButton, dictationButton, pcButton, listenButton, watchButton, folderButton, NSView(), terminalButton])
         controlsRow.orientation = .horizontal
@@ -614,7 +614,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         pcButton.isEnabled = eng.supportsJellyfishTools
         pcButton.toolTip = eng.supportsJellyfishTools
             ? L("このエージェントに PC 操作（画面を見る・クリック・入力）を許す。操作中は画面の縁が光り、Esc で止まる。次の指示から反映")
-            : L("PC 操作は Claude のクラゲだけで使えます")
+            : L("PC 操作は Claude のおもちだけで使えます")
         let listening = manager?.isListening(jelly) ?? false
         listenButton.state = listening ? .on : .off
         listenButton.title = listening ? L("🎧 停止") : "🎧"
@@ -1176,7 +1176,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         op.allowsMultipleSelection = false
         op.directoryURL = runtime.cwd
         op.prompt = L("このフォルダで作業")
-        op.message = L("このクラゲが作業するフォルダを選んでください（新しいセッションとして始まります）")
+        op.message = L("このおもちが作業するフォルダを選んでください（新しいセッションとして始まります）")
         op.beginSheetModal(for: window) { [weak self] resp in
             guard resp == .OK, let url = op.url, let self else { return }
             self.runtime.changeFolder(url)

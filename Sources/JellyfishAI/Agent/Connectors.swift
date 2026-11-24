@@ -337,25 +337,25 @@ enum ConnectorPolicy {
         let rule = s[t.kind]
         let name = t.kind.label
         if rule.access == .off {
-            return L("「%@」のコネクタはオフです（メニューバーのクラゲ › 🔌 コネクタ で変えられます）", name)
+            return L("「%@」のコネクタはオフです（メニューバーのおもち › 🔌 コネクタ で変えられます）", name)
         }
         if t.writes && rule.access == .read {
             return L("「%@」は見るだけの設定です。追加・変更はできません（🔌 コネクタで「見る・書く」にすると使えます）", name)
         }
         guard let keys = rule.models(for: ctx.engine) else {
-            return L("「%@」は %@ のクラゲには渡さない設定です", name, ctx.engine.displayName)
+            return L("「%@」は %@ のおもちには渡さない設定です", name, ctx.engine.displayName)
         }
         if !keys.isEmpty {
             if ctx.model == nil || ctx.model?.isEmpty == true {
                 if !optimistic {
-                    return L("「%@」は決まったモデル（%@）のクラゲだけが使える設定ですが、このクラゲのモデルが分かりません。チャットの上の段でモデルを選んでから頼んでください", name, modelLabels(keys, engine: ctx.engine))
+                    return L("「%@」は決まったモデル（%@）のおもちだけが使える設定ですが、このおもちのモデルが分かりません。チャットの上の段でモデルを選んでから頼んでください", name, modelLabels(keys, engine: ctx.engine))
                 }
             } else if !modelMatches(ctx.model, keys: keys, engine: ctx.engine) {
-                return L("「%@」を使えるのは %@ の %@ だけです（このクラゲは %@）", name, ctx.engine.displayName, modelLabels(keys, engine: ctx.engine), ctx.model ?? "")
+                return L("「%@」を使えるのは %@ の %@ だけです（このおもちは %@）", name, ctx.engine.displayName, modelLabels(keys, engine: ctx.engine), ctx.model ?? "")
             }
         }
         if t.kind == .mail && ctx.pcTools {
-            return L("PC 操作を使っているクラゲにはメールを渡しません（メールの文で操作を乗っ取られないように）。PC 操作をオフにしてから頼んでください")
+            return L("PC 操作を使っているおもちにはメールを渡しません（メールの文で操作を乗っ取られないように）。PC 操作をオフにしてから頼んでください")
         }
         return nil
     }
@@ -409,7 +409,7 @@ enum ConnectorPolicy {
         var lines = [L("# Jellyfish コネクタ（ユーザーが許可したもの）\njellyfish MCP のツールで、この Mac の %@ を使えます。ユーザーの依頼に必要なときだけ使ってください。", list)]
         lines.append(L("- 日時は ISO 8601。タイムゾーンを省くとこの Mac の時刻（%@）。いまの日時はツールの結果の now にある", TimeZone.current.identifier))
         if ks.contains(where: { $0.writes && $0.0 != .mail }) {
-            lines.append(L("- 予定・リマインダーの追加と完了は、ユーザーがクラゲの横の確認で押したときだけ実行されます。断られたら、やり直さずにそう伝えてください"))
+            lines.append(L("- 予定・リマインダーの追加と完了は、ユーザーがおもちの横の確認で押したときだけ実行されます。断られたら、やり直さずにそう伝えてください"))
         }
         if ks.contains(where: { $0.0 == .mail }) {
             lines.append(L("- メールは送れません。mail_draft はメールアプリに下書きの画面を開くだけで、確かめて送るのはユーザーです"))

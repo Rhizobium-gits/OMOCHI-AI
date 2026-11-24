@@ -1,6 +1,6 @@
 # Jellyfish AI — 設計メモ
 
-デスクトップに常駐するクラゲ（= Claude Code のドット絵キャラクター）が、それぞれ独立した AI エージェントとして動く macOS アプリ。
+デスクトップに常駐するおもち（床に座った丸餅のドット絵「まるもち」）が、それぞれ独立した AI エージェントとして動く macOS アプリ。
 
 ## 1. 技術選定
 
@@ -26,14 +26,14 @@ Framer Motion / CSS Animation の役割は Core Animation が担う（アニメ�
 │      │      └── AgentBackend  ClaudeCodeBackend（他の AI もこの口で差し替え）  │
 │      └── AgentChatController ×N チャットウィンドウ（入力・会話・モデル切替）     │
 └───────────────────────────────────────────────────────────────────────────┘
-          │ 1 ターン = 1 子プロセス（クラゲごとに独立）
+          │ 1 ターン = 1 子プロセス（おもちごとに独立）
           ▼
    claude -p <prompt> --output-format stream-json --verbose
           --permission-mode auto --permission-prompts none
           --session-id <uuid>（初回） / --resume <uuid>（2 回目以降）
 ```
 
-- **エージェントの独立性**：クラゲごとに別のセッション ID・作業フォルダ・履歴・ログ・OS プロセスを持つ。1 体のプロセスが落ちても他には影響しない。
+- **エージェントの独立性**：おもちごとに別のセッション ID・作業フォルダ・履歴・ログ・OS プロセスを持つ。1 体のプロセスが落ちても他には影響しない。
 - **状態は実イベントから**：stream-json のイベントだけで遷移させ、応答文から推測しない。
 
   | イベント | 状態 |
@@ -63,11 +63,11 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 ```
 
 - **MCP サーバーはアプリ側**：ブリッジは標準入出力とソケットを中継するだけで、JSON-RPC（initialize / tools/list / tools/call）は TeamCoordinator が処理する。どのエージェントからの呼び出しかはブリッジの hello で分かる
-- **ツール**：`list_team`、`assign_task`（すぐ task_id を返す。相手が作業中なら順番待ち）、`create_teammate`（呼んだクラゲの隣に出し、線でつなぎ、作業フォルダ・モデル・強さを引き継ぐ）、`wait_for_tasks`（最大 1800 秒待つ。過ぎたらその時点の状況を返し、もう一度呼べば続きを待てる）。待ちが長いので子プロセスに `MCP_TOOL_TIMEOUT` を渡す
+- **ツール**：`list_team`、`assign_task`（すぐ task_id を返す。相手が作業中なら順番待ち）、`create_teammate`（呼んだおもちの隣に出し、線でつなぎ、作業フォルダ・モデル・強さを引き継ぐ）、`wait_for_tasks`（最大 1800 秒待つ。過ぎたらその時点の状況を返し、もう一度呼べば続きを待てる）。待ちが長いので子プロセスに `MCP_TOOL_TIMEOUT` を渡す
 - **依頼の実行**：依頼先の次のターンとして `--resume` で送る（目印 `[Jellyfish チーム依頼 from: 名前]` を先頭に付け、チャットでは「📨 名前 からの依頼」と表示）。ターンが終わったら結果（stream-json の result）を依頼元へ返す
-- **つながり**：無向の辺（links.json）。つながりの塊が 1 チームで、チーム内なら隣でなくても頼める（光は線をたどる最短経路を流れる）。ドラッグ中、中心どうしが体 1.5 個ぶん以内の最も近いクラゲを「つながる先」として、ドラッグ元の色の流れる点線・相手を囲む脈打つ輪・「離すと 〇〇 とつながる」の吹き出しで見せる（チームが 8 体を超えるなら赤）。離すと、線が体に隠れず ✂︎ も出せるよう、相手から体 1.6 個ぶんの空いた位置へ 0.22 秒で滑らせてからつなぐ。⇧ ドラッグはチーム全体を平行移動、⌥ を押したまま離すとそのクラゲのつながりを全部切る（修飾キーはドラッグ中もポインタ追跡で拾うので、マウスを止めたまま押しても表示が切り替わる）。右クリック › つなぐ で離れたクラゲともつなげる
-- **描画**：LinkOverlay（ディスプレイごとの透明な重ね窓、クラゲより 1 段下のレベル、クリックは素通し）。線は CAShapeLayer の点線、依頼が流れている間だけ lineDashPhase を流す。光は CAKeyframeAnimation。静止中はアニメーションが無いので CPU を使わない。✂︎ は線の近くにポインタがあるときだけ出る小さなクリック可能パネル
-- **上限**：1 チーム 8 体、全体 20 体、作成の深さ 2（ユーザーのクラゲ = 0）。毎ターンの system prompt に今のチームと残り枠を書く
+- **つながり**：無向の辺（links.json）。つながりの塊が 1 チームで、チーム内なら隣でなくても頼める（光は線をたどる最短経路を流れる）。ドラッグ中、中心どうしが体 1.5 個ぶん以内の最も近いおもちを「つながる先」として、ドラッグ元の色の流れる点線・相手を囲む脈打つ輪・「離すと 〇〇 とつながる」の吹き出しで見せる（チームが 8 体を超えるなら赤）。離すと、線が体に隠れず ✂︎ も出せるよう、相手から体 1.6 個ぶんの空いた位置へ 0.22 秒で滑らせてからつなぐ。⇧ ドラッグはチーム全体を平行移動、⌥ を押したまま離すとそのおもちのつながりを全部切る（修飾キーはドラッグ中もポインタ追跡で拾うので、マウスを止めたまま押しても表示が切り替わる）。右クリック › つなぐ で離れたおもちともつなげる
+- **描画**：LinkOverlay（ディスプレイごとの透明な重ね窓、おもちより 1 段下のレベル、クリックは素通し）。線は CAShapeLayer の点線、依頼が流れている間だけ lineDashPhase を流す。光は CAKeyframeAnimation。静止中はアニメーションが無いので CPU を使わない。✂︎ は線の近くにポインタがあるときだけ出る小さなクリック可能パネル
+- **上限**：1 チーム 8 体、全体 20 体、作成の深さ 2（ユーザーのおもち = 0）。毎ターンの system prompt に今のチームと残り枠を書く
 
 ## 2.6 自律組織モード（Org/）
 
@@ -88,13 +88,13 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
   - `OrgReward`：完了 0.65・失敗 0.15・キャンセル 0.1、仲間の失敗・長時間で減点、👍 は 0.85 以上に、👎 は 0.25 以下に、再実行・キャンセル・「違う」で減点、「ありがとう」で加点
   - `OrgEvolution`：2 件以上の型の上位 2 つから、人数 ±1・レビュー係の付け外し・形の変更の子を 1 つずつ。4 件以上でいちばんの型より 0.3 低い型は引退（solo は残す）。リーダーが自分で選んだ一覧にない形は取り込む
 - **OrgLearner**：状態はメインスレッド。保存（`org/episodes.json` 0600・`population.json`・`report.md`）と進化は 3 秒待ってまとめて `jellyfish.org`（utility）キューで。終了時は `flush` で書き切る。エピソードは 600 件まで
-- **予約**（Agent/PromptQueue.swift・UI/PromptQueueView.swift）：`PromptQueues`（JellyManager が持つ。`queues.json`）がクラゲごとの `PromptQueue`（予約の行 `QueuedPrompt` = 本人が打った文・送り先・前の結果を渡すか・予約したときの添付と画面の欄）を動かす。チャットで作業中（または予約が進んでいる途中）に Enter を押すと `enqueue` し、そのクラゲが作業中ならその終わりを `watching` で待つ。`AgentRuntime.onTurnEnded` → `turnEnded` で、完了なら結果を `lastResult` に取って `pump` が先頭の行を送る（送り先が作業中なら次の turnEnded まで待つ。送る前に watching を付けるので、起動に失敗してその場で終わっても取りこぼさない）。止めた・エラー・送れない・送り先が消えた・アプリを終了したときは `pause`（▶ で再開）。前の結果は `PromptQueues.resultMarker` の欄として本人の文と添付の欄の間に入れ、Jellyfish の目印と同じ形は崩しておく（`defang`）。`typedText`・外部 MCP の判定・モデルの自動選択・タイトルはこの欄を除いた本人の文で決める。打っている途中の行は最後の入力から 4 秒待つ。テストは `Tests/JellyfishAITests/QueueTests.swift`（偽のクラゲ）と `jellyfish://queue`（自動化のときだけ）
+- **予約**（Agent/PromptQueue.swift・UI/PromptQueueView.swift）：`PromptQueues`（JellyManager が持つ。`queues.json`）がおもちごとの `PromptQueue`（予約の行 `QueuedPrompt` = 本人が打った文・送り先・前の結果を渡すか・予約したときの添付と画面の欄）を動かす。チャットで作業中（または予約が進んでいる途中）に Enter を押すと `enqueue` し、そのおもちが作業中ならその終わりを `watching` で待つ。`AgentRuntime.onTurnEnded` → `turnEnded` で、完了なら結果を `lastResult` に取って `pump` が先頭の行を送る（送り先が作業中なら次の turnEnded まで待つ。送る前に watching を付けるので、起動に失敗してその場で終わっても取りこぼさない）。止めた・エラー・送れない・送り先が消えた・アプリを終了したときは `pause`（▶ で再開）。前の結果は `PromptQueues.resultMarker` の欄として本人の文と添付の欄の間に入れ、Jellyfish の目印と同じ形は崩しておく（`defang`）。`typedText`・外部 MCP の判定・モデルの自動選択・タイトルはこの欄を除いた本人の文で決める。打っている途中の行は最後の入力から 4 秒待つ。テストは `Tests/JellyfishAITests/QueueTests.swift`（偽のおもち）と `jellyfish://queue`（自動化のときだけ）
 - **片付け**：form_team が作った仲間は `JellyRecord.orgSpawned`。次の form_team で使わない、空いている仲間（とその下の仲間）を消す。リーダーが仲間を使わずにターンを終えたら、前の依頼の仲間を消す
 - **安全**：PC 操作のツールは仲間からの依頼のターンでは渡さない（`usesPCTools`）。仲間からの依頼の文では外部 MCP を読み込まない。学習は端末内だけで、どこにも送らない
 
 ## 2.6.1 使う AI（Agent/Engines.swift・OtherBackends.swift）
 
-- `AgentEngine`（claude / codex / gemini）。クラゲごとに `AgentRuntime.engine`（meta.json、nil = 設定の `engine`）。変えると新しい会話
+- `AgentEngine`（claude / codex / gemini）。おもちごとに `AgentRuntime.engine`（meta.json、nil = 設定の `engine`）。変えると新しい会話
 - バックエンド：`ClaudeCodeBackend`（従来）、`CodexBackend`（`codex exec [resume] --json --skip-git-repo-check --config sandbox_mode="workspace-write" --config approval_policy="never" -- [id] <指示>`。会話の ID は thread.started で受け取る＝`assignsSessionID`）、`GeminiBackend`（`gemini -o stream-json --approval-mode auto_edit --session-id|--resume <id> --prompt=<指示>`）。出力はそれぞれ JSONL を `AgentEvent` に（`CodexEventParser`・`GeminiEventParser`）
 - オプションは `CLILocator` が `--help` で存在を確かめる（足りなければ「この版では使えない」）
 - 実行の前に `JellyManager.preflight`：`EngineAuth`（10 分まで覚える）で、サブスクリプションでログインしているときだけ動かす。API キー（従量課金）なら、`allowAPIBilling` がオンのときだけ
@@ -106,14 +106,14 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 - **受け渡し用のフォルダ**：Claude のリーダーのユーザーのターンごとに `handoff/<日時>-agent<番号>-<4 文字>`（700）を作り（`leadHandoff`）、そのターンの依頼（`TeamTask.handoff`）に引き継ぐ。`AgentRuntime.extraDirs` → `AgentRunOptions.addDirs` で、Claude `--add-dir`・Codex `--config sandbox_workspace_write.writable_roots=[…]`（resume に --add-dir が無いため）・Gemini `--include-directories`。空なら turnEnded で消し、DataJanitor が 7 日で片付ける
 - **使用量**：`AgentEvent.usage(model:input:output:cached:)` を各パーサが出す（Claude は result の modelUsage、Codex は turn.completed の usage、Gemini は result の stats.models）。`UsageLedger`（usage.json、日 × AI × モデル × アカウント）
 - **ChatGPT の枠**：`CodexUsage`（Agent/EngineUsage.swift）が `$CODEX_HOME/sessions/年/月/日/rollout-*.jsonl` の終わり 1MB から最後の `token_count` の `rate_limits`（primary = 5 時間・secondary = 今週の used_percent・window_minutes・resets_at、plan_type）を読み、メニューの上の欄（`AccountMenu.engineItems`）に Claude と同じバーで出す
-- **会話を作った AI**：`AgentRuntime.sessionEngine`（meta.json）。既定の AI が変わってクラゲの AI が変わったら、submit で新しい会話にしてモデル・強さの指定を外す。`AgentTurn.engine` でターンごとの AI を覚え、チャットの見出しに使う（Claude Code のセッション記録から読んだ返答は Claude）
+- **会話を作った AI**：`AgentRuntime.sessionEngine`（meta.json）。既定の AI が変わっておもちの AI が変わったら、submit で新しい会話にしてモデル・強さの指定を外す。`AgentTurn.engine` でターンごとの AI を覚え、チャットの見出しに使う（Claude Code のセッション記録から読んだ返答は Claude）
 - **仲間の強さ**：`TeamCoordinator.requestedEffort` / `effortList`（Claude は AgentChatController.efforts、ChatGPT はモデルの supported_reasoning_levels、Gemini は無し）
 
 ## 2.6.4 見守り（Agent/ScreenWatcher.swift・UI/WatchBubble.swift）
 
-- `AgentRuntime.watchScreen`（meta.json、既定オフ）。`ScreenWatcher.shared` は見守るクラゲがいるときだけ 4 秒の Timer。前面のアプリ（除外の一覧・`watchIgnoredApps`・自分は飛ばす）のいちばん前のウィンドウを CGWindowList で選び、ScreenCaptureKit で長辺 320px を撮って 24×16 の明るさの格子に → 前と比べてはっきり変わったマスが 0.4% を超えたら「読む待ち」、落ち着いた（変わらなかった）ティックで、待ちがあり前回から 8 秒以上なら長辺 1200px で撮って Vision（accurate・ja/en/zh）で読む
+- `AgentRuntime.watchScreen`（meta.json、既定オフ）。`ScreenWatcher.shared` は見守るおもちがいるときだけ 4 秒の Timer。前面のアプリ（除外の一覧・`watchIgnoredApps`・自分は飛ばす）のいちばん前のウィンドウを CGWindowList で選び、ScreenCaptureKit で長辺 320px を撮って 24×16 の明るさの格子に → 前と比べてはっきり変わったマスが 0.4% を超えたら「読む待ち」、落ち着いた（変わらなかった）ティックで、待ちがあり前回から 8 秒以上なら長辺 1200px で撮って Vision（accurate・ja/en/zh）で読む
 - `WatchMatcher`：英語は単語として（`NSError`・`errorHandler` は数えない）、日中は語で。署名は数字を # にして同じ表示を 30 分まとめる。知らせたら 60 秒は次を出さず、アプリごとに 10 分（✕ で 30 分）静か
-- 見つけたら `JellyManager.handleWatchFinding` がクラゲのデータフォルダに PNG を置き、`WatchBubble`（キーにならないパネル）を出す。「見る」→ `AgentChatController.sendWatchFinding`（作業中なら入力欄に）。消すときは PNG も消す
+- 見つけたら `JellyManager.handleWatchFinding` がおもちのデータフォルダに PNG を置き、`WatchBubble`（キーにならないパネル）を出す。「見る」→ `AgentChatController.sendWatchFinding`（作業中なら入力欄に）。消すときは PNG も消す
 - 負担：ティックごとに `getrusage` の差を記録し、メニューに直近 1 分の CPU。`--watch-bench 秒`（毎回読む場合と、落ち着いたときだけ読む場合）。SCWindow は 10 秒使い回す
 
 ## 2.6.3 チャットの会話の表示（UI/ChatTranscriptView.swift・Resources/chat）
@@ -145,22 +145,22 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 | ファイル | 内容 |
 |---|---|
 | `settings.json` | ショートカット、見た目、大きさ、自動起動、権限モード、claude のパス等 |
-| `jellies.json` | クラゲ（番号・色・位置・状態・表示） |
+| `jellies.json` | おもち（番号・色・位置・状態・表示） |
 | `agents/<id>/meta.json` | セッション ID・作業フォルダ |
-| `links.json` | クラゲ同士のつながり |
+| `links.json` | おもち同士のつながり |
 | `bus.sock` | チーム機能のソケット（0600） |
 | `agents/<id>/history.json` | 指示と結果の履歴 |
 | `agents/<id>/events.jsonl` | Claude Code の生イベント |
 | `app.log` | アプリのログ |
 
-環境変数 `JELLYFISH_DATA_DIR` を付けて起動すると、この保存先を差し替える（README の GIF を撮る `scripts/demo/record.sh` が、普段のクラゲや会話に触れずに空のデータで録画するために使う）。
+環境変数 `JELLYFISH_DATA_DIR` を付けて起動すると、この保存先を差し替える（README の GIF を撮る `scripts/demo/record.sh` が、普段のおもちや会話に触れずに空のデータで録画するために使う）。
 
 ## 4. ロードマップと現状
 
 | Phase | 内容 | 状態 |
 |---|---|---|
 | 1 基本 UI | 常駐、Claude キャラ、浮遊、⌘L 生成、色分け、ドラッグ、非表示/再表示、自動起動、長押しで削除 | ✅ 動作確認済み |
-| 2 AI 連携 | ⌘L で即入力、タップでチャットウィンドウ（閉じる/しまう/フルスクリーン/自由リサイズ）、Claude Code 接続（Auto Mode）、独立エージェントの並列実行、`--resume` で前の成果物に続けて指示、モデル・強さ（--model / --effort）をクラゲごとに切替、会話は Claude Code のセッション記録から表示、過去のセッション（VS Code・ターミナル製も含む）をメニューから呼び出し、ターミナルで同じセッションを開く | ✅ 実行→完了・エラー・再実行・続けて指示を確認 |
+| 2 AI 連携 | ⌘L で即入力、タップでチャットウィンドウ（閉じる/しまう/フルスクリーン/自由リサイズ）、Claude Code 接続（Auto Mode）、独立エージェントの並列実行、`--resume` で前の成果物に続けて指示、モデル・強さ（--model / --effort）をおもちごとに切替、会話は Claude Code のセッション記録から表示、過去のセッション（VS Code・ターミナル製も含む）をメニューから呼び出し、ターミナルで同じセッションを開く | ✅ 実行→完了・エラー・再実行・続けて指示を確認 |
 | 3 状態の可視化 | Idle/Thinking/Working/Completed/Error/Cancelled のアニメーション、完了で静止 | ✅ 実イベントで遷移を確認 |
 | 4 画面認識 | 指示が画面を指していれば送信時に ScreenCaptureKit で撮影（Jellyfish のウィンドウは除外）、前面アプリ名・ウィンドウ名を添付、📎 添付を優先、対象ディスプレイ選択（使っていたアプリの画面 / 全ディスプレイ）、自動判定/毎回/しない | 🟡 実装済み・画面収録の権限付与後の実機確認待ち。AX（アクセシビリティ）で選択テキスト等を取るのは未 |
 | 5 チーム | 名前、隣に置くとつながる線、依頼と結果の受け渡しを線上で可視化、✂︎ で切る、エージェントが仲間を作って分担（MCP） | ✅ 実機で 4 体の分業（作成 → 並列 → レビュー → 統合）を確認 |
@@ -188,10 +188,10 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 - **`jellyfish://`**：`URLRoutes.allowed` が受け付ける操作を決める。普段は表示系（`new`・`open`・`toggle`・`show`・`hide`・`arrange`・`style`・`scale`）だけ。指示の送信・PC 操作の許可・作業フォルダ・削除などは `JELLYFISH_AUTOMATION=1` で起動したときだけ（デモ録画は `scripts/demo/record.sh` が付ける。`connectors`・`connectortest` はコネクタの GIF 用で、画面を前面化せずに出してボタンを押すだけ・何も書き込まない）
 - **チームのソケット**：`bus.sock`（0600）。接続ごとに `LOCAL_PEERPID` で相手のプロセスを取り、hello で名乗ったエージェントの claude（`AgentRuntime.processID`）の子孫であることを `ProcessTree.isDescendant` で確かめてから受け付ける
 - **通信**：アプリ自身はメニューの「アップデートを確認…」のときと、「アップデートの自動確認」で間隔を選んだときのその間隔ごとだけ `api.github.com/repos/…/releases/latest` を読む（既定は確認しない）。利用状況の送信はしない。ほかは「アップデートする」のときのリリースのファイルと、チャットの Web のプレビューだけ
-- **アップデートの自動確認**（App/UpdateSchedule.swift）：`AppSettings.updateCheck`（never / daily / weekly / monthly）と `lastUpdateCheck`（読めたときの UNIX 秒）から `UpdateCheckInterval.isDue` で番かを決め、起動 1 分後と 1 時間ごとに見る。番なら `UpdateChecker.fetchLatest` で版だけを読み、新しければ `JellyManager.showUpdateBubble` が見えているクラゲの上に `WatchBubble`（キーにならないパネル）を出す。「見る」は手での確認と同じ画面（`UpdateChecker.check`）を開き、入れ替えはそこで「アップデートする」を押したときだけ。「この版は知らせない」は `skippedUpdateVersion` に入れる
-- **コネクタ**（Agent/Connectors.swift・Agent/MacConnectors.swift・App/ConnectorsWindow.swift）：`ConnectorSettings`（設定の `connectors`。コネクタごとに `ConnectorRule` = 範囲 off/read/readWrite と、使える AI → 使えるモデル）・`ConnectorPreset`（ワンタッチ設定）・`ConnectorPolicy`（クラゲの AI・このターンのモデル `AgentRuntime.connectorModel`・PC 操作の有無から、渡すツールと断る理由を決める）。`TeamCoordinator` が jellyfish MCP の tools/list に足し、tools/call で決まりを確かめ直してから `MacConnectors` へ（カレンダー・リマインダーは EventKit、メールは `/usr/bin/osascript -l JavaScript` に JSON の引数 1 つ）。書き込みは `JellyManager.confirmConnector` の吹き出しで本人が押したときだけ
+- **アップデートの自動確認**（App/UpdateSchedule.swift）：`AppSettings.updateCheck`（never / daily / weekly / monthly）と `lastUpdateCheck`（読めたときの UNIX 秒）から `UpdateCheckInterval.isDue` で番かを決め、起動 1 分後と 1 時間ごとに見る。番なら `UpdateChecker.fetchLatest` で版だけを読み、新しければ `JellyManager.showUpdateBubble` が見えているおもちの上に `WatchBubble`（キーにならないパネル）を出す。「見る」は手での確認と同じ画面（`UpdateChecker.check`）を開き、入れ替えはそこで「アップデートする」を押したときだけ。「この版は知らせない」は `skippedUpdateVersion` に入れる
+- **コネクタ**（Agent/Connectors.swift・Agent/MacConnectors.swift・App/ConnectorsWindow.swift）：`ConnectorSettings`（設定の `connectors`。コネクタごとに `ConnectorRule` = 範囲 off/read/readWrite と、使える AI → 使えるモデル）・`ConnectorPreset`（ワンタッチ設定）・`ConnectorPolicy`（おもちの AI・このターンのモデル `AgentRuntime.connectorModel`・PC 操作の有無から、渡すツールと断る理由を決める）。`TeamCoordinator` が jellyfish MCP の tools/list に足し、tools/call で決まりを確かめ直してから `MacConnectors` へ（カレンダー・リマインダーは EventKit、メールは `/usr/bin/osascript -l JavaScript` に JSON の引数 1 つ）。書き込みは `JellyManager.confirmConnector` の吹き出しで本人が押したときだけ
 - **macOS の許可**（App/Permissions.swift）：`AppPermission`（アクセシビリティ = AXIsProcessTrusted、画面収録 = CGPreflightScreenCaptureAccess、フルディスクアクセス = TCC.db を開けるか、オートメーション = アプリごと）と tccutil のサービス名・システム設定の場所。`PermissionsWindowController` が状態・範囲を出し、まとめて許可（効いていないものだけ `permissions.sh grant <サービス>` → 終わると `jellyfish://permissions?done=grant` → `waitingForGrant` のときだけ AX の確認・画面収録の確認・フルディスクアクセスの場所）・取り消し（`disableAllPrivileges` → `permissions.sh revoke`）・固定の署名（`source-checkout` があるとき）。entitlement は `Resources/JellyfishAI.entitlements`（Apple Events だけ）
 - **コマンドでアップデート**：`scripts/update.sh`（build.sh が `Contents/Resources/update.sh` に入れる。アプリの中から動かすと写しから動き直す）。JSON は `plutil -extract`、版の比較は数で、URL は `releases/download/<tag>/` と完全一致、`ditto -x -k` → バンドル ID・版・`codesign --verify --strict`・証明書の署名なら `codesign --verify -R=<いまの DR>`、`ps -o comm=` でその場所のプロセスだけを SIGTERM、`mv` で退かして置き、失敗したら戻す。`--source` は `git pull --ff-only` → install.sh。アプリの `AppUpdater.terminalCommand` が `source-checkout`（install.sh が書く）を見てコマンドを決め、`runInTerminal` が `update.command` で開く
-- **アップデート**（App/Updater.swift）：`AppUpdater.release(from:)` が `github.com/<repo>/releases/download/<tag>/` の `JellyfishAI-<版>.zip` と `SHA256SUMS.txt` だけを選ぶ → `UpdateSession` が取ってくる（リダイレクトは github.com・*.githubusercontent.com の https だけ）→ SHA-256 → `ditto -x -k` → `bundleProblem`（バンドル ID・版）→ `signingStep`（`SecStaticCodeCheckValidity` strict。いまの版が証明書の署名ならその designated requirement も。満たさなくても、いまの版が自己署名の証明書 1 枚＝固定の署名なら、`security find-identity` に鍵があれば `.resign` で `codesign --force --sign <SHA-1> --options runtime --preserve-metadata=entitlements` し `satisfiesCurrent` を確かめ、鍵が無ければ `.releaseSignature`。Developer ID など鎖のある証明書は `.refuse`）→ 作業中のクラゲがいないことを確かめ、いまの版を `update/previous.app` に退かして新しい版を置き（失敗したら戻す）、`sh` の小さなスクリプトがアプリの終了を待って新しい版を開き `update/` を消す
-- **片付け**：起動時に 7 日より古い画面の画像を消す（`DataJanitor`）。`app.log` は 2MB、`events.jsonl` は 4MB で 1 世代に入れ替える（`LogRotation`）。クラゲを消すとそのクラゲの生イベントと画像を消す
+- **アップデート**（App/Updater.swift）：`AppUpdater.release(from:)` が `github.com/<repo>/releases/download/<tag>/` の `JellyfishAI-<版>.zip` と `SHA256SUMS.txt` だけを選ぶ → `UpdateSession` が取ってくる（リダイレクトは github.com・*.githubusercontent.com の https だけ）→ SHA-256 → `ditto -x -k` → `bundleProblem`（バンドル ID・版）→ `signingStep`（`SecStaticCodeCheckValidity` strict。いまの版が証明書の署名ならその designated requirement も。満たさなくても、いまの版が自己署名の証明書 1 枚＝固定の署名なら、`security find-identity` に鍵があれば `.resign` で `codesign --force --sign <SHA-1> --options runtime --preserve-metadata=entitlements` し `satisfiesCurrent` を確かめ、鍵が無ければ `.releaseSignature`。Developer ID など鎖のある証明書は `.refuse`）→ 作業中のおもちがいないことを確かめ、いまの版を `update/previous.app` に退かして新しい版を置き（失敗したら戻す）、`sh` の小さなスクリプトがアプリの終了を待って新しい版を開き `update/` を消す
+- **片付け**：起動時に 7 日より古い画面の画像を消す（`DataJanitor`）。`app.log` は 2MB、`events.jsonl` は 4MB で 1 世代に入れ替える（`LogRotation`）。おもちを消すとそのおもちの生イベントと画像を消す
 

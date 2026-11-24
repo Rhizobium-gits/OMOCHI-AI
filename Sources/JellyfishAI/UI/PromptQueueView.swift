@@ -183,7 +183,7 @@ final class PromptQueueView: NSView, NSTextViewDelegate {
             let t = it.target ?? owner
             r.target.selectItem(at: agents.firstIndex { $0.id == t } ?? 0)
             r.pass.state = it.passResult ? .on : .off
-            r.pass.toolTip = L("前の手順の結果（前の行を作業したクラゲの最後の返答）を、この指示に添えて渡します")
+            r.pass.toolTip = L("前の手順の結果（前の行を作業したおもちの最後の返答）を、この指示に添えて渡します")
             r.up.isEnabled = i > 0
             r.down.isEnabled = i < items.count - 1
             r.attach.isHidden = it.attachmentCount == 0 && it.suffix == nil
@@ -278,7 +278,7 @@ final class PromptQueueView: NSView, NSTextViewDelegate {
         r.target.bezelStyle = .accessoryBarAction
         r.target.target = self
         r.target.action = #selector(targetChanged(_:))
-        r.target.toolTip = L("この指示を送るクラゲ。ほかのクラゲにすると、そのクラゲの会話で作業します")
+        r.target.toolTip = L("この指示を送るおもち。ほかのおもちにすると、そのおもちの会話で作業します")
         (r.target.cell as? NSPopUpButtonCell)?.lineBreakMode = .byTruncatingTail
         r.target.setContentCompressionResistancePriority(.init(600), for: .horizontal)
         r.pass.controlSize = .small
@@ -322,7 +322,7 @@ final class PromptQueueView: NSView, NSTextViewDelegate {
     private func fillTargets(_ r: Row) {
         r.target.removeAllItems()
         for a in agents {
-            let title = a.id == owner ? L("→ このクラゲ（%@）", a.title) : "→ " + a.title
+            let title = a.id == owner ? L("→ このおもち（%@）", a.title) : "→ " + a.title
             let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
             item.image = PromptQueueView.dot(a.color)
             r.target.menu?.addItem(item)

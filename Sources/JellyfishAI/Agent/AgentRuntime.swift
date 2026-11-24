@@ -151,7 +151,7 @@ final class AgentRuntime {
         let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isRunning else { return false }
         guard let backend = backendProvider(engine) else {
-            refuse(text, L("%@ が見つかりません。メニューバーのクラゲ › 🔑 アカウントと AI で、入っているか・ログインしているかを確かめてください", (engine ?? defaultEngine?() ?? .claude).cliTitle))
+            refuse(text, L("%@ が見つかりません。メニューバーのおもち › 🔑 アカウントと AI で、入っているか・ログインしているかを確かめてください", (engine ?? defaultEngine?() ?? .claude).cliTitle))
             return false
         }
         // ログインしていない・API キー（従量課金）でログインしている、などのときは動かさない（勝手に課金しない）

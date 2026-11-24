@@ -182,7 +182,7 @@ def state_times(ev_list, agent):
 if want("basic"):
     d, tl, ev = load("basic")
     orange = jellies(ev["tap"])[0]
-    caps = [(0, "⌘L で新しいクラゲ → そのまま指示を入力")]
+    caps = [(0, "⌘L で新しいおもち → そのまま指示を入力")]
     for t, s in state_times(tl["events"], 2):
         if t < ev["completed"]["t"]:
             if s == "thinking":
@@ -240,7 +240,7 @@ if want("team"):
 # ---- 5. つなぐ・まとめて動かす・切り離す --------------------------------------
 if want("link"):
     d, tl, ev = load("link")
-    caps = [(0, "ドラッグしてほかのクラゲに近づける"),
+    caps = [(0, "ドラッグしてほかのおもちに近づける"),
             (ev["drag1"]["t"] + 1.0, "相手が光って「離すとつながる」"),
             (ev["drag1"]["t"] + 1.95, "離すと見やすい距離に収まって線でつながる"),
             (ev["drag2"]["t"], "つなぐほどチームが大きくなる（8 体まで）"),
@@ -253,10 +253,10 @@ if want("link"):
 if want("queue"):
     d, tl, ev = load("queue")
     first = lambda prefix, after=0: min((e["t"] for e in tl["events"] if e["mark"].startswith(prefix) and e["t"] > after), default=None)
-    caps = [(0, "クラゲに作業を頼む"),
+    caps = [(0, "おもちに作業を頼む"),
             (ev["q1"]["t"], "作業中でも次の指示を打てる → Enter で「予約」"),
             (ev["q2"]["t"] + 1.6, "予約は送るまで書き換え・並べ替え・削除できる"),
-            (ev["retarget"]["t"], "送り先をほかのクラゲにすると、前の結果を渡してつなげる")]
+            (ev["retarget"]["t"], "送り先をほかのおもちにすると、前の結果を渡してつなげる")]
     c1 = first("state:1:completed", ev["retarget"]["t"]) or first("state:1:completed")
     if c1: caps.append((c1, "終わったらすぐ次の予約を送る"))
     caps += [(ev["mio"]["t"], "Mio が Aki の結果を受け取って続きを作業"),
@@ -270,9 +270,9 @@ if want("connectors"):
     caps = [(0, "コネクタ：この Mac のカレンダー・リマインダー・メールをエージェントのツールに"),
             (ev["readOnly"]["t"], "ワンタッチ設定「見るだけ」：3 つとも見るだけ（どの AI でも）"),
             (ev["recommended"]["t"], "「おすすめ」：カレンダー・リマインダーは書ける、メールは Claude だけ"),
-            (ev["claudeTop"]["t"], "「Claude の上位モデルだけ」：Fable・Opus のクラゲだけが使える"),
+            (ev["claudeTop"]["t"], "「Claude の上位モデルだけ」：Fable・Opus のおもちだけが使える"),
             (ev["custom"]["t"], "AI ごと・モデルごとに、自分で選ぶこともできる"),
-            (ev["confirm"]["t"], "予定の追加などの書き込みは、クラゲの横で確認（見本）"),
+            (ev["confirm"]["t"], "予定の追加などの書き込みは、おもちの横で確認（見本）"),
             (ev["approve"]["t"], "押したときだけ実行する。メールは送らない（下書きを開くだけ）")]
     render("connectors", "demo-connectors.gif", ev["open"]["t"] - 0.6, ev["end"]["t"], caps)
 

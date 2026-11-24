@@ -6,7 +6,8 @@
 
 ### 変更
 
-- README（日本語・English・简体中文）：エージェントの呼び名を「クラゲ」から「おもち」（English は mochi、简体中文は 年糕）に。つながる・離れるチームや AI をまたいだ分業などで当初から大きく進化したので、エージェントの姿を変えたことを冒頭に書いた。アプリの名前（Jellyfish AI）と、見た目の「リアルなクラゲ」はそのまま
+- エージェントの呼び名を、アプリの画面・メニュー・案内・エージェントへの説明のすべてで「クラゲ」から「おもち」に（English は omochi、简体中文は 年糕）。見た目の名前も「ドット絵（おもち）」/ Pixel (Omochi) / 像素（年糕）に。`install.sh`・`update.sh` のメッセージ、README の GIF の字幕、SECURITY.md・docs/ARCHITECTURE.md も同じ。アプリの名前（Jellyfish AI）、見た目の「リアルなクラゲ」、MCP サーバーの名前 `jellyfish`、`jellyfish://` はそのまま
+- README（日本語・English・简体中文）：エージェントの呼び名を「クラゲ」から「おもち」（English は omochi、简体中文は 年糕）に。つながる・離れるチームや AI をまたいだ分業などで当初から大きく進化したので、エージェントの姿を変えたことを冒頭に書いた。アプリの名前（Jellyfish AI）と、見た目の「リアルなクラゲ」はそのまま
 - README（日本語・English・简体中文）の GIF を、すべて 1.3.2 の「まるもち」とチャットの吹き出しで撮り直した（`demo-basic`・`demo-parallel`・`demo-team`・`demo-crossai`・`demo-link`・`demo-queue`・`demo-connectors`・`states`）。もう前のキャラクター（Claude Code のキャラクター）は写らないので、注意書きからその一文を外した。まるもちの状態ごとの動きの説明と、「見た目」のメニューの名前（ドット絵（もち）/ リアルなクラゲ）を README に書いた
 - デモの録画（`scripts/demo/record.sh`）：メインディスプレイが 1920×1080 でなくても撮れるようにした。右上からの位置を保つように、録画範囲・シードのクラゲ・コネクタの画面の位置をずらした写し（`.build/demo-takes`）で撮る
 

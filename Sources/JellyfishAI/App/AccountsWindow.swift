@@ -26,7 +26,7 @@ final class AccountsWindowController: NSObject, NSWindowDelegate {
 
         let title = NSTextField(labelWithString: L("使う AI にログインする"))
         title.font = .systemFont(ofSize: 17, weight: .semibold)
-        let intro = NSTextField(wrappingLabelWithString: L("エージェントは、この Mac に入っている各 AI の公式の CLI を、あなたのアカウントのログインのまま動かします。ログインはそれぞれの公式の画面（ターミナルとブラウザ）で行い、Jellyfish はパスワード・トークン・API キーを受け取りません。使う AI はクラゲごとにチャットでも変えられます。"))
+        let intro = NSTextField(wrappingLabelWithString: L("エージェントは、この Mac に入っている各 AI の公式の CLI を、あなたのアカウントのログインのまま動かします。ログインはそれぞれの公式の画面（ターミナルとブラウザ）で行い、Jellyfish はパスワード・トークン・API キーを受け取りません。使う AI はおもちごとにチャットでも変えられます。"))
         intro.textColor = .secondaryLabelColor
         intro.font = .systemFont(ofSize: 12)
 
@@ -34,7 +34,7 @@ final class AccountsWindowController: NSObject, NSWindowDelegate {
         for e in AgentEngine.allCases {
             let use = NSButton(radioButtonWithTitle: "", target: self, action: #selector(useEngine(_:)))
             use.identifier = NSUserInterfaceItemIdentifier(e.rawValue)
-            use.toolTip = L("クラゲごとに選んでいないときに使う AI にする")
+            use.toolTip = L("おもちごとに選んでいないときに使う AI にする")
             let name = NSTextField(labelWithString: e.displayName)
             name.font = .systemFont(ofSize: 13, weight: .semibold)
             let sub = NSTextField(labelWithString: "\(e.cliTitle) · \(e.accountKind)")
@@ -115,7 +115,7 @@ final class AccountsWindowController: NSObject, NSWindowDelegate {
             r.setup.isHidden = installed
         }
         billing.stringValue = m.settings.allowAPIBilling
-            ? L("⚠️ API キー（従量課金）での利用を許可しています。メニューバーのクラゲ › 🔑 アカウントと AI でオフにできます。")
+            ? L("⚠️ API キー（従量課金）での利用を許可しています。メニューバーのおもち › 🔑 アカウントと AI でオフにできます。")
             : L("💳 勝手に課金しません：API キー（従量課金）でログインしている AI は使わず、シェルの設定にある API キーも CLI に渡しません。サブスクリプション（Claude・ChatGPT・Google のアカウント）でログインしてください。")
     }
 

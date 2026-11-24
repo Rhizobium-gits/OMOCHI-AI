@@ -40,14 +40,14 @@ enum AppInfo {
         a.messageText = L("Jellyfish AI へようこそ")
         a.icon = NSApp.applicationIconImage
         a.informativeText = L("""
-        デスクトップのクラゲ 1 体が、AI のエージェント 1 体です。動かす AI は Claude（Claude Code）・ChatGPT（Codex）・Gemini から選べます。
+        デスクトップのおもち 1 体が、AI のエージェント 1 体です。動かす AI は Claude（Claude Code）・ChatGPT（Codex）・Gemini から選べます。
 
-        ・クラゲをクリック：話しかける
-        ・%@：新しいクラゲ
+        ・おもちをクリック：話しかける
+        ・%@：新しいおもち
         ・ドラッグ：移動 ／ 長押し：消す
-        ・別のクラゲの近くで離す：つながってチームで分業
+        ・別のおもちの近くで離す：つながってチームで分業
 
-        エージェントは確認なしでファイルの作成・編集やコマンドの実行を行います（作業フォルダは既定でホーム。危ない操作は各 AI の安全の仕組みが止めます）。PC 操作は既定でオフです。いま与えている権限は、メニューバーのクラゲの「実行ポリシー」「PC 操作」で確認できます。
+        エージェントは確認なしでファイルの作成・編集やコマンドの実行を行います（作業フォルダは既定でホーム。危ない操作は各 AI の安全の仕組みが止めます）。PC 操作は既定でオフです。いま与えている権限は、メニューバーのおもちの「実行ポリシー」「PC 操作」で確認できます。
 
         次の画面で、使う AI にログインしてください。ログインはそれぞれの公式の画面で行い、Jellyfish は API キーを扱わず、勝手に課金しません。
         """, newJellyKey)
@@ -134,14 +134,14 @@ enum UpdateChecker {
                 a.messageText = L("新しいバージョン %@ があります", tag)
                 let release = json.flatMap(AppUpdater.release(from:))
                 if let release {
-                    var text = L("いまのバージョンは %@ です。「アップデートする」を押すと、GitHub のリリースから新しい版をダウンロードし、チェックサムと署名を確かめてから入れ替えて、開き直します（設定・クラゲ・会話はそのまま残ります）。", current)
+                    var text = L("いまのバージョンは %@ です。「アップデートする」を押すと、GitHub のリリースから新しい版をダウンロードし、チェックサムと署名を確かめてから入れ替えて、開き直します（設定・おもち・会話はそのまま残ります）。", current)
                     switch signing {
                     case .adhoc:
-                        text += "\n\n" + L("いまの版は仮の署名（ad-hoc）なので、入れ替えたあと macOS に画面収録・アクセシビリティ・フォルダの許可をもう一度求められることがあります（メニューバーのクラゲ › 🔐 権限 の「まとめて許可する」で許可し直せます）。")
+                        text += "\n\n" + L("いまの版は仮の署名（ad-hoc）なので、入れ替えたあと macOS に画面収録・アクセシビリティ・フォルダの許可をもう一度求められることがあります（メニューバーのおもち › 🔐 権限 の「まとめて許可する」で許可し直せます）。")
                     case .local(let name, true):
                         text += "\n\n" + L("いまの版はこの Mac の固定の署名（%@）なので、新しい版をこの署名で署名し直してから入れ替えます（macOS の許可はそのまま続きます）。途中で macOS が「codesign がキーを使おうとしています」と確かめるので「許可」を押してください（「常に許可」にすると、ほかのプログラムも確認なしでこの鍵を使えるようになります）。", name)
                     case .local(let name, false):
-                        text += "\n\n" + L("いまの版は固定の署名（%@）ですが、その鍵がこの Mac のキーチェーンに見つからないので、配布版の仮の署名（ad-hoc）のまま入れ替えます。macOS に画面収録・アクセシビリティ・フォルダの許可をもう一度求められることがあります（メニューバーのクラゲ › 🔐 権限 の「まとめて許可する」で許可し直せます）。", name)
+                        text += "\n\n" + L("いまの版は固定の署名（%@）ですが、その鍵がこの Mac のキーチェーンに見つからないので、配布版の仮の署名（ad-hoc）のまま入れ替えます。macOS に画面収録・アクセシビリティ・フォルダの許可をもう一度求められることがあります（メニューバーのおもち › 🔐 権限 の「まとめて許可する」で許可し直せます）。", name)
                     case .issued:
                         break
                     }
@@ -166,14 +166,14 @@ enum UpdateChecker {
                     case (0, _): UpdateSession.start(release, manager: manager)
                     case (1, let c?):
                         if manager?.anyAgentBusy == true {
-                            fallback(L("作業中のクラゲがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
+                            fallback(L("作業中のおもちがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
                         } else if !AppUpdater.runInTerminal(c) { NSSound.beep() }
                         else { AppLog.write("update in terminal: \(c.contains("--source") ? "source" : "release")") }
                     case (1, nil), (2, _?): NSWorkspace.shared.open(AppInfo.releasesURL)
                     default: break
                     }
                 } else {
-                    a.informativeText = L("いまのバージョンは %@ です。ダウンロードページから .dmg を入れ直してください（設定・クラゲ・会話はそのまま残ります）。", current)
+                    a.informativeText = L("いまのバージョンは %@ です。ダウンロードページから .dmg を入れ直してください（設定・おもち・会話はそのまま残ります）。", current)
                     a.addButton(withTitle: L("ダウンロードページを開く"))
                     a.addButton(withTitle: L("あとで"))
                     if ActiveSpace.runModal(a) == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }

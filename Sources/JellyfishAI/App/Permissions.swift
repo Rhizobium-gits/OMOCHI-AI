@@ -19,7 +19,7 @@ enum AppPermission: String, CaseIterable {
     /// 付けると何ができるようになるか（Full Access の範囲）
     var scope: String {
         switch self {
-        case .accessibility: return L("PC 操作でクリック・キー入力をする（PC 操作をオンにしたクラゲだけ。スクリプトからの入力の合成も、この許可の範囲で動けます）")
+        case .accessibility: return L("PC 操作でクリック・キー入力をする（PC 操作をオンにしたおもちだけ。スクリプトからの入力の合成も、この許可の範囲で動けます）")
         case .screenRecording: return L("画面の撮影（「この画面」の添付・PC 操作）と、🎧 システムの音の文字起こし")
         case .fullDiskAccess: return L("エージェントが、デスクトップ・書類・ダウンロード・ほかのアプリのデータなどを、そのたびに聞かれずに読み書きする")
         case .automation: return L("エージェントが AppleScript などでほかのアプリ（Finder・ブラウザなど）を操作する。アプリごとに macOS が確認します")
@@ -269,7 +269,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
         guard let cmd = AppPermission.command("revoke") else { NSSound.beep(); return }
         let a = NSAlert()
         a.messageText = L("まとめて取り消しますか？")
-        a.informativeText = L("すべてのクラゲの PC 操作をオフにし、🎧 の聞き取りを止めてから、Jellyfish AI に付いている macOS の許可をすべて取り消します（アクセシビリティ・画面収録・フルディスクアクセス・デスクトップなどのフォルダ・オートメーション。ほかのアプリの許可には触りません）。ターミナルで次のコマンドを実行します:") + "\n\n" + cmd
+        a.informativeText = L("すべてのおもちの PC 操作をオフにし、🎧 の聞き取りを止めてから、Jellyfish AI に付いている macOS の許可をすべて取り消します（アクセシビリティ・画面収録・フルディスクアクセス・デスクトップなどのフォルダ・オートメーション。ほかのアプリの許可には触りません）。ターミナルで次のコマンドを実行します:") + "\n\n" + cmd
         a.alertStyle = .warning
         a.addButton(withTitle: L("取り消す"))
         a.addButton(withTitle: L("キャンセル"))
@@ -291,7 +291,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
         a.addButton(withTitle: L("キャンセル"))
         guard ActiveSpace.runModal(a) == .alertFirstButtonReturn else { return }
         if manager?.anyAgentBusy == true {
-            UpdateChecker.fallback(L("作業中のクラゲがいます。終わってからもう一度試してください。"), offerPage: false)
+            UpdateChecker.fallback(L("作業中のおもちがいます。終わってからもう一度試してください。"), offerPage: false)
             return
         }
         if !runInTerminal(cmd, name: "signing") { NSSound.beep() }
@@ -308,7 +308,7 @@ final class PermissionsWindowController: NSObject, NSWindowDelegate {
 
     @objc private func reopenApp() {
         guard AppUpdater.relaunch(manager: manager) else {
-            UpdateChecker.fallback(L("作業中のクラゲがいます。終わってからもう一度試してください。"), offerPage: false)
+            UpdateChecker.fallback(L("作業中のおもちがいます。終わってからもう一度試してください。"), offerPage: false)
             return
         }
     }

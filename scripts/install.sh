@@ -57,7 +57,7 @@ if pgrep -x JellyfishAI >/dev/null; then
   pkill -x JellyfishAI || true
   for _ in $(seq 100); do pgrep -x JellyfishAI >/dev/null || break; /bin/sleep 0.1; done
   if pgrep -x JellyfishAI >/dev/null; then
-    echo "Jellyfish AI が終わらないので、入れ替えをやめました。メニューバーのクラゲから終了してから、もう一度実行してください。" >&2
+    echo "Jellyfish AI が終わらないので、入れ替えをやめました。メニューバーのおもちから終了してから、もう一度実行してください。" >&2
     exit 1
   fi
 fi
@@ -75,7 +75,7 @@ open -g "$DEST"
 echo "Installed: $DEST  (v$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$DEST/Contents/Info.plist"))"
 echo "  ・Launchpad・Spotlight（⌘Space で「Jellyfish」）・Finder の「アプリケーション」から開けます。"
 echo "    Dock に置くなら、アプリケーションフォルダの Jellyfish AI を Dock へドラッグしてください。"
-echo "  ・動いているときにアイコンを開くと、隠したクラゲを出します（1 体もいなければ新しいクラゲを出します）。"
+echo "  ・動いているときにアイコンを開くと、隠したおもちを出します（1 体もいなければ新しいおもちを出します）。"
 SIG="$(codesign -d --verbose=2 "$DEST" 2>&1 || true)"
 if [[ "$SIG" == *$'\nAuthority='* ]]; then
   echo "  ・署名用の証明書で署名しています。前にこの証明書で署名した版で許可していれば、許可はそのまま続きます"
@@ -87,6 +87,6 @@ else
 fi
 settings="$HOME/Library/Application Support/JellyfishAI/settings.json"
 if [[ "$(plutil -extract launchAtLogin raw "$settings" 2>/dev/null || true)" == "true" ]]; then
-  echo "  ・アプリの場所が変わったので、ログイン時に起動しなくなっていたら、メニューバーのクラゲ ›"
+  echo "  ・アプリの場所が変わったので、ログイン時に起動しなくなっていたら、メニューバーのおもち ›"
   echo "    「ログイン時に自動起動」を一度オフにしてからオンにしてください。"
 fi

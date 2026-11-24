@@ -476,7 +476,7 @@ enum EngineInstall {
         lines.append("hash -r")
         lines.append("cli=\"$(command -v \(e.cliName))\"")
         lines.append("if [ -z \"$cli\" ]; then")
-        lines.append("  printf '\\n%s\\n' \(q("⚠️ " + L("入りましたが %@ が見つかりません。ターミナルを開き直してから、メニューバーのクラゲ › 🔑 アカウントと AI でログインしてください。", e.cliName)))")
+        lines.append("  printf '\\n%s\\n' \(q("⚠️ " + L("入りましたが %@ が見つかりません。ターミナルを開き直してから、メニューバーのおもち › 🔑 アカウントと AI でログインしてください。", e.cliName)))")
         lines.append("  exit 1")
         lines.append("fi")
         lines.append("printf '\\n%s\\n\\n' \(q("✅ " + L("入りました。続けてログインします。"))) ")

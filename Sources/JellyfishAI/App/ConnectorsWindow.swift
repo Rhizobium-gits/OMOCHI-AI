@@ -101,11 +101,11 @@ final class ConnectorsWindowController: NSObject, NSWindowDelegate {
         for k in ConnectorKind.allCases { views.append(section(k, s[k])) }
 
         views.append(label([
-            L("・書き込み（予定・リマインダーの追加と完了）は、クラゲの横に確認が出て、押したときだけ実行します。5 分押さなければ実行しません"),
+            L("・書き込み（予定・リマインダーの追加と完了）は、おもちの横に確認が出て、押したときだけ実行します。5 分押さなければ実行しません"),
             L("・メールは送信しません。下書きはメールアプリで開くので、確かめて送るのはあなたです"),
-            L("・メールの本文は「外から来たデータ」として渡し、中の指示に従わないよう伝えます。PC 操作を使っているクラゲにはメールを渡しません"),
-            L("・仲間からの依頼で動いているクラゲにも、その AI・モデルの決まりのとおりに渡します（渡した内容を仲間に頼むことはできます）"),
-            L("・中身は、そのクラゲの AI（Anthropic・OpenAI・Google）に送られます。使った記録は Jellyfish のログ（app.log）に、ツールの名前だけ残ります"),
+            L("・メールの本文は「外から来たデータ」として渡し、中の指示に従わないよう伝えます。PC 操作を使っているおもちにはメールを渡しません"),
+            L("・仲間からの依頼で動いているおもちにも、その AI・モデルの決まりのとおりに渡します（渡した内容を仲間に頼むことはできます）"),
+            L("・中身は、そのおもちの AI（Anthropic・OpenAI・Google）に送られます。使った記録は Jellyfish のログ（app.log）に、ツールの名前だけ残ります"),
         ].joined(separator: "\n"), size: 11, secondary: true))
 
         let close = NSButton(title: L("閉じる"), target: self, action: #selector(closeWindow))
@@ -219,7 +219,7 @@ final class ConnectorsWindowController: NSObject, NSWindowDelegate {
         b.font = .systemFont(ofSize: 11)
         let title = keys.isEmpty ? L("すべてのモデル") : ConnectorPolicy.modelLabels(keys, engine: e)
         b.addItem(withTitle: title.count > 22 ? String(title.prefix(22)) + "…" : title)
-        b.toolTip = L("%@ のクラゲのうち、このコネクタを使えるモデル", e.displayName)
+        b.toolTip = L("%@ のおもちのうち、このコネクタを使えるモデル", e.displayName)
         let all = NSMenuItem(title: L("すべてのモデル"), action: #selector(modelChosen(_:)), keyEquivalent: "")
         all.target = self
         all.state = keys.isEmpty ? .on : .off

@@ -348,13 +348,13 @@ final class PromptQueues {
         if let p = q.pause { return PromptQueues.pauseText(p) }
         if let w = q.watching {
             if w == owner && q.sent == 0 { return L("いまの作業が終わったら、上から順に送ります") }
-            let who = w == owner ? L("このクラゲ") : (host?.queueAgentName(w) ?? "?")
+            let who = w == owner ? L("このおもち") : (host?.queueAgentName(w) ?? "?")
             return L("%@ が %ld 件目を作業中。終わったら次を送ります", who, q.sent)
         }
         if let first = q.items.first {
             let t = first.target ?? owner
             if host?.queueAgentRunning(t) == true {
-                return L("%@ の手が空くのを待っています", t == owner ? L("このクラゲ") : (host?.queueAgentName(t) ?? "?"))
+                return L("%@ の手が空くのを待っています", t == owner ? L("このおもち") : (host?.queueAgentName(t) ?? "?"))
             }
             if editedAt[first.id] != nil { return L("書き換えが終わったら送ります") }
         }
@@ -367,7 +367,7 @@ final class PromptQueues {
         case .stopped: return L("⏸ 作業を止めたので、予約も止めています（▶ で続きを送ります）")
         case .failed: return L("⏸ 前の作業がエラーで終わったので止めています（▶ で続きを送ります）")
         case .refused(let why): return L("⏸ 送れませんでした: %@", why ?? L("不明"))
-        case .targetMissing: return L("⏸ 送り先のクラゲがいません。送り先を選び直してください")
+        case .targetMissing: return L("⏸ 送り先のおもちがいません。送り先を選び直してください")
         case .restarted: return L("⏸ アプリを終了したので止めています（▶ で続きを送ります）")
         }
     }

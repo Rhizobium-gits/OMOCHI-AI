@@ -77,7 +77,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let wm = NSMenu()
         wm.autoenablesItems = false
         let names = manager.watchingControllers.map(\.record.title)
-        wm.addItem(.header(L("見守っているクラゲ: %@", names.isEmpty ? L("なし") : names.joined(separator: L("、")))))
+        wm.addItem(.header(L("見守っているおもち: %@", names.isEmpty ? L("なし") : names.joined(separator: L("、")))))
         if ScreenWatcher.shared.isRunning {
             if !CGPreflightScreenCaptureAccess() {
                 wm.addItem(.header(L("⚠️ 画面収録の許可が効いていないので、いまは見ていません（🔐 権限）")))
@@ -86,7 +86,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             }
         }
         wm.addItem(.separator())
-        wm.addItem(.header(L("・クラゲのチャットの 👀 か、右クリック ›「見守る」でクラゲごとにオン（既定はオフ）")))
+        wm.addItem(.header(L("・おもちのチャットの 👀 か、右クリック ›「見守る」でおもちごとにオン（既定はオフ）")))
         wm.addItem(.header(L("・前面のウィンドウを、この Mac の中だけで読む（トークン 0・どこにも送らない）")))
         wm.addItem(.header(L("・エラーっぽい表示に気づいたら「見る？」と聞く。押したときだけ、その 1 枚を送る")))
         wm.addItem(.header(L("・パスワードの管理・ロック画面・Jellyfish 自身は見ない。画面が変わらないときと離席中は読まない")))
@@ -190,7 +190,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         cm.addItem(ClosureMenuItem(L("コネクタの画面を開く（AI・モデルごとに決める）…")) { [weak self] in self?.manager.showConnectors() })
         cm.addItem(.separator())
         cm.addItem(.header(L("・この Mac のカレンダー・リマインダー・メール（Google・iCloud なども Mac のアプリ経由）")))
-        cm.addItem(.header(L("・書き込みはクラゲの横の確認で押したときだけ。メールは送らない（下書きを開くだけ）")))
+        cm.addItem(.header(L("・書き込みはおもちの横の確認で押したときだけ。メールは送らない（下書きを開くだけ）")))
         item.submenu = cm
         return item
     }
@@ -210,7 +210,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             am.addItem(.header("\(st?.usable == true ? "✓" : (st.map { if case .paidAPI = $0.login { return "⚠️" }; return "・" } ?? "…")) \(e.displayName): \(st?.summary ?? L("確認中…"))"))
         }
         am.addItem(.separator())
-        am.addItem(.header(L("使う AI（クラゲごとに選んでいないとき）")))
+        am.addItem(.header(L("使う AI（おもちごとに選んでいないとき）")))
         for e in AgentEngine.allCases {
             am.addItem(ClosureMenuItem(e.displayName, checked: s.engine == e) { [weak self] in self?.manager.setDefaultEngine(e) })
         }
@@ -278,7 +278,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         om.addItem(.separator())
         om.addItem(.header(L("・依頼のたびに、学習からおすすめの組織（一人で・分担・順番・別案・階層 ＋ レビュー係）を選んでリーダーに伝える")))
-        om.addItem(.header(L("・リーダー（頼んだクラゲ）が form_team で仲間を作り、役割と順番を決めて任せる")))
+        om.addItem(.header(L("・リーダー（頼んだおもち）が form_team で仲間を作り、役割と順番を決めて任せる")))
         om.addItem(.header(L("・結果（完了・失敗・時間）と 👍👎・やり直し・続けて送った言葉から点数を付けて学ぶ")))
         om.addItem(.header(L("・成績のよい組織を少し変えた型が生まれ、悪い型は引退する（未知の依頼にも似た依頼から当てはめる）")))
         om.addItem(.header(L("・仲間の分だけ Claude Code の使用量が増える。PC 操作は仲間には渡らない")))
@@ -299,12 +299,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             menu.addItem(.separator())
         }
 
-        let newTitle = L("新しいクラゲ")
+        let newTitle = L("新しいおもち")
         let newItem = ClosureMenuItem(newTitle) { [weak self] in self?.manager.spawn() }
         if let hk = shortcuts.activeNewJelly { applyShortcut(hk, to: newItem) }
         menu.addItem(newItem)
 
-        let toggle = ClosureMenuItem(s.allHidden ? L("クラゲを表示") : L("クラゲを隠す")) { [weak self] in
+        let toggle = ClosureMenuItem(s.allHidden ? L("おもちを表示") : L("おもちを隠す")) { [weak self] in
             self?.manager.toggleAllHidden()
         }
         if let hk = shortcuts.activeToggle { applyShortcut(hk, to: toggle) }
@@ -472,7 +472,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             if list.isEmpty { mm.addItem(.header(L("・モデルの一覧を読んでいます…"))) }
         }
         mm.addItem(.separator())
-        mm.addItem(.header(L("・クラゲごとのモデルはチャットの上の段で選べる（こちらは選んでいないクラゲの既定）")))
+        mm.addItem(.header(L("・おもちごとのモデルはチャットの上の段で選べる（こちらは選んでいないおもちの既定）")))
         mm.addItem(.header(L("・自動：短い・簡単な依頼は Haiku、ふつうは Sonnet、重い依頼は Opus")))
         mm.addItem(.header(L("　いちばん重い依頼は Fable（今週の Fable の使用量が %ld%% 未満のときだけ）", ModelRouter.fableLimit)))
         modelItem.submenu = mm
@@ -482,7 +482,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let policy = NSMenuItem(title: L("実行ポリシー"), action: nil, keyEquivalent: "")
         let pm = NSMenu()
         pm.autoenablesItems = false
-        pm.addItem(.header(L("すべてのクラゲ共通：%@", manager.policyDescription)))
+        pm.addItem(.header(L("すべてのおもち共通：%@", manager.policyDescription)))
         pm.addItem(.header("claude -p --permission-mode \(manager.effectivePermissionMode)"))
         if let refused = manager.refusedPermissionMode {
             pm.addItem(.header(L("⚠️ settings.json の permissionMode「%@」は使いません（安全判定が外れるか、この版にないため）", String(refused.prefix(40)))))
@@ -490,7 +490,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         pm.addItem(.header(L("・確認なしでファイル作成/編集/削除・コマンド実行")))
         pm.addItem(.header(L("・認証情報の持ち出し、意図しない外部送信、取り返しのつかない操作は")))
         pm.addItem(.header(L("　Claude Code の安全判定で止まる（OS の権限設定は変更しない）")))
-        pm.addItem(.header(L("・作業フォルダはクラゲごと（既定はホーム）")))
+        pm.addItem(.header(L("・作業フォルダはおもちごと（既定はホーム）")))
         pm.addItem(.separator())
         // Claude 以外の AI で動かすときの決まり
         pm.addItem(.header(L("使う AI（既定）: %@", s.engine.displayName)))
@@ -539,7 +539,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             self?.manager.team?.refresh()
         })
         tm.addItem(.separator())
-        tm.addItem(.header(L("・クラゲを別のクラゲに近づけて離すと線でつながり、同じチームになる")))
+        tm.addItem(.header(L("・おもちを別のおもちに近づけて離すと線でつながり、同じチームになる")))
         tm.addItem(.header(L("・⇧ を押しながらドラッグでチームごと移動、⌥ を押しながら離すと切り離し")))
         tm.addItem(.header(L("・チームの仲間に作業を頼む / 新しい仲間を作って分担する（Claude Code の MCP ツール）")))
         tm.addItem(.header(L("・線の上の光：依頼（依頼元の色）と結果（依頼先の色）の受け渡し")))
@@ -637,7 +637,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             })
         }
         um.addItem(.header(L("・読むのは GitHub の公開 API の、最新リリースの版だけ")))
-        um.addItem(.header(L("・新しい版があればクラゲの吹き出しで知らせる。入れ替えるのは「アップデートする」を押したときだけ")))
+        um.addItem(.header(L("・新しい版があればおもちの吹き出しで知らせる。入れ替えるのは「アップデートする」を押したときだけ")))
         item.submenu = um
         return item
     }

@@ -302,7 +302,7 @@ final class UpdateSession: NSObject, URLSessionTaskDelegate {
     static func start(_ release: AppUpdater.Release, manager: JellyManager?) {
         guard current == nil else { current?.panel?.makeKeyAndOrderFront(nil); return }
         if manager?.anyAgentBusy == true {
-            UpdateChecker.fallback(L("作業中のクラゲがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
+            UpdateChecker.fallback(L("作業中のおもちがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
             return
         }
         if let why = AppUpdater.locationProblem() { UpdateChecker.fallback(why, offerPage: true); return }
@@ -396,7 +396,7 @@ final class UpdateSession: NSObject, URLSessionTaskDelegate {
 
     private func install(_ newApp: URL) {
         if manager?.anyAgentBusy == true {
-            failed(L("作業中のクラゲがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
+            failed(L("作業中のおもちがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
             return
         }
         let fm = FileManager.default

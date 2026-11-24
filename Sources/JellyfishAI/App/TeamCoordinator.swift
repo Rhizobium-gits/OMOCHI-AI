@@ -417,7 +417,7 @@ final class TeamCoordinator {
             } else if s.candidate == nil, links.isEmpty, m.settings.teamEnabled,
                       m.controllers.contains(where: { $0 !== c && $0.isVisible }) {
                 // まだ一度もつないでいない人向けの案内
-                pills.append(.init(id: "hint", text: L("ほかのクラゲの近くで離すと つながる"), at: at, color: color))
+                pills.append(.init(id: "hint", text: L("ほかのおもちの近くで離すと つながる"), at: at, color: color))
             }
         }
         overlay.update(segments: segs, labels: labels, preview: preview, pills: pills, warn: warn)
@@ -651,7 +651,7 @@ final class TeamCoordinator {
                 reply(why, true)
             case .ready(let action):
                 guard t.confirms else { action.perform(reply); return }
-                guard let self, let me, let m = self.manager else { reply(L("クラゲが見つかりません"), true); return }
+                guard let self, let me, let m = self.manager else { reply(L("おもちが見つかりません"), true); return }
                 m.confirmConnector(for: me, action: action, engine: ctx.engine) { [weak self] ok in
                     guard ok else {
                         reply(L("ユーザーが「やめる」を選んだ（または 5 分のあいだ押さなかった）ので、実行していません。やり直さずに、そう伝えてください"), true)
@@ -1106,7 +1106,7 @@ final class TeamCoordinator {
             // 受け付けた接続で、その実行がまだ続いているときだけ（ターンが終わったあとに残った接続からは呼べない）
             guard let caller = conn.agentID, let c = controller(caller), let a = authed[caller], a.conn === conn,
                   manager?.runtime(for: c)?.processID == a.pid else {
-                reply(["content": [["type": "text", "text": L("このエージェントは Jellyfish のクラゲとして見つかりません")]], "isError": true])
+                reply(["content": [["type": "text", "text": L("このエージェントは Jellyfish のおもちとして見つかりません")]], "isError": true])
                 return
             }
             call(tool, args, from: caller) { text, isError in
@@ -1177,7 +1177,7 @@ final class TeamCoordinator {
         }
         switch tool {
         case "form_team":
-            guard orgEnabled else { fail(L("自律組織モードがオフです（メニューバーのクラゲ › 自律組織 でオンにできます）")); return }
+            guard orgEnabled else { fail(L("自律組織モードがオフです（メニューバーのおもち › 自律組織 でオンにできます）")); return }
             guard canCreateCount(from: me) > 0 || !team(of: caller).dropFirst().isEmpty else {
                 fail(L("このエージェントは仲間を作れません（作成の深さの上限）。一人で進めてください。")); return
             }

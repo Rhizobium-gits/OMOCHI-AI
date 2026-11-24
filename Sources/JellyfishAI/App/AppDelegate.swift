@@ -211,7 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         if !automation {
             guard urlThrottle.allow(host.lowercased()) else { AppLog.write("url throttled: \(host)"); return }
             if host.lowercased() == "new", manager.controllers.count >= TeamCoordinator.maxAgents {
-                AppLog.write("url refused: new（クラゲが上限の \(TeamCoordinator.maxAgents) 体）")
+                AppLog.write("url refused: new（おもちが上限の \(TeamCoordinator.maxAgents) 体）")
                 return
             }
         }

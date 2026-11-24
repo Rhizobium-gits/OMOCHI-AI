@@ -364,11 +364,11 @@ final class JellyManager {
         case .subscription:
             return nil
         case .paidAPI(let how):
-            return allowAPI ? nil : L("%@ は %@（従量課金）でログインしているので使いません（勝手に課金しないため）。%@ でログインし直すか、メニューバーのクラゲ › 🔑 アカウントと AI で「API キー（従量課金）での利用を許可」をオンにしてください", e.displayName, how, e.accountKind)
+            return allowAPI ? nil : L("%@ は %@（従量課金）でログインしているので使いません（勝手に課金しないため）。%@ でログインし直すか、メニューバーのおもち › 🔑 アカウントと AI で「API キー（従量課金）での利用を許可」をオンにしてください", e.displayName, how, e.accountKind)
         case .loggedOut:
-            return L("%@ にログインしていません。メニューバーのクラゲ › 🔑 アカウントと AI から、%@ でログインしてください", e.displayName, e.accountKind)
+            return L("%@ にログインしていません。メニューバーのおもち › 🔑 アカウントと AI から、%@ でログインしてください", e.displayName, e.accountKind)
         case .notInstalled:
-            return L("%@ が入っていません。メニューバーのクラゲ › 🔑 アカウントと AI に、入れ方があります", e.cliTitle)
+            return L("%@ が入っていません。メニューバーのおもち › 🔑 アカウントと AI に、入れ方があります", e.cliTitle)
         case .unsupported(let m):
             return L("この版の %@ では使えません（%@ がありません）。%@ を新しくしてください", e.cliTitle, m, e.cliTitle)
         case .unknown:
@@ -928,8 +928,8 @@ final class JellyManager {
             }
         }
         let text = WatchBubble.Text(title: L("%@ はまだ作業中です", c.record.title),
-                                    detail: L("クラゲを消しても、作業はバックグラウンドで最後まで続けられます。結果は履歴（ログ）に残ります。"),
-                                    show: L("作業は続けて、クラゲだけ消す"), closeTip: "", ignore: L("作業をキャンセルして消す"),
+                                    detail: L("おもちを消しても、作業はバックグラウンドで最後まで続けられます。結果は履歴（ログ）に残ります。"),
+                                    show: L("作業は続けて、おもちだけ消す"), closeTip: "", ignore: L("作業をキャンセルして消す"),
                                     note: nil, detailLines: 4, closeTitle: L("やめる"), stacked: true)
         // 答えないまま 60 秒たったら「やめる」と同じ（消さない）
         let b = WatchBubble(text, accent: c.record.color.nsColor, near: c.panel.frame, autoClose: 60,
@@ -989,7 +989,7 @@ final class JellyManager {
         let n = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if n.count > 24 { return L("名前は 24 文字までです") }
         if !n.isEmpty, let other = controllers.first(where: { $0 !== c && $0.record.title.lowercased() == n.lowercased() }) {
-            return L("「%@」は %@ のクラゲが使っています", n, other.record.color.name)
+            return L("「%@」は %@ のおもちが使っています", n, other.record.color.name)
         }
         c.update { $0.name = n.isEmpty ? nil : n }
         c.panel.title = c.record.title
@@ -1360,7 +1360,7 @@ final class JellyManager {
     func connectorSummary(for c: JellyController) -> String? {
         guard settings.connectors.anyEnabled, let rt = runtimes[c.record.id], let team else { return nil }
         let ks = ConnectorPolicy.kinds(team.connectorTools(c.record.id, rt))
-        if ks.isEmpty { return L("🔌 コネクタ: このクラゲ（%@）には渡さない設定", rt.effectiveEngine.displayName) }
+        if ks.isEmpty { return L("🔌 コネクタ: このおもち（%@）には渡さない設定", rt.effectiveEngine.displayName) }
         return L("🔌 コネクタ: %@", ks.map { "\($0.0.icon)\($0.0.label)（\($0.writes ? ConnectorAccess.readWrite.shortLabel : ConnectorAccess.read.shortLabel)）" }.joined(separator: L("・")))
     }
 
@@ -1473,11 +1473,11 @@ final class JellyManager {
         if r.hidden {
             items.append(ClosureMenuItem(L("表示する")) { [weak self, weak c] in if let c { self?.setHidden(c, false) } })
         } else {
-            items.append(ClosureMenuItem(L("このクラゲを隠す")) { [weak self, weak c] in if let c { self?.setHidden(c, true) } })
+            items.append(ClosureMenuItem(L("このおもちを隠す")) { [weak self, weak c] in if let c { self?.setHidden(c, true) } })
         }
         items.append(ClosureMenuItem(L("定位置に戻す")) { [weak self, weak c] in if let c { self?.resetPosition(c) } })
         items.append(.separator())
-        items.append(ClosureMenuItem(L("このクラゲを削除")) { [weak self, weak c] in if let c { self?.requestRemove(c) } })
+        items.append(ClosureMenuItem(L("このおもちを削除")) { [weak self, weak c] in if let c { self?.requestRemove(c) } })
         return items
     }
 
@@ -1497,7 +1497,7 @@ extension JellyManager: PromptQueueHost {
     func queueAgentName(_ id: UUID) -> String { controllers.first { $0.record.id == id }?.record.title ?? "?" }
 
     func queueSubmit(_ prompt: String, to id: UUID) -> QueueSubmitResult {
-        guard let rt = runtimes[id] else { return .refused(L("送り先のクラゲがいません")) }
+        guard let rt = runtimes[id] else { return .refused(L("送り先のおもちがいません")) }
         guard !rt.isRunning else { return .refused(L("作業中です")) }
         return rt.submit(prompt) ? .sent : .refused(rt.lastError)
     }
