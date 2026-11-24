@@ -6,12 +6,18 @@ final class PassthroughView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
-/// ドット絵のクラゲ「もち」（MochiSprite）。
+/// ドット絵のお餅「まるもち」（MochiSprite）。
 ///
-/// お餅なので宙には浮かず、床に座ったまま（足元の影は絵に入っている）。
-/// 動きはドット絵のコマ（ふくらむ・しぼむ・小さく跳ねる・まばたき）だけで、最大 8fps で描き替える。
-/// エラーの横ゆれ・長押しの縮み・着地のはずみは Core Animation。
-/// 完了・キャンセルでは少しして止まり、タイマーもアニメーションも無くす
+/// お餅なので宙には浮かず、床に座ったまま（足元の影は床に残る）。
+/// 負荷を抑えつつ滑らかに動かす設計：
+/// - 呼吸・ふくらむ・しぼむ・跳ねるといった連続的な動きは Core Animation の伸び縮み（足元を基準）と上下の移動に任せる
+///   （WindowServer 側で画面の速さで補間されるので、アプリのメインスレッドは毎フレーム起きない）
+/// - アプリが描き替えるのはドット絵のコマ（まばたき・目線・頭上の記号・状態ごとの形）だけで、最大 8fps
+/// - 形が変わる瞬間（完了でふくらむ・エラーでしぼむ）は、伸び縮みを 1 回はさんで段差を目立たせない
+/// - 完了・キャンセルでは少しして止まり、タイマーもアニメーションも無くす
+///
+/// レイヤー：root ─ shadowLayer（床の影） / floatLayer（跳ねる：上下）─ breathLayer（呼吸：伸び縮み）
+///                 ─ hopLayer（つつく・長押し・着地・出現・横ゆれ）─ spriteLayer（ドット絵）
 final class PixelAvatar: Avatar {
     static func cell(scale: Double) -> Double { (6.0 * scale).rounded() }
     static let topMarginCells: CGFloat = 2.0
@@ -30,9 +36,13 @@ final class PixelAvatar: Avatar {
     private let cacheKey: String
 
     private let root = CALayer()
+    private let shadowLayer = CALayer()
     private let floatLayer = CALayer()
+    private let breathLayer = CALayer()
     private let hopLayer = CALayer()
     private let spriteLayer = CALayer()
+    /// 頭上の「…」「!」「✓」（体の伸び縮みでゆがまないよう別のレイヤー）
+    private let markLayer = CALayer()
 
     private(set) var state: AgentState
     private var timer: Timer?
@@ -41,7 +51,7 @@ final class PixelAvatar: Avatar {
     private var settling = false
     private var settled = false
 
-    // 表情・手足の状態
+    // 表情・形の状態
     private var pose = JellyPose()
     private var shownPose: JellyPose?
     private var nextBlink = CACurrentMediaTime() + 2.5
@@ -70,11 +80,13 @@ final class PixelAvatar: Avatar {
 
         root.frame = CGRect(origin: .zero, size: size)
         floatLayer.frame = root.bounds
-        hopLayer.frame = root.bounds
-        // 拡大・縮小はスプライトの足元を基準に
+        // 伸び縮み・拡大縮小は足元（床の線）を基準に
         let footY = PixelAvatar.bottomMarginCells * P + P * 1.0
-        hopLayer.anchorPoint = CGPoint(x: 0.5, y: footY / size.height)
-        hopLayer.position = CGPoint(x: size.width / 2, y: footY)
+        for l in [breathLayer, hopLayer] {
+            l.bounds = root.bounds
+            l.anchorPoint = CGPoint(x: 0.5, y: footY / size.height)
+            l.position = CGPoint(x: size.width / 2, y: footY)
+        }
 
         spriteLayer.frame = CGRect(x: 0, y: PixelAvatar.bottomMarginCells * P,
                                    width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
@@ -82,17 +94,31 @@ final class PixelAvatar: Avatar {
         spriteLayer.minificationFilter = .nearest
         spriteLayer.contentsGravity = .resize
         spriteLayer.actions = ["contents": NSNull(), "opacity": NSNull()]
+        markLayer.frame = spriteLayer.frame
+        markLayer.magnificationFilter = .nearest
+        markLayer.minificationFilter = .nearest
+        markLayer.contentsGravity = .resize
+        markLayer.actions = ["contents": NSNull(), "opacity": NSNull()]
 
+        // 床の影（体が跳ねても床に残り、高く上がると小さくなる）
+        shadowLayer.backgroundColor = CGColor(gray: 0, alpha: SpriteColors.shadowAlpha)
+        shadowLayer.actions = ["bounds": NSNull(), "position": NSNull(), "transform": NSNull(), "opacity": NSNull()]
+
+        root.addSublayer(shadowLayer)
         root.addSublayer(floatLayer)
-        floatLayer.addSublayer(hopLayer)
+        root.addSublayer(markLayer)
+        floatLayer.addSublayer(breathLayer)
+        breathLayer.addSublayer(hopLayer)
         hopLayer.addSublayer(spriteLayer)
-        [root, floatLayer, hopLayer].forEach { $0.actions = ["transform": NSNull(), "opacity": NSNull(), "position": NSNull()] }
+        [root, floatLayer, breathLayer, hopLayer].forEach { $0.actions = ["transform": NSNull(), "opacity": NSNull(), "position": NSNull()] }
 
         pose = basePose(for: state, now: CACurrentMediaTime())
         render(force: true)
     }
 
-    var isAnimating: Bool { timer != nil || !(floatLayer.animationKeys() ?? []).isEmpty || !(hopLayer.animationKeys() ?? []).isEmpty }
+    var isAnimating: Bool {
+        timer != nil || [floatLayer, breathLayer, hopLayer, shadowLayer].contains { !($0.animationKeys() ?? []).isEmpty }
+    }
 
     // MARK: - 状態
 
@@ -107,6 +133,7 @@ final class PixelAvatar: Avatar {
         render(force: true)
     }
 
+    /// 状態ごとの形と表情（形が変わるのは完了・エラー・キャンセルだけ。呼吸や跳ねは Core Animation）
     private func basePose(for s: AgentState, now: Double) -> JellyPose {
         var p = JellyPose()
         switch s {
@@ -118,39 +145,180 @@ final class PixelAvatar: Avatar {
         return p
     }
 
-    /// 状態ごとの動きを設定する（宙には浮かない。エラーだけ横にゆれる）
+    /// 状態ごとの動きを設定する（宙には浮かない。いまの伸び縮みから滑らかにつなぐ）
     private func applyStateMotion(transition: Bool) {
         hopLayer.removeAnimation(forKey: "shake")
-        hopLayer.removeAnimation(forKey: "hopLoop")
-        floatLayer.removeAllAnimations()
         spriteLayer.opacity = state == .cancelled ? 0.85 : 1.0
+        // 周期はクラゲごとに少し変えて、並んでいても息がそろわないように
+        let jitter = (seed * 0.37).truncatingRemainder(dividingBy: 1) * 0.5
         switch state {
-        case .error: addShakeLoop()
-        case .completed, .cancelled: settleSoon()
-        default: break
+        case .idle:
+            // ゆっくり呼吸。4 回に 1 回は大きく吸う
+            setBreath(loop(period: (4.0 + jitter) * 4,
+                           y: [1, 1.045, 1, 1.045, 1, 1.045, 1, 1.09, 1],
+                           x: [1, 0.985, 1, 0.985, 1, 0.985, 1, 0.975, 1],
+                           times: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1],
+                           timing: Array(repeating: .easeInEaseOut, count: 8)))
+            setHop(nil)
+        case .thinking:
+            // 「ぷくー」と少しずつふくらんで、「しゅん」としぼみ、少し弾んで戻る
+            setBreath(loop(period: 2.6 + jitter * 0.4,
+                           y: [1, 1.2, 0.88, 1.03, 1],
+                           x: [1, 1.06, 1.1, 0.99, 1],
+                           times: [0, 0.68, 0.78, 0.9, 1],
+                           timing: [.easeInEaseOut, .easeIn, .easeOut, .easeInEaseOut]))
+            setHop(nil)
+        case .working:
+            // 「ぽよん」：かがんで → 伸びて跳ね → 空中でまるく → 着地でつぶれる
+            let period = 0.95 + jitter * 0.1
+            let times: [NSNumber] = [0, 0.12, 0.3, 0.55, 0.7, 0.8, 1]
+            setBreath(loop(period: period,
+                           y: [0.92, 1.1, 1.02, 1.0, 1.05, 0.86, 0.92],
+                           x: [1.05, 0.95, 0.99, 1.0, 0.97, 1.09, 1.05],
+                           times: times,
+                           timing: [.easeOut, .easeOut, .easeInEaseOut, .easeIn, .easeOut, .easeInEaseOut]))
+            setHop(hopLoop(period: period, height: P * 0.7))
+        case .completed:
+            // できた！で一度ぷくっと弾んで、ふくらんだまま止まる
+            setBreath(once(duration: 0.8, y: [0.9, 1.16, 0.95, 1.03, 1], x: [1.06, 1.05, 1.03, 0.99, 1], times: [0, 0.3, 0.55, 0.8, 1]))
+            setHop(nil)
+            settleSoon()
+        case .error:
+            // しゅんとしぼむ（そのあとは横ゆれだけ）
+            setBreath(once(duration: 0.5, y: [1.12, 0.9, 1.02, 1], x: [0.96, 1.06, 0.99, 1], times: [0, 0.45, 0.75, 1]))
+            setHop(nil)
+            addShakeLoop()
+        case .cancelled:
+            setBreath(once(duration: 0.6, y: [1.1, 0.92, 1.01, 1], x: [0.97, 1.05, 1.0, 1], times: [0, 0.5, 0.8, 1]))
+            setHop(nil)
+            settleSoon()
         }
         startTimer()
+    }
+
+    // MARK: - 伸び縮み・跳ね（Core Animation）
+
+    private func timings(_ t: [CAMediaTimingFunctionName]) -> [CAMediaTimingFunction] { t.map { CAMediaTimingFunction(name: $0) } }
+
+    /// 足元を基準に縦・横へ伸び縮みするくり返し
+    private func loop(period: Double, y: [CGFloat], x: [CGFloat], times: [NSNumber], timing: [CAMediaTimingFunctionName]) -> CAAnimation {
+        let ay = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        ay.values = y
+        let ax = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        ax.values = x
+        for a in [ay, ax] { a.keyTimes = times; a.timingFunctions = timings(timing) }
+        let g = CAAnimationGroup()
+        g.animations = [ay, ax]
+        g.duration = period
+        g.repeatCount = .infinity
+        return g
+    }
+
+    /// 1 回だけの伸び縮み（最後は 1 に戻る）
+    private func once(duration: Double, y: [CGFloat], x: [CGFloat], times: [NSNumber]) -> CAAnimation {
+        let ay = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        ay.values = y
+        let ax = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        ax.values = x
+        for a in [ay, ax] {
+            a.keyTimes = times
+            a.timingFunctions = Array(repeating: CAMediaTimingFunction(name: .easeInEaseOut), count: times.count - 1)
+        }
+        let g = CAAnimationGroup()
+        g.animations = [ay, ax]
+        g.duration = duration
+        return g
+    }
+
+    /// 跳ねるくり返し（体は上下、影は高く上がるほど小さく）
+    private func hopLoop(period: Double, height: CGFloat) -> (body: CAAnimation, shadow: CAAnimation) {
+        let times: [NSNumber] = [0, 0.12, 0.42, 0.72, 1]
+        let t = timings([.linear, .easeOut, .easeIn, .linear])
+        let a = CAKeyframeAnimation(keyPath: "transform.translation.y")
+        a.values = [0, 0, height, 0, 0]
+        a.keyTimes = times
+        a.timingFunctions = t
+        a.duration = period
+        a.repeatCount = .infinity
+        let s = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        s.values = [1, 1, 0.72, 1, 1]
+        s.keyTimes = times
+        s.timingFunctions = t
+        s.duration = period
+        s.repeatCount = .infinity
+        return (a, s)
+    }
+
+    /// 呼吸の層を、いまの伸び縮みから次の動きの最初の形へ滑らかにつないでから始める
+    private func setBreath(_ next: CAAnimation?) {
+        let pres = breathLayer.presentation()
+        let sx = (pres?.value(forKeyPath: "transform.scale.x") as? CGFloat) ?? 1
+        let sy = (pres?.value(forKeyPath: "transform.scale.y") as? CGFloat) ?? 1
+        breathLayer.removeAllAnimations()
+        // 次の動きの最初の値（無ければ 1）
+        func first(_ key: String) -> CGFloat {
+            let a = (next as? CAAnimationGroup)?.animations?.first { ($0 as? CAKeyframeAnimation)?.keyPath == key } as? CAKeyframeAnimation
+            return (a?.values?.first as? CGFloat) ?? 1
+        }
+        let tx = first("transform.scale.x"), ty = first("transform.scale.y")
+        var lead = 0.0
+        // 1 回だけの動き（完了・エラーなど）は形が変わる瞬間に始めたいので、つながずにすぐ始める
+        if next?.repeatCount ?? .infinity != 0, abs(sx - tx) > 0.004 || abs(sy - ty) > 0.004 {
+            lead = 0.22
+            let bx = CABasicAnimation(keyPath: "transform.scale.x")
+            bx.fromValue = sx
+            bx.toValue = tx
+            let by = CABasicAnimation(keyPath: "transform.scale.y")
+            by.fromValue = sy
+            by.toValue = ty
+            for b in [bx, by] { b.duration = lead; b.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut) }
+            let g = CAAnimationGroup()
+            g.animations = [bx, by]
+            g.duration = lead
+            breathLayer.add(g, forKey: "breathIn")
+        }
+        guard let next else { return }
+        next.beginTime = breathLayer.convertTime(CACurrentMediaTime(), from: nil) + lead
+        breathLayer.add(next, forKey: "breath")
+    }
+
+    /// 跳ねる層（と影）を、いまの高さから次の動きへつなぐ
+    private func setHop(_ next: (body: CAAnimation, shadow: CAAnimation)?) {
+        let cur = currentY(floatLayer)
+        floatLayer.removeAllAnimations()
+        shadowLayer.removeAnimation(forKey: "hop")
+        var lead = 0.0
+        if abs(cur) > 0.3 {
+            lead = 0.18
+            let b = CABasicAnimation(keyPath: "transform.translation.y")
+            b.fromValue = cur
+            b.toValue = 0
+            b.duration = lead
+            b.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            floatLayer.add(b, forKey: "hopIn")
+        }
+        guard let next else { return }
+        let start = floatLayer.convertTime(CACurrentMediaTime(), from: nil) + lead
+        next.body.beginTime = start
+        next.shadow.beginTime = shadowLayer.convertTime(CACurrentMediaTime(), from: nil) + lead
+        floatLayer.add(next.body, forKey: "hop")
+        shadowLayer.add(next.shadow, forKey: "hop")
     }
 
     private func currentY(_ layer: CALayer) -> CGFloat {
         (layer.presentation()?.value(forKeyPath: "transform.translation.y") as? CGFloat) ?? 0
     }
 
-    /// 完了・キャンセル：ふくらみが落ち着いたら止める（タイマーは tick が止める）
+    /// 完了・キャンセル：弾みが落ち着いたら止める（タイマーは tick が止める）
     private func settleSoon() {
         settling = true
         let start = stateStart
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
             guard let self, self.settling, self.state.isTerminal, self.stateStart == start else { return }
             self.settling = false
             self.settled = true
             if self.active { self.tick() }
         }
-    }
-
-    /// 状態が始まってからの位置（0〜1。クラゲごとに少しずらす）
-    private func phase(_ now: Double, _ period: Double) -> Double {
-        ((now - stateStart + seed) / period).truncatingRemainder(dividingBy: 1)
     }
 
     private func addShakeLoop() {
@@ -163,7 +331,7 @@ final class PixelAvatar: Avatar {
         hopLayer.add(shake, forKey: "shake")
     }
 
-    // MARK: - コマ送り（まばたき・手足）
+    // MARK: - コマ送り（まばたき・目線・頭上の記号）
 
     private func startTimer() {
         guard active, timer == nil else { return }
@@ -189,31 +357,18 @@ final class PixelAvatar: Avatar {
                 nextGlance = now + Double.random(in: 5...9)
             }
             if let g = glance { if now < g.until { p.eyes = .open(dx: g.dx, dy: g.dy) } else { glance = nil } }
-            // ゆっくり呼吸：ふつう → ぷく 1 → ふつう（4 秒）。4 回に 1 回は大きく吸う
-            let ph = phase(now, 4)
-            p.puff = [0, 0, 0, 1, 1, 1, 0, 0][min(7, Int(ph * 8))]
-            if Int((now - stateStart + seed) / 4) % 4 == 3 && ph > 0.35 && ph < 0.6 { p.puff = 2 }
         case .thinking:
-            // 目がきょろきょろ、頭上に「…」が増えていく。体は「ぷくー」とふくらんで「しゅん」としぼむ（2.6 秒）
+            // 目がきょろきょろ、頭上に「…」が増えていく
             let gl = [(-1, -1), (-1, -1), (1, -1), (1, -1), (0, -1), (0, 0)]
             let gi = Int(el / 0.45) % gl.count
             p.eyes = .open(dx: gl[gi].0, dy: gl[gi].1)
             p.mark = .dots(Int(el / 0.38) % 4)
-            let ph = phase(now, 2.6)
-            p.puff = ph < 0.7 ? Int(ph / 0.7 * 4) : (ph < 0.82 ? -1 : 0)
         case .working:
-            // 「ぽよん」：ふくらむ → 跳ねる → 着地でつぶれる（1/8 秒ごと、8 コマで 1 回）
-            let f = Int(el * 8)
-            p.puff = [1, 2, 2, 1, 1, 0, 0, 1][f % 8]
-            if f % 8 == 2 || f % 8 == 3 { p.lift = 1 }
-            if f % 8 == 5 { p.legs = .crouch }
-            p.eyes = .open(dx: 0, dy: f % 16 < 8 ? 1 : 0)
+            // 目線は手もとと前をいったりきたり
+            p.eyes = .open(dx: 0, dy: Int(el * 8) % 16 < 8 ? 1 : 0)
         case .error:
             p.mark = Int(el / 0.4) % 3 == 2 ? .none : .exclaim
-        case .completed:
-            // できた瞬間だけいちばんふくらむ
-            p.puff = el < 0.35 ? 3 : 2
-        case .cancelled:
+        case .completed, .cancelled:
             break
         }
 
@@ -228,33 +383,39 @@ final class PixelAvatar: Avatar {
             if let h = hoverLook, now >= blinkEnd, case .open = p.eyes { p.eyes = .open(dx: h.dx, dy: h.dy) }
         }
 
-        // 操作への反応
-        // つつく：ぷくっとふくらんで、ちょっと跳ねる（影は床に残る）
-        if now < pokeEnd {
-            let k = pokeEnd - now
-            p.puff = 3
-            p.lift = k > 0.12 && k < 0.32 ? 1 : 0
-            if case .open = p.eyes { p.eyes = .open(dx: 0, dy: -1) }
-        }
+        // 操作への反応（ぷくっと弾む・伸びる・つぶれるは Core Animation、ここは目と形だけ）
+        if now < pokeEnd, case .open = p.eyes { p.eyes = .open(dx: 0, dy: -1) }
         // つまむと「のび〜」、着地・長押しでぎゅっとつぶれる
-        if dragging { p.legs = .dangle; p.eyes = state.isTerminal ? p.eyes : .open(dx: 0, dy: 1); p.lift = 0 }
+        if dragging { p.legs = .dangle; p.eyes = state.isTerminal ? p.eyes : .open(dx: 0, dy: 1) }
         if now < landEnd { p.legs = .crouch }
         if pressing { p.eyes = .closed; p.legs = .crouch; p.mark = .none }
 
         pose = p
         render(force: false)
 
-        // 終了状態は揺れが収まり、反応も終わったらタイマーを止める
+        // 終了状態は弾みが収まり、反応も終わったらタイマーを止める
         if state.isTerminal && settled && now > pokeEnd && now > landEnd && !dragging { stopTimer() }
     }
 
     private func render(force: Bool) {
         if !force, shownPose == pose { return }
+        let shapeChanged = shownPose.map { MochiSprite.widths($0) != MochiSprite.widths(pose) || $0.lift != pose.lift } ?? true
         shownPose = pose
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        spriteLayer.contents = MochiSprite.image(pose, colors: colors, key: cacheKey)
+        spriteLayer.contents = MochiSprite.image(pose, colors: colors, key: cacheKey, shadow: false, part: .body)
+        markLayer.contents = pose.mark == .none ? nil : MochiSprite.image(pose, colors: colors, key: cacheKey, shadow: false, part: .marks)
+        if shapeChanged { layoutShadow() }
         CATransaction.commit()
+    }
+
+    /// 床の影：いまの形のいちばん下より少し短く、床の行の上半分
+    private func layoutShadow() {
+        let sw = CGFloat(MochiSprite.shadowHalfWidth(pose))
+        let half = P / 2
+        let frame = CGRect(x: (7 - sw) * P, y: PixelAvatar.bottomMarginCells * P + half, width: (2 * sw + 1) * P, height: half)
+        shadowLayer.bounds = CGRect(origin: .zero, size: frame.size)
+        shadowLayer.position = CGPoint(x: frame.midX, y: frame.midY)
     }
 
     // MARK: - 操作
@@ -291,15 +452,43 @@ final class PixelAvatar: Avatar {
     }
 
     func poke() {
-        // ぷくっとふくらんで跳ね、着地で少しつぶれる（コマで描く）
-        pokeEnd = CACurrentMediaTime() + 0.45
-        landEnd = pokeEnd + 0.12
+        // ぷくっとふくらみながら跳ね、着地でむにっとつぶれて戻る（影は床で小さくなる）
+        let duration = 0.55
+        pokeEnd = CACurrentMediaTime() + duration
+        let times: [NSNumber] = [0, 0.18, 0.45, 0.72, 0.84, 1]
+        let sy = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        sy.values = [1, 1.16, 1.06, 1.0, 0.86, 1]
+        let sx = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        sx.values = [1, 1.04, 1.02, 0.98, 1.1, 1]
+        let ty = CAKeyframeAnimation(keyPath: "transform.translation.y")
+        ty.values = [0, P * 0.3, P * 1.2, 0, 0, 0]
+        for a in [sy, sx, ty] {
+            a.keyTimes = times
+            a.timingFunctions = timings([.easeOut, .easeOut, .easeIn, .easeOut, .easeInEaseOut])
+        }
+        let g = CAAnimationGroup()
+        g.animations = [sy, sx, ty]
+        g.duration = duration
+        hopLayer.add(g, forKey: "poke")
+        let sh = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        sh.values = [1, 0.9, 0.7, 1, 1.05, 1]
+        sh.keyTimes = times
+        sh.timingFunctions = timings([.easeOut, .easeOut, .easeIn, .easeOut, .easeInEaseOut])
+        sh.duration = duration
+        shadowLayer.add(sh, forKey: "poke")
         startTimer()
         tick()
     }
 
     func dragBegan() {
         dragging = true
+        // 形が「のび〜」に変わる段差を、縦の伸びでなめらかに
+        let s = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        s.values = [0.8, 1.08, 0.97, 1]
+        s.keyTimes = [0, 0.4, 0.75, 1]
+        s.timingFunctions = timings([.easeOut, .easeInEaseOut, .easeInEaseOut])
+        s.duration = 0.35
+        hopLayer.add(s, forKey: "pick")
         startTimer()
         tick()
     }
@@ -307,11 +496,18 @@ final class PixelAvatar: Avatar {
     func dragEnded() {
         dragging = false
         landEnd = CACurrentMediaTime() + 0.15
-        let bounce = CAKeyframeAnimation(keyPath: "transform.scale.y")
-        bounce.values = [1, 0.86, 1.06, 1]
-        bounce.keyTimes = [0, 0.3, 0.65, 1]
-        bounce.duration = 0.35
-        hopLayer.add(bounce, forKey: "land")
+        let by = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        by.values = [1.15, 0.84, 1.06, 0.98, 1]
+        let bx = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        bx.values = [0.9, 1.1, 0.97, 1.01, 1]
+        for a in [by, bx] {
+            a.keyTimes = [0, 0.3, 0.6, 0.82, 1]
+            a.timingFunctions = timings([.easeOut, .easeInEaseOut, .easeInEaseOut, .easeInEaseOut])
+        }
+        let g = CAAnimationGroup()
+        g.animations = [by, bx]
+        g.duration = 0.45
+        hopLayer.add(g, forKey: "land")
         startTimer()
         tick()
     }
@@ -327,12 +523,13 @@ final class PixelAvatar: Avatar {
         pop.mass = 1
         pop.duration = pop.settlingDuration
         hopLayer.add(pop, forKey: "spawn")
-        let fade = CABasicAnimation(keyPath: "opacity")
-        fade.fromValue = 0
-        fade.toValue = 1
-        fade.duration = 0.18
-        hopLayer.add(fade, forKey: "spawnFade")
-        pokeEnd = CACurrentMediaTime() + 0.5
+        for l in [hopLayer, shadowLayer] {
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 0
+            fade.toValue = 1
+            fade.duration = 0.18
+            l.add(fade, forKey: "spawnFade")
+        }
         startTimer()
     }
 
@@ -354,6 +551,13 @@ final class PixelAvatar: Avatar {
         g.fillMode = .forwards
         g.isRemovedOnCompletion = false
         hopLayer.add(g, forKey: "despawn")
+        let sf = CABasicAnimation(keyPath: "opacity")
+        sf.toValue = 0
+        sf.duration = 0.2
+        sf.fillMode = .forwards
+        sf.isRemovedOnCompletion = false
+        shadowLayer.add(sf, forKey: "despawn")
+        markLayer.add(sf, forKey: "despawn")
         CATransaction.commit()
     }
 
@@ -366,8 +570,7 @@ final class PixelAvatar: Avatar {
             tick()
         } else {
             stopTimer()
-            floatLayer.removeAllAnimations()
-            hopLayer.removeAllAnimations()
+            for l in [floatLayer, breathLayer, hopLayer, shadowLayer] { l.removeAllAnimations() }
         }
     }
 
@@ -417,7 +620,6 @@ final class PixelAvatar: Avatar {
     func teardown() {
         stopTimer()
         root.removeAllAnimations()
-        floatLayer.removeAllAnimations()
-        hopLayer.removeAllAnimations()
+        for l in [floatLayer, breathLayer, hopLayer, shadowLayer] { l.removeAllAnimations() }
     }
 }

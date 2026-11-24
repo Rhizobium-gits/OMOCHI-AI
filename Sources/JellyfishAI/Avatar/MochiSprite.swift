@@ -107,9 +107,13 @@ enum MochiSprite {
         }
     }
 
-    /// そのポーズのドットの配置
-    static func grid(_ p: JellyPose) -> Grid {
+    /// 描く部分（アプリは体・頭上の記号・影を別のレイヤーにして、体だけを伸び縮みさせる）
+    enum Part: Hashable { case all, body, marks }
+
+    /// そのポーズのドットの配置。shadow = 足元の影も描く（アプリは影を別のレイヤーで描くので false）
+    static func grid(_ p: JellyPose, shadow: Bool = true, part: Part = .all) -> Grid {
         var g = Grid()
+        if part == .marks { drawMarks(&g, p); return g }
         let ws = widths(p)
         let bottom = floor - p.lift
         let top = bottom - ws.count + 1
@@ -119,8 +123,10 @@ enum MochiSprite {
         }
 
         // 足元の影（床の行の上半分。体のいちばん下より少し短く、跳ねると小さくなる）
-        let sw = max(1, (ws[ws.count - 1] + 1) / 2 - 1 - p.lift)
-        for x in ((7 - sw) * sub)..<((8 + sw) * sub) { g.px(x, (floor + 1) * sub, .shadow) }
+        if shadow {
+            let sw = shadowHalfWidth(p)
+            for x in ((7 - sw) * sub)..<((8 + sw) * sub) { g.px(x, (floor + 1) * sub, .shadow) }
+        }
 
         // 目（1 マス）。顔は下のほう。ぺたんとしたときは 2 段のまん中、いちばんふくらむと目の間が広がる
         let flat = ws.count <= 3
@@ -143,37 +149,47 @@ enum MochiSprite {
             }
         }
 
-        // 頭上の表示（キャンバス上 3 マス）
+        if part == .all { drawMarks(&g, p) }
+        return g
+    }
+
+    /// 頭上の表示（キャンバス上 3 マス）
+    private static func drawMarks(_ g: inout Grid, _ p: JellyPose) {
         switch p.mark {
         case .none: break
         case .dots(let n): for i in 0..<min(n, 3) { g.cell(5 + i * 2, 1, .mark) }
         case .exclaim: for y in [0, 1, 2, 4, 5] { g.px(25, y, .warn); g.px(26, y, .warn) }
         case .check: for (x, y) in [(23, 3), (24, 4), (25, 5), (26, 4), (27, 3), (28, 2), (29, 1)] { g.px(x, y, .mark) }
         }
-        return g
+    }
+
+    /// 足元の影の半分の幅（マス。真ん中の 1 マスを除く）
+    static func shadowHalfWidth(_ p: JellyPose) -> Int {
+        let ws = widths(p)
+        return max(1, (ws[ws.count - 1] + 1) / 2 - 1 - p.lift)
     }
 
     // MARK: - 画像
 
     private static var cache: [String: CGImage] = [:]
 
-    static func image(_ pose: JellyPose, colors: SpriteColors, key: String) -> CGImage {
-        let k = "\(key)|\(pose.hashValue)"
+    static func image(_ pose: JellyPose, colors: SpriteColors, key: String, shadow: Bool = true, part: Part = .all) -> CGImage {
+        let k = "\(key)|\(shadow)|\(part)|\(pose.hashValue)"
         if let img = cache[k] { return img }
-        let img = draw(pose, colors: colors)
+        let img = draw(pose, colors: colors, shadow: shadow, part: part)
         if cache.count > 400 { cache.removeAll() }
         cache[k] = img
         return img
     }
 
-    private static func draw(_ pose: JellyPose, colors: SpriteColors) -> CGImage {
+    private static func draw(_ pose: JellyPose, colors: SpriteColors, shadow: Bool, part: Part) -> CGImage {
         let W = pixelWidth, H = pixelHeight
         let ctx = CGContext(data: nil, width: W, height: H, bitsPerComponent: 8, bytesPerRow: 0,
                             space: CGColorSpace(name: CGColorSpace.sRGB)!,
                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         ctx.interpolationQuality = .none
         ctx.setShouldAntialias(false)
-        let g = grid(pose)
+        let g = grid(pose, shadow: shadow, part: part)
         var shades: [Role: CGColor] = [:]
         for y in 0..<H {
             for x in 0..<W {
