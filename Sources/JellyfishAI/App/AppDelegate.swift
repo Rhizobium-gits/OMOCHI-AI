@@ -279,6 +279,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             } else {
                 AppLog.write("prompt: agent/text/runtime missing agent=\(agent?.record.number ?? -1)")
             }
+        case "queue":
+            // テスト用：jellyfish://queue?agent=1&text=… はチャットの入力欄から送ったのと同じ（作業中・予約の途中なら予約に足す）。
+            // to=2・pass=1|0 を付けると送り先・前の結果を渡すかを決めて予約に足す。
+            // do=pause|resume|skip|clear|stop、do=edit&index=0&text=…（行の文を書き換える）、do=move&index=1&by=-1
+            if let c = agent {
+                let id = c.record.id
+                let items = manager.queues.items(id)
+                // index=last で最後の行（デモの録画で、前の行が送られたあとでも同じ行を指せるように）
+                let row = param("index") == "last" ? items.last
+                    : param("index").flatMap(Int.init).flatMap { $0 >= 0 && $0 < items.count ? items[$0] : nil }
+                switch param("do") ?? "" {
+                case "pause": manager.queues.pause(owner: id)
+                case "resume": manager.queues.resume(owner: id)
+                case "skip": manager.queues.skipCurrent(owner: id)
+                case "clear": manager.queues.clear(owner: id)
+                case "stop": manager.runtime(for: c)?.cancel()
+                case "edit":
+                    if let row, let t = param("text") {
+                        manager.queues.update(owner: id, item: row.id, text: t)
+                        if param("hold") != "1" { manager.queues.endEditing(owner: id, item: row.id) }
+                    }
+                case "target":
+                    if let row, let to = param("to").flatMap(Int.init).flatMap({ manager.controller(number: $0) }) {
+                        manager.queues.update(owner: id, item: row.id, target: .some(to.record.id))
+                    }
+                case "move":
+                    if let row { manager.queues.move(owner: id, item: row.id, by: param("by").flatMap(Int.init) ?? 0) }
+                case "remove":
+                    if let row { manager.queues.remove(owner: id, item: row.id) }
+                default:
+                    guard let text = param("text") else { break }
+                    let to = param("to").flatMap(Int.init).flatMap { manager.controller(number: $0) }?.record.id
+                    if to != nil || param("pass") != nil {
+                        manager.queues.enqueue(owner: id, text: text, target: to, passResult: param("pass").map { $0 == "1" })
+                    } else {
+                        manager.submitFromChat(c, text: text)
+                    }
+                }
+            }
+        case "chatshot":
+            // テスト用：チャットの窓の中身を、データフォルダの shots/<name>.png に描く（画面には出さない）
+            if let c = agent, let name = param("name"), name.range(of: "^[A-Za-z0-9_-]{1,40}$", options: .regularExpression) != nil {
+                let dir = AppPaths.dataDir.appendingPathComponent("shots", isDirectory: true)
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                AppLog.write("chatshot \(name) ok=\(manager.snapshotChat(c, to: dir.appendingPathComponent(name + ".png")))")
+            }
         case "open":
             if let c = agent { manager.openChat(for: c, activate: automation) }
         case "permissions":
@@ -320,6 +366,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             }
             AppLog.write("app policy=\(policy) active=\(NSApp.isActive) hidden=\(NSApp.isHidden) menus=[\(menus.joined(separator: " | "))]")
             for line in manager.debugChatLines() { AppLog.write(line) }
+            for line in manager.debugQueueLines() { AppLog.write(line) }
         case "style":
             if let st = param("v").flatMap(AvatarStyle.init(rawValue:)) { manager.setStyle(st) }
         case "login":

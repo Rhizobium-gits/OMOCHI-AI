@@ -251,21 +251,21 @@ enum SnapshotTool {
 
     // MARK: - pixel sheet（ドット絵のコマ一覧）
 
-    static func pixelPoses() -> [(String, ClawdPose)] {
-        var a: [(String, ClawdPose)] = []
-        a.append(("idle", ClawdPose()))
-        a.append(("blink", ClawdPose(eyes: .closed)))
-        a.append(("glance", ClawdPose(eyes: .open(dx: 1, dy: -1))))
-        a.append(("think1", ClawdPose(eyes: .open(dx: -1, dy: -1), mark: .dots(1))))
-        a.append(("think3", ClawdPose(eyes: .open(dx: 1, dy: -1), mark: .dots(3))))
-        a.append(("work1", ClawdPose(eyes: .open(dx: 0, dy: 1), arms: .leftUp, legs: .walkA)))
-        a.append(("work2", ClawdPose(eyes: .open(dx: 0, dy: 1), arms: .rightUp, legs: .walkB)))
-        a.append(("crouch", ClawdPose(arms: .down, legs: .crouch)))
-        a.append(("hop", ClawdPose(arms: .rightUp, legs: .walkA, lift: 1)))
-        a.append(("done", ClawdPose(eyes: .happy, mark: .check)))
-        a.append(("error", ClawdPose(eyes: .cross, mark: .exclaim, tone: .error)))
-        a.append(("cancel", ClawdPose(eyes: .closed, tone: .cancelled)))
-        a.append(("drag", ClawdPose(eyes: .open(dx: 0, dy: 1), arms: .raised, legs: .dangle)))
+    static func pixelPoses() -> [(String, JellyPose)] {
+        var a: [(String, JellyPose)] = []
+        a.append(("idle", JellyPose()))
+        a.append(("blink", JellyPose(eyes: .closed)))
+        a.append(("glance", JellyPose(eyes: .open(dx: 1, dy: -1))))
+        a.append(("think1", JellyPose(eyes: .open(dx: -1, dy: -1), mark: .dots(1))))
+        a.append(("think3", JellyPose(eyes: .open(dx: 1, dy: -1), mark: .dots(3))))
+        a.append(("work1", JellyPose(eyes: .open(dx: 0, dy: 1), arms: .leftUp, legs: .walkA)))
+        a.append(("work2", JellyPose(eyes: .open(dx: 0, dy: 1), arms: .rightUp, legs: .walkB)))
+        a.append(("crouch", JellyPose(arms: .down, legs: .crouch)))
+        a.append(("hop", JellyPose(arms: .rightUp, legs: .walkA, lift: 1)))
+        a.append(("done", JellyPose(eyes: .happy, mark: .check)))
+        a.append(("error", JellyPose(eyes: .cross, mark: .exclaim, tone: .error)))
+        a.append(("cancel", JellyPose(eyes: .closed, tone: .cancelled)))
+        a.append(("drag", JellyPose(eyes: .open(dx: 0, dy: 1), arms: .raised, legs: .dangle)))
         return a
     }
 
@@ -274,18 +274,18 @@ enum SnapshotTool {
         let colorsN = 6
         let scale = 2.0
         let P = CGFloat(PixelAvatar.cell(scale: 1.0) * scale)       // 1 マスの px
-        let tileW = Int(CGFloat(ClawdSprite.cols) * P), tileH = Int(CGFloat(ClawdSprite.rows + 1) * P)
+        let tileW = Int(CGFloat(MochiSprite.cols) * P), tileH = Int(CGFloat(MochiSprite.rows + 1) * P)
         let W = tileW * poses.count, H = tileH * colorsN
         let ctx = makeContext(W, H)
         fillBackground(ctx, CGRect(x: 0, y: 0, width: W, height: H), dark: dark)
         ctx.interpolationQuality = .none
         for ci in 0..<colorsN {
             let jc = Palette.color(ci)
-            let colors = ClawdColors.from(jc)
+            let colors = SpriteColors.from(jc)
             for (i, (_, pose)) in poses.enumerated() {
-                let img = ClawdSprite.image(pose, colors: colors, key: jc.key)
+                let img = MochiSprite.image(pose, colors: colors, key: jc.key)
                 let rect = CGRect(x: CGFloat(i * tileW), y: CGFloat(H - (ci + 1) * tileH) + P * 0.5,
-                                  width: CGFloat(ClawdSprite.cols) * P, height: CGFloat(ClawdSprite.rows) * P)
+                                  width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
                 ctx.saveGState()
                 let f = jc.flat
                 ctx.setShadow(offset: .zero, blur: P * 0.9 * 2,
@@ -329,9 +329,9 @@ enum SnapshotTool {
                                endCenter: CGPoint(x: 512, y: 512), endRadius: 560, options: [.drawsAfterEndLocation])
         // Claude キャラクターを大きく描く（ドット絵なので補間なし）
         let jc = Palette.color(0)
-        let img = ClawdSprite.image(ClawdPose(), colors: ClawdColors.from(jc), key: jc.key)
+        let img = MochiSprite.image(JellyPose(), colors: SpriteColors.from(jc), key: jc.key)
         let P: CGFloat = 52
-        let w = CGFloat(ClawdSprite.cols) * P, h = CGFloat(ClawdSprite.rows) * P
+        let w = CGFloat(MochiSprite.cols) * P, h = CGFloat(MochiSprite.rows) * P
         ctx.interpolationQuality = .none
         ctx.setShadow(offset: .zero, blur: 70, color: CGColor(srgbRed: 0.85, green: 0.47, blue: 0.34, alpha: 0.6))
         ctx.draw(img, in: CGRect(x: (CGFloat(S) - w) / 2, y: (CGFloat(S) - h) / 2 - P * 0.6, width: w, height: h))

@@ -20,7 +20,7 @@ Framer Motion / CSS Animation の役割は Core Animation が担う（アニメ�
 │      │                                                                    │
 │ JellyManager ── 配置・表示/非表示・永続化・クリック透過のポインタ追跡          │
 │      ├── JellyController ×N   透明 NSPanel（nonactivating）+ マウス操作       │
-│      │      └── Avatar        PixelAvatar（既定, Core Animation）             │
+│      │      └── Avatar        PixelAvatar（既定, ドット絵「もち」）           │
 │      │                        RealisticAvatar（Metal シェーダ）               │
 │      ├── AgentRuntime ×N      セッション・履歴・状態遷移・ログ                 │
 │      │      └── AgentBackend  ClaudeCodeBackend（他の AI もこの口で差し替え）  │
@@ -88,6 +88,7 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
   - `OrgReward`：完了 0.65・失敗 0.15・キャンセル 0.1、仲間の失敗・長時間で減点、👍 は 0.85 以上に、👎 は 0.25 以下に、再実行・キャンセル・「違う」で減点、「ありがとう」で加点
   - `OrgEvolution`：2 件以上の型の上位 2 つから、人数 ±1・レビュー係の付け外し・形の変更の子を 1 つずつ。4 件以上でいちばんの型より 0.3 低い型は引退（solo は残す）。リーダーが自分で選んだ一覧にない形は取り込む
 - **OrgLearner**：状態はメインスレッド。保存（`org/episodes.json` 0600・`population.json`・`report.md`）と進化は 3 秒待ってまとめて `jellyfish.org`（utility）キューで。終了時は `flush` で書き切る。エピソードは 600 件まで
+- **予約**（Agent/PromptQueue.swift・UI/PromptQueueView.swift）：`PromptQueues`（JellyManager が持つ。`queues.json`）がクラゲごとの `PromptQueue`（予約の行 `QueuedPrompt` = 本人が打った文・送り先・前の結果を渡すか・予約したときの添付と画面の欄）を動かす。チャットで作業中（または予約が進んでいる途中）に Enter を押すと `enqueue` し、そのクラゲが作業中ならその終わりを `watching` で待つ。`AgentRuntime.onTurnEnded` → `turnEnded` で、完了なら結果を `lastResult` に取って `pump` が先頭の行を送る（送り先が作業中なら次の turnEnded まで待つ。送る前に watching を付けるので、起動に失敗してその場で終わっても取りこぼさない）。止めた・エラー・送れない・送り先が消えた・アプリを終了したときは `pause`（▶ で再開）。前の結果は `PromptQueues.resultMarker` の欄として本人の文と添付の欄の間に入れ、Jellyfish の目印と同じ形は崩しておく（`defang`）。`typedText`・外部 MCP の判定・モデルの自動選択・タイトルはこの欄を除いた本人の文で決める。打っている途中の行は最後の入力から 4 秒待つ。テストは `Tests/JellyfishAITests/QueueTests.swift`（偽のクラゲ）と `jellyfish://queue`（自動化のときだけ）
 - **片付け**：form_team が作った仲間は `JellyRecord.orgSpawned`。次の form_team で使わない、空いている仲間（とその下の仲間）を消す。リーダーが仲間を使わずにターンを終えたら、前の依頼の仲間を消す
 - **安全**：PC 操作のツールは仲間からの依頼のターンでは渡さない（`usesPCTools`）。仲間からの依頼の文では外部 MCP を読み込まない。学習は端末内だけで、どこにも送らない
 

@@ -1,0 +1,5 @@
+{
+ "model": "claude-haiku-5-5",
+ "chatWidth": 640,
+ "chatHeight": 900
+}

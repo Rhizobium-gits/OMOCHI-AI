@@ -1,6 +1,6 @@
 #!/bin/zsh
 # README の GIF を撮り直す。
-#   scripts/demo/record.sh [basic parallel states team link crossai connectors]
+#   scripts/demo/record.sh [basic parallel states team link crossai connectors queue]
 #
 # - 普段の Jellyfish AI を一度終了し、JELLYFISH_DATA_DIR で空のデモ用データから起動して録画する
 #   （JELLYFISH_AUTOMATION=1 で、指示の送信などデモ用の jellyfish:// 操作を受け付ける）
@@ -17,7 +17,7 @@
 set -e
 cd "$(dirname "$0")/../.."
 # zsh では ${@:-a b} が 1 語になるので、引数が無いときの一覧は別に書く
-if (( $# )); then takes=("$@"); else takes=(basic parallel states team link crossai connectors); fi
+if (( $# )); then takes=("$@"); else takes=(basic parallel states team link crossai connectors queue); fi
 [[ -d dist/JellyfishAI.app ]] || scripts/build.sh
 mkdir -p .build ~/jellyfish-demo
 swiftc -O scripts/demo/recorder.swift -o .build/recorder

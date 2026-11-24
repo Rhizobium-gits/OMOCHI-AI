@@ -27,6 +27,8 @@ final class PromptTextView: NSTextView {
         return super.performDragOperation(sender)
     }
     var onEscape: (() -> Void)?
+    /// ⌘.（いまの作業を止める）
+    var onStop: (() -> Void)?
     /// ↑（older = true）/ ↓ で前に送った指示を呼び出す。入れ替えたら true
     var onHistory: ((_ older: Bool) -> Bool)?
     var placeholder: String = "" { didSet { needsDisplay = true } }
@@ -42,6 +44,7 @@ final class PromptTextView: NSTextView {
         case 125 where mods.isEmpty && isEditable && caretOnLastLine:
             if onHistory?(false) == true { return }
         case 53: onEscape?(); return
+        case 47 where mods == [.command]: onStop?(); return
         case 36, 76:
             if e.modifierFlags.contains(.shift) || e.modifierFlags.contains(.option) {
                 insertNewlineIgnoringFieldEditor(nil)
@@ -146,7 +149,12 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     private let titleLabel = NSTextField(labelWithString: "")
     private let stateLabel = NSTextField(labelWithString: "")
     private let dot = NSImageView()
-    private let cancelButton = NSButton(title: L("キャンセル"), target: nil, action: nil)
+    /// いまの作業を止める（入力欄の横。⌘. でも）
+    private let cancelButton = NSButton(title: L("■ 止める"), target: nil, action: nil)
+    /// 送信（作業中は「予約」）
+    private let sendButton = NSButton(title: L("送信"), target: nil, action: nil)
+    /// 予約：いまの作業が終わったら送る指示の一覧（送るまで書き換えられる）
+    private let queueView = PromptQueueView(frame: NSRect(x: 0, y: 0, width: 500, height: 40))
     private let retryButton = NSButton(title: L("再実行"), target: nil, action: nil)
     private let folderButton = NSButton(title: "", target: nil, action: nil)
     private let terminalButton = NSButton(title: L("Claude Code で開く"), target: nil, action: nil)
@@ -264,6 +272,13 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
             b.target = self
         }
         cancelButton.action = #selector(cancelTask)
+        cancelButton.contentTintColor = .systemRed
+        cancelButton.toolTip = L("いまの作業を止める（⌘.）。予約があれば一時停止します")
+        sendButton.bezelStyle = .accessoryBarAction
+        sendButton.controlSize = .small
+        sendButton.font = .systemFont(ofSize: 11.5, weight: .semibold)
+        sendButton.target = self
+        sendButton.action = #selector(sendTapped)
         renameButton.action = #selector(renameAgent)
         pcButton.action = #selector(togglePC)
         listenButton.action = #selector(toggleListen)
@@ -304,7 +319,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         terminalButton.toolTip = L("同じセッションをターミナルの claude --resume で開く")
 
         // モデルと強さは、ほかのボタンに押されて見えなくならないよう上の段に置く
-        let titleRow = NSStackView(views: [dot, titleLabel, NSView(), enginePopup, modelPopup, effortPopup, renameButton, retryButton, cancelButton])
+        let titleRow = NSStackView(views: [dot, titleLabel, NSView(), enginePopup, modelPopup, effortPopup, renameButton, retryButton])
         titleRow.orientation = .horizontal
         titleRow.spacing = 8
         let infoRow = NSStackView(views: [stateLabel])
@@ -374,6 +389,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         input.onSubmit = { [weak self] in self?.submit() }
         input.onDropFiles = { [weak self] u in self?.addAttachments(u) }
         input.onEscape = { [weak self] in self?.closeAndReturn() }
+        input.onStop = { [weak self] in self?.cancelTask() }
         input.onHistory = { [weak self] older in self?.recallPrompt(older: older) ?? false }
         input.delegate = self
         inputScroll.documentView = input
@@ -400,7 +416,18 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         orgRow.spacing = 6
         orgRow.isHidden = true
         self.orgRow = orgRow
-        let stack = NSStackView(views: [titleRow, infoRow, transcriptView, orgRow, attachRow, inputScroll, controlsRow, footer])
+        setUpQueueView()
+        // 入力欄の右に「送信 / 予約」と「■ 止める」
+        let actions = NSStackView(views: [sendButton, cancelButton])
+        actions.orientation = .vertical
+        actions.alignment = .trailing
+        actions.spacing = 4
+        actions.setHuggingPriority(.required, for: .horizontal)
+        let inputRow = NSStackView(views: [inputScroll, actions])
+        inputRow.orientation = .horizontal
+        inputRow.alignment = .top
+        inputRow.spacing = 6
+        let stack = NSStackView(views: [titleRow, infoRow, transcriptView, orgRow, attachRow, queueView, inputRow, controlsRow, footer])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -420,7 +447,8 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
             inputHeight,
         ]
         attachRow.isHidden = true
-        for v in [titleRow, infoRow, transcriptView, orgRow, attachRow, inputScroll, controlsRow, footer] as [NSView] {
+        queueView.isHidden = true
+        for v in [titleRow, infoRow, transcriptView, orgRow, attachRow, queueView, inputRow, controlsRow, footer] as [NSView] {
             cs.append(v.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -32))
         }
         NSLayoutConstraint.activate(cs)
@@ -532,6 +560,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
             st += "  ·  \(m)"
         }
         if let p = manager?.team?.pendingDescription(for: r.id) { st += "  ·  \(p)" }
+        if let n = manager?.queues.noteForTarget(r.id) { st += "  ·  \(n)" }
         // 線でつながった仲間（この人たちに分担を頼める）
         let mates = (manager?.settings.teamEnabled ?? false) ? (manager?.team?.teammateNames(for: r.id) ?? []) : []
         if !mates.isEmpty {
@@ -612,19 +641,27 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         folderButton.title = "📁 " + runtime.cwd.path.replacingOccurrences(of: home, with: "~")
 
-        input.isEditable = !running && !capturing
+        // 作業中も打てる（Enter で予約に足す）
+        input.isEditable = !capturing
+        let queueing = running || (manager?.queues.isActive(r.id) ?? false)
+        sendButton.title = queueing ? L("予約") : L("送信")
+        sendButton.toolTip = queueing ? L("いまの作業が終わったら送る指示として、予約に足します（Enter）") : L("送信（Enter）")
+        refreshQueue()
         let hintNames = mates.prefix(2).joined(separator: L("・"))
         let teamHint = mates.isEmpty ? "" : (mates.count > 2 ? L("（つながっている %@ たち に分担させることもできます）", hintNames)
                                                               : L("（つながっている %@ に分担させることもできます）", hintNames))
-        input.placeholder = running ? L("実行中です。終わったら続けて指示できます")
+        input.placeholder = running ? L("作業中です。Enter で次の指示を予約できます（送るまで書き換えられます）")
+            : queueing ? L("Enter で予約の最後に足します")
             : (runtime.turns.isEmpty && !runtime.sessionStarted ? L("%@ に頼みたいことを入力…", r.title) : L("この結果に続けて指示する…")) + teamHint
         // 下の段：その AI の動かし方と、会話がどこに残るか
+        let keys = running ? L("⏎ 予約   ⇧⏎ 改行   ⌘. 止める   esc 閉じる")
+            : queueing ? L("⏎ 予約   ⇧⏎ 改行   esc 閉じる") : L("⏎ 送信   ⇧⏎ 改行   esc 閉じる")
         switch eng {
         case .claude:
-            footer.stringValue = L("⏎ 送信   ⇧⏎ 改行   esc 閉じる   ·   %@   ·   記録: Claude Code のセッション", manager?.policyDescription ?? "")
+            footer.stringValue = keys + "   ·   " + (manager?.policyDescription ?? "") + "   ·   " + L("記録: Claude Code のセッション")
         case .codex, .gemini:
             let policy = eng == .codex ? "Codex · workspace-write" : "Gemini · auto_edit"
-            footer.stringValue = L("⏎ 送信   ⇧⏎ 改行   esc 閉じる   ·   %@   ·   記録: %@ のセッション", policy, eng.cliTitle)
+            footer.stringValue = keys + "   ·   " + policy + "   ·   " + L("記録: %@ のセッション", eng.cliTitle)
         }
         footer.toolTip = eng.policyLine
         scheduleReload()
@@ -728,6 +765,12 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
                     text = String(text[..<r.lowerBound])
                     notes.append("📎 " + names.joined(separator: ", "))
                 }
+                // 予約で、前の手順の結果を添えて送った指示
+                if !fromTeammate, let r = text.range(of: PromptQueues.resultMarker) {
+                    let from = PromptQueues.passedFrom(text) ?? ""
+                    text = String(text[..<r.lowerBound])
+                    notes.insert(L("🔗 前の手順（%@）の結果を受け取りました", from), at: 0)
+                }
                 let userTyped = !fromTeammate && typed.contains(text.trimmingCharacters(in: .whitespacesAndNewlines))
                 add("user", caption: cap, style: style, color: color, text: text, notes: notes,
                     media: mediaItems(attachedMedia + ChatMedia.refs(in: text), autoWeb: userTyped, images: &images))
@@ -766,7 +809,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     /// 指示のうち、本人が打った部分（添付・画面の欄の前まで）
     static func typedText(_ prompt: String) -> String {
         var t = prompt
-        for m in [attachMarker, ScreenContext.marker] { if let r = t.range(of: m) { t = String(t[..<r.lowerBound]) } }
+        for m in [attachMarker, ScreenContext.marker, PromptQueues.resultMarker] { if let r = t.range(of: m) { t = String(t[..<r.lowerBound]) } }
         return t.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -799,7 +842,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         for r in raw {
             if r.hasPrefix(TeamCoordinator.requestMarker) { continue }
             var t = r
-            for m in [ScreenContext.marker, attachMarker] {
+            for m in [ScreenContext.marker, attachMarker, PromptQueues.resultMarker] {
                 if let range = t.range(of: m) { t = String(t[..<range.lowerBound]) }
             }
             t = t.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -809,15 +852,13 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     private func submit() {
-        guard !runtime.isRunning, !capturing else { return }
+        guard !capturing, let id = jelly?.record.id else { return }
         let text = input.string.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        var prompt = text
         let attach = pendingAttachments
-        if !attach.isEmpty {
-            prompt += AgentChatController.attachMarker + "\n" + attach.map { "- \($0.path)" }.joined(separator: "\n")
-                + "\n" + L("画像やファイルは Read ツールで開いて内容を確認してください。")
-        }
+        let attachBlock = attach.isEmpty ? "" : AgentChatController.attachMarker + "\n" + attach.map { "- \($0.path)" }.joined(separator: "\n")
+            + "\n" + L("画像やファイルは Read ツールで開いて内容を確認してください。")
+        let prompt = text + attachBlock
         input.string = ""
         history.reset()
         relayoutInput()
@@ -826,6 +867,30 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         // 画面を指す指示なら、送信時点の画面を撮って添える（明示的な添付があればそちらを優先）
         let mode = manager?.settings.screenMode ?? .auto
         let wantScreen = attach.isEmpty && (mode == .always || (mode == .auto && ScreenIntent.refersToScreen(text)))
+
+        // 作業中（または予約が進んでいる途中）なら、送らずに予約に足す。画面は今のものを撮っておく
+        if runtime.isRunning || (manager?.queues.isActive(id) ?? false) {
+            guard wantScreen else {
+                manager?.queues.enqueue(owner: id, text: text, suffix: attachBlock.isEmpty ? nil : attachBlock, attachments: attach.count)
+                refresh()
+                return
+            }
+            capturing = true
+            refresh()
+            let app = contextApp
+            let target = manager?.settings.screenTarget ?? .activeDisplay
+            let dir = runtime.dir.appendingPathComponent("attachments", isDirectory: true)
+            Task { @MainActor [weak self] in
+                let ctx = await ScreenContext.capture(frontApp: app, target: target, into: dir)
+                guard let self else { return }
+                self.capturing = false
+                var suffix = ctx.promptSuffix
+                if let note = ctx.note { suffix += ScreenContext.marker + "\n" + note + L("（画像なしで進めてください）") }
+                self.manager?.queues.enqueue(owner: id, text: text, suffix: suffix.isEmpty ? nil : suffix)
+                self.refresh()
+            }
+            return
+        }
         guard wantScreen else { send(prompt); return }
 
         capturing = true
@@ -981,7 +1046,61 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         refresh()
     }
 
-    @objc private func cancelTask() { runtime.cancel() }
+    @objc private func cancelTask() {
+        guard runtime.isRunning else { NSSound.beep(); return }
+        AppLog.write("chat \(jelly?.record.number ?? -1): stop")
+        runtime.cancel()
+    }
+
+    @objc private func sendTapped() {
+        window.makeFirstResponder(input)
+        submit()
+    }
+
+    // MARK: 予約
+
+    private func setUpQueueView() {
+        let q = queueView
+        q.onText = { [weak self] item, text in self?.withQueue { $0.update(owner: $1, item: item, text: text) } }
+        q.onEndEditing = { [weak self] item in self?.withQueue { $0.endEditing(owner: $1, item: item) } }
+        q.onTarget = { [weak self] item, t in self?.withQueue { $0.update(owner: $1, item: item, target: .some(t)) } }
+        q.onPass = { [weak self] item, on in self?.withQueue { $0.update(owner: $1, item: item, passResult: on) } }
+        q.onMove = { [weak self] item, by in self?.withQueue { $0.move(owner: $1, item: item, by: by) } }
+        q.onRemove = { [weak self] item in self?.withQueue { $0.remove(owner: $1, item: item) } }
+        q.onPause = { [weak self] in self?.withQueue { $0.pause(owner: $1) } }
+        q.onResume = { [weak self] in self?.withQueue { $0.resume(owner: $1) } }
+        q.onSkip = { [weak self] in self?.withQueue { $0.skipCurrent(owner: $1) } }
+        q.onClear = { [weak self] in self?.withQueue { $0.clear(owner: $1) } }
+        q.onDoneEditing = { [weak self] in
+            guard let self else { return }
+            self.window.makeFirstResponder(self.input)
+        }
+    }
+
+    private func withQueue(_ f: (PromptQueues, UUID) -> Void) {
+        guard let m = manager, let id = jelly?.record.id else { return }
+        f(m.queues, id)
+    }
+
+    /// 予約の欄だけ更新する（書き換えている途中の欄はそのまま）
+    func refreshQueue() {
+        guard let m = manager, let id = jelly?.record.id else { return }
+        let q = m.queues.queue(id)
+        let show = q.map { !$0.items.isEmpty || $0.watching != nil || $0.isPaused } ?? false
+        if queueView.isHidden == show { queueView.isHidden = !show }
+        guard show else { return }
+        let canSkip = q?.watching.map { m.queues.host?.queueAgentRunning($0) ?? false } ?? false
+        queueView.update(queue: q, owner: id, agents: m.queueAgents(), status: m.queues.statusLine(id), canSkip: canSkip)
+    }
+
+    /// テスト・自動化用：予約の欄に出している行の文
+    var shownQueueTexts: [String] { queueView.isHidden ? [] : queueView.shownTexts }
+
+    /// テスト・自動化用：入力欄に文を入れて、Enter と同じ送信（作業中なら予約）をする
+    func submitText(_ text: String) {
+        input.string = text
+        submit()
+    }
     @objc private func renameAgent() { if let j = jelly { manager?.promptRename(j) } }
 
     @objc private func toggleListen() {
@@ -1025,7 +1144,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
             addAttachments([image])
             input.string = text
             relayoutInput()
-            setInputHint(L("いまは作業中です。終わったら Enter で送れます"))
+            setInputHint(L("いまは作業中です。Enter で予約に足せます"))
             return
         }
         send(text + AgentChatController.attachMarker + "\n- " + image.path + "\n" + L("画像やファイルは Read ツールで開いて内容を確認してください。"))

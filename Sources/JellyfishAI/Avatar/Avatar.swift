@@ -45,7 +45,7 @@ enum AvatarStyle: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .pixel: return L("ピクセル（Claude）")
+        case .pixel: return L("ドット絵（もち）")
         case .realistic: return L("リアルなクラゲ")
         }
     }

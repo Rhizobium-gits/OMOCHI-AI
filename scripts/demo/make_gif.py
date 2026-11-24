@@ -249,6 +249,21 @@ if want("link"):
             (ev["scissors"]["t"], "線の ✂ でも切れる")]
     render("link", "demo-link.gif", ev["drag1"]["t"] - 0.8, ev["end"]["t"], caps)
 
+# ---- 6. 予約（作業中に次の指示を積む・ほかのクラゲへつなぐ） ----------------------------
+if want("queue"):
+    d, tl, ev = load("queue")
+    first = lambda prefix, after=0: min((e["t"] for e in tl["events"] if e["mark"].startswith(prefix) and e["t"] > after), default=None)
+    caps = [(0, "クラゲに作業を頼む"),
+            (ev["q1"]["t"], "作業中でも次の指示を打てる → Enter で「予約」"),
+            (ev["q2"]["t"] + 1.6, "予約は送るまで書き換え・並べ替え・削除できる"),
+            (ev["retarget"]["t"], "送り先をほかのクラゲにすると、前の結果を渡してつなげる")]
+    c1 = first("state:1:completed", ev["retarget"]["t"]) or first("state:1:completed")
+    if c1: caps.append((c1, "終わったらすぐ次の予約を送る"))
+    caps += [(ev["mio"]["t"], "Mio が Aki の結果を受け取って続きを作業"),
+             (ev["open2"]["t"], "結果を受け取った指示は Mio の会話に残る（■ 止める・⌘. で中断もできる）")]
+    fast = [(ev["retarget"]["t"] + 3.0, ev["mio"]["t"] - 0.8, 3)] if ev["mio"]["t"] - ev["retarget"]["t"] > 6 else []
+    render("queue", "demo-queue.gif", ev["type"]["t"] - 0.6, ev["end"]["t"], caps, fast=fast)
+
 # ---- 7. コネクタ（カレンダー・リマインダー・メールを AI・モデルごとに） ------------------
 if want("connectors"):
     d, tl, ev = load("connectors")

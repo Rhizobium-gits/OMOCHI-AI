@@ -44,50 +44,67 @@ enum MenuImages {
         }
     }
 
-    /// メニューバー用の Claude キャラクターのシルエット（テンプレート画像、目は抜き）
+    /// メニューバー用のクラゲ「もち」のシルエット（テンプレート画像、目は抜き）
     static func statusIcon() -> NSImage { statusFrame(StatusPose()) }
 
-    /// メニューバーのアイコンのコマ（11×8 マスの Clawd。目はくり抜き、テンプレート画像なので明暗に追従）
+    /// メニューバーのアイコンのコマ（16×13 の「もち」。目はくり抜き、テンプレート画像なので明暗に追従）
     struct StatusPose: Hashable {
-        var lift = 0          // 0 / 1（1 マス浮く）
+        var lift = 0          // 0 / 1（1 段浮く）
         var blink = false
-        var legs = 0          // 0 = 立つ, 1 / 2 = 歩く
+        var legs = 0          // 0 = まっすぐ, 1 / 2 = 触手が左右に揺れる
         var dots = 0          // 考え中の「…」（0〜3）
         var arms = false      // 作業中に腕を上げる
     }
 
     private static var frameCache: [StatusPose: NSImage] = [:]
 
+    /// アイコンの点の配置（上から。# = 塗る）
+    static func statusRows(_ p: StatusPose) -> [String] {
+        var g: [[Character]] = [
+            ".....######.....",
+            "...##########...",
+            "..############..",
+            ".##############.",
+            ".##############.",
+            ".###..####..###.",
+            ".###..####..###.",
+            ".##############.",
+            "..############..",
+            "................",
+            "................",
+            "................",
+            "................",
+        ].map(Array.init)
+        func set(_ x: Int, _ y: Int, _ c: Character = "#") { if y >= 0, y < g.count, x >= 0, x < 16 { g[y][x] = c } }
+        // まばたき：目を下の 1 段だけに
+        if p.blink { for x in [4, 5, 10, 11] { set(x, 5) } }
+        // 腕（かさの下の角から外へ。作業中は上へ）
+        if p.arms { set(1, 9); set(0, 8); set(14, 9); set(15, 8) } else { set(1, 9); set(0, 10); set(14, 9); set(15, 10) }
+        // 触手 2 本（下の 2 段が揺れる）
+        let sway: [[Int]]
+        switch p.legs {
+        case 1: sway = [[6, 9], [6, 9], [5, 8], [4, 7]]
+        case 2: sway = [[6, 9], [6, 9], [7, 10], [8, 11]]
+        default: sway = [[6, 9], [6, 9], [6, 9], [5, 10]]
+        }
+        for (i, xs) in sway.enumerated() { for x in xs { set(x, 9 + i) } }
+        return g.map { String($0) }
+    }
+
     static func statusFrame(_ p: StatusPose) -> NSImage {
         if let img = frameCache[p] { return img }
-        var rows = [
-            ".#########.",
-            ".#########.",
-            p.blink ? "###########" : "##.#####.##",
-            "###########",
-            ".#########.",
-            ".#########.",
-            ".#.#...#.#.",
-            ".#.#...#.#.",
-        ]
-        if p.arms { rows[3] = ".#########."; rows[1] = "###########" }
-        switch p.legs {
-        case 1: rows[6] = ".#.#...#.#."; rows[7] = ".#.....#..."
-        case 2: rows[6] = ".#.#...#.#."; rows[7] = "...#.....#."
-        default: break
-        }
+        let rows = statusRows(p)
         let dots = p.dots
         let lift = CGFloat(p.lift)
         let img = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { _ in
             NSColor.black.setFill()
-            let c: CGFloat = 1.5
-            let ox = (18 - 11 * c) / 2, oy = (18 - 8 * c) / 2 + 1.5 - lift * c
-            for i in 0..<dots {
-                NSRect(x: ox + CGFloat(3 + i * 2) * c, y: oy - 2 * c, width: c, height: c).fill()
+            let ox: CGFloat = 1, oy: CGFloat = 4 - lift
+            for i in 0..<min(dots, 3) {
+                NSRect(x: ox + CGFloat(3 + i * 4), y: 0, width: 2, height: 2).fill()
             }
             for (y, row) in rows.enumerated() {
                 for (x, ch) in row.enumerated() where ch == "#" {
-                    NSRect(x: ox + CGFloat(x) * c, y: oy + CGFloat(y) * c, width: c, height: c).fill()
+                    NSRect(x: ox + CGFloat(x), y: oy + CGFloat(y), width: 1, height: 1).fill()
                 }
             }
             return true

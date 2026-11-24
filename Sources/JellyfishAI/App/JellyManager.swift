@@ -20,6 +20,12 @@ final class JellyManager {
     private var chats: [UUID: AgentChatController] = [:]
     /// エージェント同士の分業（つながり・依頼・受け渡しの表示）
     private(set) var team: TeamCoordinator?
+    /// チャットの予約（いまの作業が終わったら送る指示。ほかのクラゲへつなげることもできる）
+    private(set) lazy var queues: PromptQueues = {
+        let q = PromptQueues(file: store.dir.appendingPathComponent("queues.json"))
+        q.host = self
+        return q
+    }()
     /// システムの音の聞き取り（同時に 1 つ）。値は AudioTranscriber（macOS 26 以降）
     private var listener: (agent: UUID, object: AnyObject)?
     /// 直近の文字起こしファイル（エージェントごと）
@@ -674,7 +680,8 @@ final class JellyManager {
                     if loadedInSession || fromLoaded { return .init(load: true, servers: servers, note: nil) }
                     return .init(load: false, servers: servers, note: ExternalMCP.notLoadedForRequestNote(servers))
                 }
-                let named = ExternalMCP.mentioned(in: text, servers: servers)
+                // 本人が打った部分だけで決める（予約で渡した前の手順の結果・添付の欄はエージェントやファイルが書いたもの）
+                let named = ExternalMCP.mentioned(in: AgentChatController.typedText(text), servers: servers)
                 if loadedInSession || !named.isEmpty { return .init(load: true, servers: servers, note: nil) }
                 return .init(load: false, servers: servers, note: ExternalMCP.notLoadedNote(servers, canLoad: true))
             }
@@ -683,7 +690,11 @@ final class JellyManager {
             guard let self, let c, let rt else { return nil }
             return self.team?.runConfig(for: c, runtime: rt)
         }
-        rt.onTurnEnded = { [weak self] turn in self?.team?.turnEnded(agent: id, turn: turn) }
+        rt.onTurnEnded = { [weak self] turn in
+            self?.team?.turnEnded(agent: id, turn: turn)
+            // 予約の続き（このクラゲの作業の終わりを待っていた予約があれば、次の行を送る）
+            self?.queues.turnEnded(agent: id, state: turn.state, result: turn.state == .completed ? turn.result : (turn.error ?? turn.result))
+        }
         // 前回の終了時に動いていた場合など、記録と状態がずれていたら記録側に合わせる
         if !rt.isRunning, let last = rt.lastTurn, c.record.state != last.state,
            !(c.record.state == .idle && last.state == .completed) {
@@ -717,8 +728,8 @@ final class JellyManager {
     }
 
     /// デモ録画・自動テスト用：チャットの入力欄に 1 文字ずつ打ち込んで送信する（jellyfish://type）
-    func typePrompt(_ text: String, into c: JellyController, cps: Double, quick: Bool = false) {
-        if chats[c.record.id]?.isVisible != true { openChat(for: c, quickCapture: quick) }
+    func typePrompt(_ text: String, into c: JellyController, cps: Double, quick: Bool = false, activate: Bool = true) {
+        if chats[c.record.id]?.isVisible != true { openChat(for: c, quickCapture: quick, activate: activate) }
         chats[c.record.id]?.typeAndSubmit(text, cps: cps)
     }
 
@@ -933,6 +944,7 @@ final class JellyManager {
     func remove(_ c: JellyController) {
         removeBubbles.removeValue(forKey: c.record.id)?.close()
         team?.removeAgent(c.record.id)
+        queues.agentRemoved(c.record.id)
         if let chat = chats.removeValue(forKey: c.record.id) {
             chat.dismiss()
             chatWindowVisibilityChanged()
@@ -1474,5 +1486,64 @@ final class JellyManager {
         m.autoenablesItems = false
         agentMenuItems(for: c, includeHeader: true).forEach { m.addItem($0) }
         return m
+    }
+}
+
+// MARK: - 予約（PromptQueues）とのやりとり
+
+extension JellyManager: PromptQueueHost {
+    func queueAgentExists(_ id: UUID) -> Bool { runtimes[id] != nil && controllers.contains { $0.record.id == id } }
+    func queueAgentRunning(_ id: UUID) -> Bool { runtimes[id]?.isRunning ?? false }
+    func queueAgentName(_ id: UUID) -> String { controllers.first { $0.record.id == id }?.record.title ?? "?" }
+
+    func queueSubmit(_ prompt: String, to id: UUID) -> QueueSubmitResult {
+        guard let rt = runtimes[id] else { return .refused(L("送り先のクラゲがいません")) }
+        guard !rt.isRunning else { return .refused(L("作業中です")) }
+        return rt.submit(prompt) ? .sent : .refused(rt.lastError)
+    }
+
+    func queueCancel(_ id: UUID) { runtimes[id]?.cancel() }
+
+    func queuesChanged(_ agents: Set<UUID>) {
+        for id in agents { chats[id]?.refresh() }
+        onChange?()
+    }
+
+    /// 予約の送り先に選べるクラゲ（番号順）
+    func queueAgents() -> [PromptQueueView.Agent] {
+        controllers.sorted { $0.record.number < $1.record.number }.map {
+            PromptQueueView.Agent(id: $0.record.id, title: $0.record.title, color: $0.record.color.nsColor)
+        }
+    }
+
+    /// 自動化（jellyfish://queue）とテスト用：チャットの入力欄から送ったのと同じにする（作業中なら予約に足す）
+    func submitFromChat(_ c: JellyController, text: String) {
+        if chats[c.record.id] == nil {
+            guard let rt = runtimes[c.record.id] else { return }
+            let chat = AgentChatController(jelly: c, runtime: rt, size: NSSize(width: settings.chatWidth, height: settings.chatHeight))
+            chat.manager = self
+            chats[c.record.id] = chat
+        }
+        chats[c.record.id]?.submitText(text)
+    }
+
+    /// 自動化用：チャットの窓の中身を画像にする（画面に出さずに描く。会話の欄は WebKit なので写らないことがある）
+    func snapshotChat(_ c: JellyController, to url: URL) -> Bool {
+        guard let chat = chats[c.record.id], let v = chat.window.contentView else { return false }
+        chat.refresh()
+        v.layoutSubtreeIfNeeded()
+        guard let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { return false }
+        v.cacheDisplay(in: v.bounds, to: rep)
+        guard let png = rep.representation(using: .png, properties: [:]) else { return false }
+        return (try? png.write(to: url)) != nil
+    }
+
+    /// jellyfish://debug 用：予約の状態と、チャットに出している予約の文
+    func debugQueueLines() -> [String] {
+        var out = queues.debugLines()
+        for c in controllers {
+            if let t = chats[c.record.id]?.shownQueueTexts, !t.isEmpty { out.append("queue-view \(c.record.number): \(t.joined(separator: " | "))") }
+        }
+        return out
     }
 }

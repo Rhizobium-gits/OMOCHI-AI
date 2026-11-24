@@ -6,7 +6,7 @@ final class PassthroughView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
-/// ドット絵の Claude キャラクター。
+/// ドット絵のクラゲ「もち」（MochiSprite）。
 ///
 /// 負荷を抑える設計：
 /// - ふわふわ浮く・跳ねる・揺れるといった連続的な動きは Core Animation に任せる
@@ -20,14 +20,14 @@ final class PixelAvatar: Avatar {
 
     static func windowSize(scale: Double) -> CGSize {
         let P = CGFloat(cell(scale: scale))
-        return CGSize(width: CGFloat(ClawdSprite.cols) * P,
-                      height: (CGFloat(ClawdSprite.rows) + topMarginCells + bottomMarginCells) * P)
+        return CGSize(width: CGFloat(MochiSprite.cols) * P,
+                      height: (CGFloat(MochiSprite.rows) + topMarginCells + bottomMarginCells) * P)
     }
 
     let view: NSView
     let size: CGSize
     private let P: CGFloat
-    private let colors: ClawdColors
+    private let colors: SpriteColors
     private let glow: CGColor
     private let cacheKey: String
 
@@ -44,8 +44,8 @@ final class PixelAvatar: Avatar {
     private var settled = false
 
     // 表情・手足の状態
-    private var pose = ClawdPose()
-    private var shownPose: ClawdPose?
+    private var pose = JellyPose()
+    private var shownPose: JellyPose?
     private var nextBlink = CACurrentMediaTime() + 2.5
     private var blinkEnd = 0.0
     private var glance: (dx: Int, dy: Int, until: Double)?
@@ -60,7 +60,7 @@ final class PixelAvatar: Avatar {
     init(record: JellyRecord, scale: Double) {
         P = CGFloat(PixelAvatar.cell(scale: scale))
         size = PixelAvatar.windowSize(scale: scale)
-        colors = ClawdColors.from(record.color)
+        colors = SpriteColors.from(record.color)
         let f = record.color.flat
         glow = CGColor(srgbRed: CGFloat(f.x), green: CGFloat(f.y), blue: CGFloat(f.z), alpha: 1)
         cacheKey = record.color.key
@@ -81,7 +81,7 @@ final class PixelAvatar: Avatar {
         hopLayer.position = CGPoint(x: size.width / 2, y: footY)
 
         spriteLayer.frame = CGRect(x: 0, y: PixelAvatar.bottomMarginCells * P,
-                                   width: CGFloat(ClawdSprite.cols) * P, height: CGFloat(ClawdSprite.rows) * P)
+                                   width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
         spriteLayer.magnificationFilter = .nearest
         spriteLayer.minificationFilter = .nearest
         spriteLayer.contentsGravity = .resize
@@ -118,8 +118,8 @@ final class PixelAvatar: Avatar {
         render(force: true)
     }
 
-    private func basePose(for s: AgentState, now: Double) -> ClawdPose {
-        var p = ClawdPose()
+    private func basePose(for s: AgentState, now: Double) -> JellyPose {
+        var p = JellyPose()
         switch s {
         case .idle, .thinking, .working: break
         case .completed: p.eyes = .happy; p.mark = .check
@@ -293,7 +293,7 @@ final class PixelAvatar: Avatar {
         shownPose = pose
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        spriteLayer.contents = ClawdSprite.image(pose, colors: colors, key: cacheKey)
+        spriteLayer.contents = MochiSprite.image(pose, colors: colors, key: cacheKey)
         CATransaction.commit()
     }
 
@@ -307,7 +307,7 @@ final class PixelAvatar: Avatar {
     func hitTest(_ p: CGPoint) -> Bool {
         let dy = currentY(floatLayer) + currentY(hopLayer)
         let base = PixelAvatar.bottomMarginCells * P
-        let rows = CGFloat(ClawdSprite.rows)
+        let rows = CGFloat(MochiSprite.rows)
         // スプライト本体（キャンバスの列 2..12、行 3..10）を少し広めに
         let rect = CGRect(x: 1.5 * P, y: base + (rows - 11) * P - 0.5 * P + dy,
                           width: 12 * P, height: 9 * P)
@@ -321,7 +321,7 @@ final class PixelAvatar: Avatar {
         }
         // 目でカーソルを追う
         let cx = size.width / 2
-        let cy = PixelAvatar.bottomMarginCells * P + (CGFloat(ClawdSprite.rows) - 5) * P
+        let cy = PixelAvatar.bottomMarginCells * P + (CGFloat(MochiSprite.rows) - 5) * P
         let dx = local.x < cx - P * 1.5 ? -1 : (local.x > cx + P * 1.5 ? 1 : 0)
         let dy = local.y > cy + P ? -1 : (local.y < cy - P * 1.5 ? 1 : 0)
         if hoverLook?.dx != dx || hoverLook?.dy != dy {

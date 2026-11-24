@@ -79,12 +79,19 @@ enum ClaudeSessions {
             }
             if title != nil && cwd != nil { break }
         }
-        let name = title ?? firstPrompt.map { String($0.prefix(40)) } ?? L("（無題のセッション）")
+        let name = title ?? firstPrompt.map(ClaudeSessions.promptTitle) ?? L("（無題のセッション）")
         let mod = modified ?? ((try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date())
         // セッション ID は claude の --resume に渡すので、UUID の形のものだけ（「--x.jsonl」のような名前がオプションにならないように）
         let id = file.deletingPathExtension().lastPathComponent
         guard UUID(uuidString: id) != nil else { return nil }
         return ClaudeSessionInfo(id: id, file: file, cwd: cwd, title: name, modified: mod)
+    }
+
+    /// 最初の指示から作るタイトル：本人が打った部分だけ（添付・画面・予約で渡した前の結果の欄は除く）を 1 行にして 40 文字まで
+    static func promptTitle(_ prompt: String) -> String {
+        let typed = AgentChatController.typedText(prompt)
+        let line = (typed.isEmpty ? prompt : typed).split(whereSeparator: \.isNewline).joined(separator: " ")
+        return String(line.prefix(40))
     }
 
     /// 読んだところまでの位置と結果（セッションのファイルは追記だけなので、次回は増えた分だけ読む）

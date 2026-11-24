@@ -2,7 +2,7 @@ import Foundation
 import simd
 
 /// クラゲ1体の固有色。
-///   flat = ドット絵キャラクターの体色（1体目は Claude のオレンジ #D97757）
+///   flat = ドット絵のクラゲの体色
 ///   base / deep = リアルなクラゲの発光色と縁の濃い色
 struct JellyColor {
     let key: String

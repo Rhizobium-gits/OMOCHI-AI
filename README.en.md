@@ -30,6 +30,7 @@
 <p align="center">
   <a href="#key-features">Key features</a>
   &nbsp;·&nbsp; <a href="#teams-across-ais">Teams across AIs</a>
+  &nbsp;·&nbsp; <a href="#queue-line-up-the-next-prompts-while-it-works">⏭ Queue</a>
   &nbsp;·&nbsp; <a href="#download-and-install">Install</a>
   &nbsp;·&nbsp; <a href="#getting-started">Getting started</a>
   &nbsp;·&nbsp; <a href="#ai-engines-and-accounts">AI engines</a>
@@ -55,6 +56,7 @@
 | **Divide work as a team** | Bring jellyfish close to each other to link them, and they split the work by asking teammates or bringing out new ones. **Across AIs**, a Claude jellyfish can bring out ChatGPT teammates and a ChatGPT jellyfish can bring out Claude teammates. Requests and results travel back and forth along the lines as light |
 | **Autonomous organization mode** | For each request, the agent decides on the team's shape and assembles it on its own, then learns from the results and 👍👎 to evolve how it chooses an organization |
 | **Chat** | Like the ChatGPT, Claude and Gemini apps, **tables, math, diagrams and charts, and highlighted code** are shown as they are. Images and PDFs appear as thumbnails, web pages with their cover and title. 🎙 Mac Dictation, 🎧 system audio transcription, screen and file attachments, ↑↓ for previous instructions |
+| **⏭ Queue & chain** | Type your next prompt while a jellyfish is working and press Enter to queue it. Edit or reorder it until it's sent; it goes out as soon as the task finishes. Send a step to another jellyfish to pass along the previous result — research → summarize → review. **■ Stop (⌘.)** interrupts |
 | **PC control** | Only jellyfish you allow can look at the screen, click and type (Claude). The edges of the screen glow while it's in control, and Esc stops it |
 | **👀 Watching** | A jellyfish reads the front window **on this Mac only** (0 tokens, nothing sent) and asks “take a look?” when something looks like an error. Only that one image is sent, and only if you press it (per jellyfish, off by default) |
 | **🔌 Connectors** | Give jellyfish this Mac's **Calendar, Reminders and Mail** (Google, iCloud and others through the Mac apps), choosing which AI and which model may use each, and how much. One-touch presets, every write asks you first, and mail is never sent |
@@ -174,7 +176,7 @@ The chat window that opens when you tap a jellyfish is a normal Mac window (mini
 | Action | What it does |
 |---|---|
 | **⌘L** (from any app) | Bring out a new jellyfish and open the input field right away |
-| **Tap** | Open the chat window (Enter to send / ⇧Enter for a new line / Esc to close) |
+| **Tap** | Open the chat window (Enter to send — queues while working / ⇧Enter for a new line / ⌘. to stop the task / Esc to close) |
 | **↑ / ↓** (input field) | Recall instructions sent earlier in that session (↑ on the first line, ↓ on the last line; includes instructions typed in VS Code or Terminal) |
 | **Long-press** | Remove that jellyfish (if it's working, asks you to choose “Keep Working, Remove Only the Jellyfish” or “Cancel Work and Remove”) |
 | **Drag** | Move it anywhere (the position is saved). Drop it near another jellyfish to link them |
@@ -194,6 +196,21 @@ The chat window that opens when you tap a jellyfish is a normal Mac window (mini
 - **Open files and pages**: ask “open the X document on my Desktop”, and it finds it and opens it in the Mac's default app (Preview, Finder, a browser, etc.). Ask “what does it say?” and it answers in the chat
 - **Give them names**: right-click “Rename…” or use “Name” in the chat. Agents call each other by these names. A jellyfish without a name is “Agent N” (a number), and the smallest free number is reused
 - **Kept on record**: Claude conversations are saved as Claude Code's own sessions (`~/.claude/projects`), so you can continue them from VS Code or Terminal (“Open in Claude Code” opens them in Terminal with `claude --resume`). With “Open past session” in the menu bar, you can also bring up sessions created in VS Code or Terminal as jellyfish (hold ⌥ while choosing one to archive it). ChatGPT and Gemini conversations are kept in each CLI's own records
+
+## Queue (line up the next prompts while it works)
+
+<p align="center">
+  <img src="docs/media/demo-queue.gif" width="820" alt="Queuing two prompts for a working jellyfish, sending the second one to another jellyfish, which continues with the previous result">
+</p>
+
+You can type in the chat while a jellyfish is working. **Enter** puts the text in the **queue** — prompts to send when the current task finishes — shown above the input box. When the task completes, the queue is sent from the top right away.
+
+- **Editable until sent**: fix a queued prompt in place (if the previous task finishes while you're typing, it waits until you're done). ↑↓ to reorder, ✕ to remove, "Clear all"
+- **Chain to other jellyfish**: each step can go to a different jellyfish. Pick another one and "Pass previous result" is turned on: the previous step's result (its last reply) is attached, and that jellyfish carries on in its own conversation. Chain as many as you like — "Aki researches → Mio makes a table → Kai reviews it" (no links or team needed)
+- **Waits if the target is busy**: it's sent as soon as that jellyfish is free. The target's chat shows "🔗 A step from X's queue is waiting for this task"
+- **Stop**: **■ Stop** next to the input box (**⌘.**) interrupts the current task. If you stop it or it ends with an error, the rest of the queue is paused instead of sent (**▶ Resume** sends it). **⏭ Stop & next** stops the current task and moves on to the next queued prompt without pausing
+- The queue survives quitting the app (it comes back paused; ▶ sends the rest)
+- If a queued prompt mentions "this screen" and the like, the screen is captured when you queue it and sent along. Attached files go along too
 
 ## AI engines and accounts
 
