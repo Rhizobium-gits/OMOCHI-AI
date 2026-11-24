@@ -1,0 +1,211 @@
+import AppKit
+
+/// バージョン・リンク・「OMOCHI AI について」・アップデートの確認・初回の案内
+enum AppInfo {
+    static let repo = "Rhizobium-gits/jellyfish-ai"
+    static let repoURL = URL(string: "https://github.com/\(repo)")!
+    static let releasesURL = URL(string: "https://github.com/\(repo)/releases")!
+    static let issuesURL = URL(string: "https://github.com/\(repo)/issues")!
+    static let claudeSetupURL = URL(string: "https://code.claude.com/docs/en/setup")!
+
+    /// Info.plist の CFBundleShortVersionString（scripts/build.sh が VERSION から入れる）。.app の外で動かすと "dev"
+    static var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev" }
+    static var build: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "" }
+
+    static func showAbout() {
+        let p = NSMutableParagraphStyle()
+        p.alignment = .center
+        let body: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 11), .paragraphStyle: p,
+                                                   .foregroundColor: NSColor.labelColor]
+        let small: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 10), .paragraphStyle: p,
+                                                    .foregroundColor: NSColor.secondaryLabelColor]
+        let credits = NSMutableAttributedString(string: L("デスクトップに住む Claude Code のエージェント") + "\n\n", attributes: body)
+        var link = body
+        link[.link] = repoURL
+        credits.append(NSAttributedString(string: "github.com/\(repo)", attributes: link))
+        credits.append(NSAttributedString(string: "\n\nMIT License\n" + L("非公式のアプリで、Anthropic とは関係ありません。\nClaude・Claude Code は Anthropic の商標です。"), attributes: small))
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(options: [
+            .applicationName: "OMOCHI AI",
+            .applicationVersion: version,
+            .version: build,
+            .credits: credits,
+        ])
+    }
+
+    /// 初回起動の案内（おもちの使い方・エージェントに与える権限・Claude Code の有無）。
+    /// 起動した直後（ユーザーがアプリを開いた直後）にだけ出す
+    static func showWelcome(manager: JellyManager, newJellyKey: String) {
+        let a = NSAlert()
+        a.messageText = L("OMOCHI AI へようこそ")
+        a.icon = NSApp.applicationIconImage
+        a.informativeText = L("""
+        デスクトップのおもち 1 体が、AI のエージェント 1 体です。動かす AI は Claude（Claude Code）・ChatGPT（Codex）・Gemini から選べます。
+
+        ・おもちをクリック：話しかける
+        ・%@：新しいおもち
+        ・ドラッグ：移動 ／ 長押し：消す
+        ・別のおもちの近くで離す：つながってチームで分業
+
+        エージェントは確認なしでファイルの作成・編集やコマンドの実行を行います（作業フォルダは既定でホーム。危ない操作は各 AI の安全の仕組みが止めます）。PC 操作は既定でオフです。いま与えている権限は、メニューバーのおもちの「実行ポリシー」「PC 操作」で確認できます。
+
+        次の画面で、使う AI にログインしてください。ログインはそれぞれの公式の画面で行い、OMOCHI AI は API キーを扱わず、勝手に課金しません。
+        """, newJellyKey)
+        a.addButton(withTitle: L("AI にログインする"))
+        a.addButton(withTitle: L("使い方（README）"))
+        let r = ActiveSpace.runModal(a)
+        if r == .alertSecondButtonReturn { NSWorkspace.shared.open(repoURL) }
+        // 初めての起動：Claude・ChatGPT・Gemini のログインの画面を出す
+        manager.showAccounts()
+        // 案内のあとにおもちが分かるよう軽くつつく
+        manager.controllers.first?.avatar.poke()
+    }
+}
+
+/// "v1.2.0" と "1.10" のようなバージョン文字列の比較
+enum AppVersion {
+    static func parts(_ s: String) -> [Int] {
+        let t = s.trimmingCharacters(in: .whitespaces)
+        let core = t.hasPrefix("v") || t.hasPrefix("V") ? String(t.dropFirst()) : t
+        // 1.2.0-beta.1 のような後ろの部分は無視する
+        let main = core.split(separator: "-").first.map(String.init) ?? core
+        return main.split(separator: ".").map { Int($0) ?? 0 }
+    }
+
+    static func isNewer(_ a: String, than b: String) -> Bool {
+        var x = parts(a), y = parts(b)
+        let n = max(x.count, y.count)
+        x += Array(repeating: 0, count: n - x.count)
+        y += Array(repeating: 0, count: n - y.count)
+        return y.lexicographicallyPrecedes(x)
+    }
+}
+
+/// アップデートの確認。GitHub の公開情報（最新リリース）を 1 回読む。
+/// 読むのは、メニューから選んだときと、メニューの「アップデートの自動確認」で間隔を選んだ人のその間隔ごと（UpdateSchedule。既定は確認しない）だけ。
+/// 新しい版があれば、許可を求めてから入れ替える（AppUpdater）
+enum UpdateChecker {
+    struct Latest {
+        var tag: String?
+        var json: [String: Any]?
+        var status: Int
+        var error: Error?
+    }
+
+    /// 最新リリースを読む（読み終わりは URLSession のスレッドで呼ぶ）
+    static func fetchLatest(_ done: @escaping (Latest) -> Void) {
+        var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(AppInfo.repo)/releases/latest")!)
+        req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        req.timeoutInterval = 15
+        URLSession.shared.dataTask(with: req) { data, resp, err in
+            let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            done(Latest(tag: json?["tag_name"] as? String, json: json, status: (resp as? HTTPURLResponse)?.statusCode ?? 0, error: err))
+        }.resume()
+    }
+
+    static func check(manager: JellyManager? = nil) {
+        fetchLatest { latest in
+            let (tag, json, status, err) = (latest.tag, latest.json, latest.status, latest.error)
+            // いまの版の署名（固定の署名なら鍵があるかを security で調べるので、画面のスレッドの外で）
+            let signing = AppUpdater.currentSigning()
+            DispatchQueue.main.async {
+                if let tag, status == 200 {
+                    UpdateSchedule.shared.note(latest: tag)
+                    manager?.updateSettings { $0.lastUpdateCheck = Date().timeIntervalSince1970 }
+                }
+                let a = NSAlert()
+                a.icon = NSApp.applicationIconImage
+                let current = AppInfo.version
+                guard let tag, status == 200 else {
+                    a.messageText = L("アップデートを確認できませんでした")
+                    a.informativeText = err?.localizedDescription ?? (status == 404 ? L("まだリリースがありません。") : L("GitHub から応答がありません（%ld）。", status))
+                    a.addButton(withTitle: L("リリースのページを開く"))
+                    a.addButton(withTitle: L("閉じる"))
+                    if ActiveSpace.runModal(a) == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
+                    return
+                }
+                guard AppVersion.isNewer(tag, than: current) else {
+                    a.messageText = L("最新のバージョンです")
+                    a.informativeText = "OMOCHI AI \(current)"
+                    a.addButton(withTitle: "OK")
+                    ActiveSpace.runModal(a)
+                    return
+                }
+                a.messageText = L("新しいバージョン %@ があります", tag)
+                let release = json.flatMap(AppUpdater.release(from:))
+                if let release {
+                    var text = L("いまのバージョンは %@ です。「アップデートする」を押すと、GitHub のリリースから新しい版をダウンロードし、チェックサムと署名を確かめてから入れ替えて、開き直します（設定・おもち・会話はそのまま残ります）。", current)
+                    switch signing {
+                    case .adhoc:
+                        text += "\n\n" + L("いまの版は仮の署名（ad-hoc）なので、入れ替えたあと macOS に画面収録・アクセシビリティ・フォルダの許可をもう一度求められることがあります（メニューバーのおもち › 🔐 権限 の「まとめて許可する」で許可し直せます）。")
+                    case .local(let name, true):
+                        text += "\n\n" + L("いまの版はこの Mac の固定の署名（%@）なので、新しい版をこの署名で署名し直してから入れ替えます（macOS の許可はそのまま続きます）。途中で macOS が「codesign がキーを使おうとしています」と確かめるので「許可」を押してください（「常に許可」にすると、ほかのプログラムも確認なしでこの鍵を使えるようになります）。", name)
+                    case .local(let name, false):
+                        text += "\n\n" + L("いまの版は固定の署名（%@）ですが、その鍵がこの Mac のキーチェーンに見つからないので、配布版の仮の署名（ad-hoc）のまま入れ替えます。macOS に画面収録・アクセシビリティ・フォルダの許可をもう一度求められることがあります（メニューバーのおもち › 🔐 権限 の「まとめて許可する」で許可し直せます）。", name)
+                    case .issued:
+                        break
+                    }
+                    if signing != .issued {
+                        text += "\n" + L("また、確かめられるのは「壊れていない・このリポジトリの GitHub のリリースのとおり・中身が OMOCHI AI のその版」までで、作った人までは確かめられません（GitHub を信じることになります）。")
+                    }
+                    // ターミナルで上げるコマンド（ソースから入れていれば git pull → install.sh）
+                    let command = AppUpdater.terminalCommand()
+                    if let command {
+                        text += "\n\n" + (command.contains("--source")
+                            ? L("ソースから入れているので、ターミナルで上げると、取り込んでビルドし直します（自分の署名のまま）:")
+                            : L("ターミナルで上げることもできます:")) + "\n" + command
+                    }
+                    a.informativeText = text
+                    a.accessoryView = notesView(release.notes)
+                    a.addButton(withTitle: L("アップデートする"))
+                    if command != nil { a.addButton(withTitle: L("ターミナルでアップデート")) }
+                    a.addButton(withTitle: L("ダウンロードページを開く"))
+                    a.addButton(withTitle: L("あとで"))
+                    let r = ActiveSpace.runModal(a).rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+                    switch (r, command) {
+                    case (0, _): UpdateSession.start(release, manager: manager)
+                    case (1, let c?):
+                        if manager?.anyAgentBusy == true {
+                            fallback(L("作業中のおもちがいます。終わってからもう一度アップデートしてください。"), offerPage: false)
+                        } else if !AppUpdater.runInTerminal(c) { NSSound.beep() }
+                        else { AppLog.write("update in terminal: \(c.contains("--source") ? "source" : "release")") }
+                    case (1, nil), (2, _?): NSWorkspace.shared.open(AppInfo.releasesURL)
+                    default: break
+                    }
+                } else {
+                    a.informativeText = L("いまのバージョンは %@ です。ダウンロードページから .dmg を入れ直してください（設定・おもち・会話はそのまま残ります）。", current)
+                    a.addButton(withTitle: L("ダウンロードページを開く"))
+                    a.addButton(withTitle: L("あとで"))
+                    if ActiveSpace.runModal(a) == .alertFirstButtonReturn { NSWorkspace.shared.open(AppInfo.releasesURL) }
+                }
+            }
+        }
+    }
+
+    /// リリースノート（スクロールできる小さな欄）
+    private static func notesView(_ notes: String) -> NSView? {
+        let text = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 380, height: 160))
+        scroll.hasVerticalScroller = true
+        scroll.borderType = .bezelBorder
+        let tv = NSTextView(frame: scroll.bounds)
+        tv.isEditable = false
+        tv.textContainerInset = NSSize(width: 6, height: 6)
+        tv.textStorage?.setAttributedString(Markdown.render(text, size: 11.5))
+        tv.autoresizingMask = [.width]
+        scroll.documentView = tv
+        return scroll
+    }
+
+    /// 入れ替えられなかったとき（理由と、ダウンロードページ）
+    static func fallback(_ message: String, offerPage: Bool) {
+        let a = NSAlert()
+        a.icon = NSApp.applicationIconImage
+        a.messageText = L("アップデートできませんでした")
+        a.informativeText = message
+        if offerPage { a.addButton(withTitle: L("ダウンロードページを開く")) }
+        a.addButton(withTitle: L("閉じる"))
+        if ActiveSpace.runModal(a) == .alertFirstButtonReturn, offerPage { NSWorkspace.shared.open(AppInfo.releasesURL) }
+    }
+}

@@ -1,25 +1,25 @@
 #!/bin/bash
-# Jellyfish AI を新しい版に上げる（コマンド 1 つで）。
+# OMOCHI AI を新しい版に上げる（コマンド 1 つで）。
 #   scripts/update.sh             GitHub の最新リリースが新しければ、確かめてから入れ替えて開き直す
 #   scripts/update.sh --check     新しい版があるかだけ見る（終了コード 0 = 最新、10 = 新しい版がある）
 #   scripts/update.sh --source    ソースから上げる（git pull --ff-only → scripts/install.sh。署名用の証明書があればそれで署名）
 #   scripts/update.sh --yes       「入れ替えますか？」を聞かない
-#   scripts/update.sh --app PATH  入れ替える .app（既定は /Applications/JellyfishAI.app、無ければ ~/Applications/JellyfishAI.app）
+#   scripts/update.sh --app PATH  入れ替える .app（既定は /Applications/OMOCHI AI.app、無ければ ~/Applications/OMOCHI AI.app）
 #   scripts/update.sh --no-open   入れ替えたあと開かない
 # アプリの中にも同じものが入っている（ソースが無くても使える）：
-#   /Applications/JellyfishAI.app/Contents/Resources/update.sh
+#   "/Applications/OMOCHI AI.app/Contents/Resources/update.sh"
 # リリース版に入れ替える前に確かめること（アプリの「アップデートする」と同じ）：
-#   ・取ってくるのは https://github.com/<repo>/releases/download/<tag>/ の JellyfishAI-<版>.zip と SHA256SUMS.txt だけ
+#   ・取ってくるのは https://github.com/<repo>/releases/download/<tag>/ の OmochiAI-<版>.zip と SHA256SUMS.txt だけ
 #   ・SHA-256 が合うか、中身のバンドル ID と版、codesign --verify --strict、
 #     いまの版が証明書で署名されていれば、新しい版も同じ証明書の署名か。いまの版がこの Mac の固定の署名
 #     （scripts/signing.sh）なら、鍵があればそれで署名し直してから入れ替える（無ければ配布版の署名のまま）
-#   ・作業中のクラゲ（アプリの子プロセス）がいるときは入れ替えない。sudo は使わない
+#   ・作業中のおもち（アプリの子プロセス）がいるときは入れ替えない。sudo は使わない
 set -euo pipefail
 
 REPO=Rhizobium-gits/jellyfish-ai
-# テストのときだけ（JELLYFISH_UPDATE_TEST=1）、取り込み元とリリースの情報を差し替えられる。ふだんは使わない
-if [[ "${JELLYFISH_UPDATE_TEST:-}" == 1 ]]; then REPO="${JELLYFISH_REPO:-$REPO}"; else unset JELLYFISH_RELEASE_JSON; fi
-BUNDLE_ID=ai.jellyfish.desktop
+# テストのときだけ（OMOCHI_UPDATE_TEST=1）、取り込み元とリリースの情報を差し替えられる。ふだんは使わない
+if [[ "${OMOCHI_UPDATE_TEST:-}" == 1 ]]; then REPO="${OMOCHI_REPO:-$REPO}"; else unset OMOCHI_RELEASE_JSON; fi
+BUNDLE_ID=ai.omochi.desktop
 CHECK=0 SOURCE=0 YES=0 OPEN=1 APP=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -35,8 +35,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # アプリの中から動かしたときは、入れ替えで自分が消えないよう、写しから動かし直す
-if [[ "$0" == *.app/Contents/* && -z "${JELLYFISH_UPDATE_COPY:-}" ]]; then
-  COPY="$(mktemp -t jellyfish-update)"
+if [[ "$0" == *.app/Contents/* && -z "${OMOCHI_UPDATE_COPY:-}" ]]; then
+  COPY="$(mktemp -t omochi-update)"
   cp "$0" "$COPY"
   chmod 700 "$COPY"
   ARGS=()
@@ -45,7 +45,7 @@ if [[ "$0" == *.app/Contents/* && -z "${JELLYFISH_UPDATE_COPY:-}" ]]; then
   [[ $YES == 1 ]] && ARGS+=(--yes)
   [[ $OPEN == 0 ]] && ARGS+=(--no-open)
   [[ -n "$APP" ]] && ARGS+=(--app "$APP")
-  JELLYFISH_UPDATE_COPY="$COPY" exec /bin/bash "$COPY" ${ARGS[@]+"${ARGS[@]}"}
+  OMOCHI_UPDATE_COPY="$COPY" exec /bin/bash "$COPY" ${ARGS[@]+"${ARGS[@]}"}
 fi
 
 say() { printf '%s\n' "$*"; }
@@ -80,16 +80,16 @@ confirm() {
 
 # 入れ替える .app
 if [[ -z "$APP" ]]; then
-  APP=/Applications/JellyfishAI.app
-  [[ -d "$APP" || ! -d "$HOME/Applications/JellyfishAI.app" ]] || APP="$HOME/Applications/JellyfishAI.app"
+  APP="/Applications/OMOCHI AI.app"
+  [[ -d "$APP" || ! -d "$HOME/Applications/OMOCHI AI.app" ]] || APP="$HOME/Applications/OMOCHI AI.app"
 fi
 APP="${APP%/}"
 
-# APP で動いている Jellyfish AI のプロセス（同じ名前のほかのコピーは数えない）
+# APP で動いている OMOCHI AI のプロセス（同じ名前のほかのコピーは数えない）
 app_pids() {
   local p
-  for p in $(pgrep -x JellyfishAI || true); do
-    [[ "$(ps -o comm= -p "$p" 2>/dev/null || true)" == "$APP/Contents/MacOS/JellyfishAI" ]] && echo "$p"
+  for p in $(pgrep -x OmochiAI || true); do
+    [[ "$(ps -o comm= -p "$p" 2>/dev/null || true)" == "$APP/Contents/MacOS/OmochiAI" ]] && echo "$p"
   done
   return 0
 }
@@ -127,16 +127,16 @@ fi
 # ---------- リリース版 ----------
 INSTALLED="$(plist_value "$APP/Contents/Info.plist" CFBundleShortVersionString)"
 if [[ -d "$APP" && "$(plist_value "$APP/Contents/Info.plist" CFBundleIdentifier)" != "$BUNDLE_ID" ]]; then
-  fail "$APP は Jellyfish AI ではありません"
+  fail "$APP は OMOCHI AI ではありません"
 fi
 
-WORK="$(mktemp -d -t jellyfish-update)"
+WORK="$(mktemp -d -t omochi-update)"
 # 終わったら作業の場所と、アプリの中から動かしたときの写しを消す
-cleanup() { rm -rf "$WORK"; [[ -n "${JELLYFISH_UPDATE_COPY:-}" && -f "$JELLYFISH_UPDATE_COPY" ]] && rm -f "$JELLYFISH_UPDATE_COPY"; return 0; }
+cleanup() { rm -rf "$WORK"; [[ -n "${OMOCHI_UPDATE_COPY:-}" && -f "$OMOCHI_UPDATE_COPY" ]] && rm -f "$OMOCHI_UPDATE_COPY"; return 0; }
 trap cleanup EXIT
 J="$WORK/latest.json"
-if [[ -n "${JELLYFISH_RELEASE_JSON:-}" ]]; then
-  cp "$JELLYFISH_RELEASE_JSON" "$J"   # テスト用
+if [[ -n "${OMOCHI_RELEASE_JSON:-}" ]]; then
+  cp "$OMOCHI_RELEASE_JSON" "$J"   # テスト用
 else
   curl -fsSL --proto '=https' --tlsv1.2 -H "Accept: application/vnd.github+json" \
     "https://api.github.com/repos/$REPO/releases/latest" -o "$J" || fail "GitHub から最新のリリースを読めませんでした"
@@ -151,7 +151,7 @@ if [[ -n "$INSTALLED" ]] && ! newer "$VERSION" "$INSTALLED"; then
 fi
 
 # このリポジトリのこのリリースのファイルだけを使う
-ZIP_NAME="JellyfishAI-$VERSION.zip"
+ZIP_NAME="OmochiAI-$VERSION.zip"
 PREFIX="https://github.com/$REPO/releases/download/$TAG/"
 ZIP_URL="" SUMS_URL=""
 N="$(plist_value "$J" assets)"
@@ -181,9 +181,9 @@ EXPECTED="$(awk -v f="$ZIP_NAME" '$2 == f || $2 == "*" f { print tolower($1) }' 
 ACTUAL="$(shasum -a 256 "$WORK/$ZIP_NAME" | awk '{ print $1 }')"
 [[ "$ACTUAL" == "$EXPECTED" ]] || fail "チェックサムが合いません（ダウンロードが壊れているか、書き換えられています）"
 /usr/bin/ditto -x -k "$WORK/$ZIP_NAME" "$WORK/new" || fail "ダウンロードしたファイルを開けません"
-NEW="$WORK/new/JellyfishAI.app"
-[[ -d "$NEW" && ! -L "$NEW" ]] || fail "中身が Jellyfish AI ではありません"
-[[ "$(plist_value "$NEW/Contents/Info.plist" CFBundleIdentifier)" == "$BUNDLE_ID" ]] || fail "中身が Jellyfish AI ではありません"
+NEW="$WORK/new/OMOCHI AI.app"
+[[ -d "$NEW" && ! -L "$NEW" ]] || fail "中身が OMOCHI AI ではありません"
+[[ "$(plist_value "$NEW/Contents/Info.plist" CFBundleIdentifier)" == "$BUNDLE_ID" ]] || fail "中身が OMOCHI AI ではありません"
 [[ "$(plist_value "$NEW/Contents/Info.plist" CFBundleShortVersionString)" == "$VERSION" ]] || fail "中身の版がリリースと合いません"
 codesign --verify --strict "$NEW" 2>/dev/null || fail "署名が正しくありません"
 if [[ -d "$APP" ]]; then
@@ -219,7 +219,7 @@ if [[ -n "$(app_pids)" ]]; then
   app_busy && fail "作業中のおもちがいるので、入れ替えをやめました。終わってからもう一度実行してください"
   for p in $(app_pids); do kill -TERM "$p" 2>/dev/null || true; done
   for _ in $(seq 100); do [[ -z "$(app_pids)" ]] && break; /bin/sleep 0.1; done
-  [[ -z "$(app_pids)" ]] || fail "Jellyfish AI が終わらないので、入れ替えをやめました。メニューバーのおもちから終了してから、もう一度実行してください"
+  [[ -z "$(app_pids)" ]] || fail "OMOCHI AI が終わらないので、入れ替えをやめました。メニューバーのおもちから終了してから、もう一度実行してください"
 fi
 
 say "入れ替えています…"
@@ -235,7 +235,7 @@ if [[ -d "$APP" ]]; then
 else
   mv "$NEW" "$APP" || fail "新しい版を置けませんでした"
 fi
-say "✅ Jellyfish AI $VERSION にしました（${APP}）"
+say "✅ OMOCHI AI $VERSION にしました（${APP}）"
 [[ "$(codesign -d --verbose=2 "$APP" 2>&1 || true)" == *$'\nAuthority='* ]] || \
   say "  ・仮の署名（ad-hoc）の版なので、PC 操作・画面の添付を使うなら、システム設定 › プライバシーとセキュリティ で許可し直すことがあります"
 if [[ $OPEN == 1 ]]; then open -g "$APP"; fi

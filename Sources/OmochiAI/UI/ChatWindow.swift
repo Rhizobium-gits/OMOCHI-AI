@@ -1,0 +1,1357 @@
+import AppKit
+
+/// Enter で送信、Shift(またはOption)+Enter で改行、Esc で閉じる。
+/// 日本語入力の変換中（marked text がある間）の Enter / Esc は IME に渡す。
+/// チャットウィンドウの背景。どこにファイルを落としても添付になる
+final class DropEffectView: NSVisualEffectView {
+    var onFiles: (([URL]) -> Void)?
+    static func urls(_ s: NSDraggingInfo) -> [URL] {
+        (s.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
+    }
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { DropEffectView.urls(sender).isEmpty ? [] : .copy }
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let u = DropEffectView.urls(sender)
+        guard !u.isEmpty else { return false }
+        onFiles?(u)
+        return true
+    }
+}
+
+final class PromptTextView: NSTextView {
+    var onSubmit: (() -> Void)?
+    /// 入力欄にファイルを落としたときはパスを文字で入れず、添付にする
+    var onDropFiles: (([URL]) -> Void)?
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let u = DropEffectView.urls(sender)
+        if !u.isEmpty, let cb = onDropFiles { cb(u); return true }
+        return super.performDragOperation(sender)
+    }
+    var onEscape: (() -> Void)?
+    /// ⌘.（いまの作業を止める）
+    var onStop: (() -> Void)?
+    /// ↑（older = true）/ ↓ で前に送った指示を呼び出す。入れ替えたら true
+    var onHistory: ((_ older: Bool) -> Bool)?
+    var placeholder: String = "" { didSet { needsDisplay = true } }
+
+    override func keyDown(with e: NSEvent) {
+        // 変換中（日本語入力の候補選び）は ↑↓ も Enter も入力メソッドに渡す
+        if hasMarkedText() { super.keyDown(with: e); return }
+        let mods = e.modifierFlags.intersection([.shift, .option, .command, .control])
+        switch e.keyCode {
+        // Claude Code のターミナルと同じく、1 行目で ↑ なら前の指示、最後の行で ↓ なら次の指示
+        case 126 where mods.isEmpty && isEditable && caretOnFirstLine:
+            if onHistory?(true) == true { return }
+        case 125 where mods.isEmpty && isEditable && caretOnLastLine:
+            if onHistory?(false) == true { return }
+        case 53: onEscape?(); return
+        case 47 where mods == [.command]: onStop?(); return
+        case 36, 76:
+            if e.modifierFlags.contains(.shift) || e.modifierFlags.contains(.option) {
+                insertNewlineIgnoringFieldEditor(nil)
+            } else {
+                onSubmit?()
+            }
+            return
+        default: break
+        }
+        super.keyDown(with: e)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard string.isEmpty, !placeholder.isEmpty else { return }
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font ?? NSFont.systemFont(ofSize: 14),
+            .foregroundColor: NSColor.placeholderTextColor,
+        ]
+        let pad = textContainer?.lineFragmentPadding ?? 0
+        (placeholder as NSString).draw(at: NSPoint(x: textContainerInset.width + pad, y: textContainerInset.height),
+                                       withAttributes: attrs)
+    }
+
+    override func didChangeText() {
+        super.didChangeText()
+        needsDisplay = true
+    }
+
+    /// 文字位置 loc を含む行（折り返しも 1 行と数える）の枠
+    private func lineFragment(at loc: Int) -> NSRect? {
+        guard let lm = layoutManager, let tc = textContainer else { return nil }
+        let len = (string as NSString).length
+        if len == 0 { return nil }
+        lm.ensureLayout(for: tc)
+        if loc >= len {
+            if !lm.extraLineFragmentRect.isEmpty { return lm.extraLineFragmentRect }   // 最後が改行
+            return lm.lineFragmentRect(forGlyphAt: lm.glyphIndexForCharacter(at: len - 1), effectiveRange: nil)
+        }
+        return lm.lineFragmentRect(forGlyphAt: lm.glyphIndexForCharacter(at: loc), effectiveRange: nil)
+    }
+
+    var caretOnFirstLine: Bool {
+        let r = selectedRange()
+        guard r.length == 0 else { return false }
+        guard let caret = lineFragment(at: r.location), let first = lineFragment(at: 0) else { return true }
+        return caret.minY <= first.minY + 0.5
+    }
+
+    var caretOnLastLine: Bool {
+        let r = selectedRange()
+        guard r.length == 0 else { return false }
+        guard let caret = lineFragment(at: r.location), let last = lineFragment(at: (string as NSString).length) else { return true }
+        return caret.minY >= last.minY - 0.5
+    }
+}
+
+/// 入力欄の ↑↓ で、そのセッションで送った指示をさかのぼる（Claude Code のターミナルと同じ動き）
+struct PromptHistory {
+    /// 古い → 新しい
+    private(set) var entries: [String] = []
+    /// いま表示している位置。nil なら呼び出す前の入力（下書き）
+    private(set) var index: Int?
+    private var draft = ""
+
+    var isBrowsing: Bool { index != nil }
+
+    mutating func reset() { entries = []; index = nil; draft = "" }
+
+    /// ↑：一つ古いもの。呼び出し始めなら entries を受け取り、今の入力を下書きとして取っておく
+    mutating func older(current: String, load: () -> [String]) -> String? {
+        if index == nil {
+            entries = load()
+            guard !entries.isEmpty else { return nil }
+            draft = current
+            index = entries.count - 1
+            return entries[entries.count - 1]
+        }
+        guard let i = index, i > 0 else { return nil }
+        index = i - 1
+        return entries[i - 1]
+    }
+
+    /// ↓：一つ新しいもの。いちばん新しいものの次は下書きに戻る
+    mutating func newer() -> String? {
+        guard let i = index else { return nil }
+        if i < entries.count - 1 { index = i + 1; return entries[i + 1] }
+        index = nil
+        return draft
+    }
+}
+
+/// エージェント1体ぶんのチャットウィンドウ。
+/// 普通のウィンドウとして 閉じる / しまう（Dock） / 拡大・フルスクリーン / 端をドラッグして自由にリサイズ ができる。
+/// 会話は Claude Code 自身のセッション記録から表示するので、VS Code やターミナルで開いたときと同じ内容になる。
+final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate {
+    let window: NSWindow
+    let runtime: AgentRuntime
+    private(set) weak var jelly: JellyController?
+    weak var manager: JellyManager?
+
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let stateLabel = NSTextField(labelWithString: "")
+    private let dot = NSImageView()
+    /// いまの作業を止める（入力欄の横。⌘. でも）
+    private let cancelButton = NSButton(title: L("■ 止める"), target: nil, action: nil)
+    /// 送信（作業中は「予約」）
+    private let sendButton = NSButton(title: L("送信"), target: nil, action: nil)
+    /// 予約：いまの作業が終わったら送る指示の一覧（送るまで書き換えられる）
+    private let queueView = PromptQueueView(frame: NSRect(x: 0, y: 0, width: 500, height: 40))
+    private let retryButton = NSButton(title: L("再実行"), target: nil, action: nil)
+    private let folderButton = NSButton(title: "", target: nil, action: nil)
+    private let terminalButton = NSButton(title: L("Claude Code で開く"), target: nil, action: nil)
+    private let renameButton = NSButton(title: L("名前"), target: nil, action: nil)
+    private let pcButton = NSButton(title: L("🖱 PC 操作"), target: nil, action: nil)
+    private let listenButton = NSButton(title: "🎧", target: nil, action: nil)
+    /// Mac の音声入力（システム設定 › キーボード › 音声入力）で入力欄に話して入れる
+    private let dictationButton = NSButton(title: "🎙", target: nil, action: nil)
+    /// 見守り（画面のエラーっぽい表示に気づいたら聞く。Mac の中だけで読む）
+    private let watchButton = NSButton(title: "👀", target: nil, action: nil)
+    private var listenTimer: Timer?
+    /// 会話の表示（表・数式・図・コードの色分け。アプリの中の HTML を WKWebView で）
+    private let transcriptView = ChatTranscriptView(frame: NSRect(x: 0, y: 0, width: 500, height: 100))
+    private let input = PromptTextView(frame: NSRect(x: 0, y: 0, width: 500, height: 44))
+    private let inputScroll = NSScrollView()
+    private let footer = NSTextField(labelWithString: "")
+    private let screenPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let attachButton = NSButton(title: "📎", target: nil, action: nil)
+    private let attachLabel = NSTextField(labelWithString: "")
+    private let clearAttachButton = NSButton(title: L("添付を外す"), target: nil, action: nil)
+    private var pendingAttachments: [URL] = []
+    /// 自律組織：この依頼をどの組織で進めたかと、その結果への 👍 / 👎（次の組織の選び方の学習に使う）
+    private let orgLabel = NSTextField(labelWithString: "")
+    private let thumbsUpButton = NSButton(title: "👍", target: nil, action: nil)
+    private let thumbsDownButton = NSButton(title: "👎", target: nil, action: nil)
+    private var orgRow: NSStackView?
+    /// チャットを開く前に使っていたアプリ（画面認識でどの画面を撮るか・アプリ名に使う）
+    private var contextApp: NSRunningApplication?
+    private var capturing = false
+    /// このおもちが使う AI（Claude・ChatGPT（Codex）・Gemini。先頭は「既定」＝メニューバーの「使う AI」）
+    private let enginePopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let modelPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    /// いまモデル・強さの欄に出している選択肢（AI によって変わる）
+    private var shownModels: [(label: String, value: String?)] = AgentChatController.models
+    private var shownEfforts: [(label: String, value: String?)] = AgentChatController.efforts
+    private let effortPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private var inputHeight: NSLayoutConstraint!
+    private var attachRow: NSStackView?
+
+    /// 選べるモデル（Claude Code の --model に渡す値。エイリアスは常に最新版を指す）。
+    /// 「自動」は依頼ごとに ModelRouter が選ぶ。nil はメニューバーの「🧠 モデル（既定）」に従う
+    static var models: [(label: String, value: String?)] {
+        [(L("🤖 自動（依頼に合わせて選ぶ）"), ModelRouter.auto), (L("既定のモデル"), nil)]
+            + ModelRouter.models.map { ($0.label, Optional($0.value)) }
+    }
+    /// 考える強さ（--effort）
+    static var efforts: [(label: String, value: String?)] { [
+        (L("強さ: 既定"), nil),
+        (L("low（速い）"), "low"),
+        ("medium", "medium"),
+        ("high", "high"),
+        ("xhigh", "xhigh"),
+        (L("max（最も深く）"), "max"),
+    ] }
+
+    private var previousApp: NSRunningApplication?
+    /// ⌘L で作ったばかりのおもちへの最初の指示は、送信したらウィンドウを閉じて元の作業に戻す
+    var closeAfterFirstSubmit = false
+    private var reloadScheduled = false
+    private var firstRender = true
+
+    init(jelly: JellyController, runtime: AgentRuntime, size: NSSize) {
+        self.jelly = jelly
+        self.runtime = runtime
+        // ほかのアプリのフル画面のスペースにも出せる窓として作る（ほかのチャットが出ていて普通のアプリのときに作った窓は、
+        // フル画面のアプリを見ていても普通のデスクトップに回され、開くたびに画面ごとそこへ切り替わっていた）
+        window = ActiveSpace.make {
+            NSWindow(contentRect: NSRect(origin: .zero, size: size),
+                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                     backing: .buffered, defer: false)
+        }
+        super.init()
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 380, height: 240)
+        window.collectionBehavior = [.fullScreenPrimary, .moveToActiveSpace]
+        // チャットはおもちごとの窓なので、ほかのチャットとタブにまとめない
+        window.tabbingMode = .disallowed
+        window.isMovableByWindowBackground = true
+        window.delegate = self
+        window.setFrameAutosaveName("OmochiChat-\(jelly.record.id.uuidString)")
+        build()
+        refresh()
+        reloadTranscript()
+    }
+
+    var isVisible: Bool { window.isVisible || window.isMiniaturized }
+    /// 最後に前面で使った時刻（Dock のアイコンを押したとき、しまったチャットのどれを戻すか）
+    private(set) var lastActive = Date.distantPast
+    var isFullScreen: Bool { window.styleMask.contains(.fullScreen) }
+
+    // MARK: 構築
+
+    private func build() {
+        let bg = DropEffectView()
+        bg.registerForDraggedTypes([.fileURL])
+        bg.onFiles = { [weak self] u in self?.addAttachments(u) }
+        bg.material = .underWindowBackground
+        bg.blendingMode = .behindWindow
+        bg.state = .active
+        window.contentView = bg
+
+        titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        stateLabel.font = .systemFont(ofSize: 12)
+        stateLabel.textColor = .secondaryLabelColor
+        stateLabel.lineBreakMode = .byTruncatingTail
+        stateLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        dot.imageScaling = .scaleNone
+        for b in [cancelButton, retryButton, folderButton, terminalButton, renameButton, pcButton, listenButton] {
+            b.bezelStyle = .accessoryBarAction
+            b.controlSize = .small
+            b.font = .systemFont(ofSize: 11.5)
+            b.target = self
+        }
+        cancelButton.action = #selector(cancelTask)
+        cancelButton.contentTintColor = .systemRed
+        cancelButton.toolTip = L("いまの作業を止める（⌘.）。予約があれば一時停止します")
+        sendButton.bezelStyle = .accessoryBarAction
+        sendButton.controlSize = .small
+        sendButton.font = .systemFont(ofSize: 11.5, weight: .semibold)
+        sendButton.target = self
+        sendButton.action = #selector(sendTapped)
+        renameButton.action = #selector(renameAgent)
+        pcButton.action = #selector(togglePC)
+        listenButton.action = #selector(toggleListen)
+        dictationButton.bezelStyle = .accessoryBarAction
+        dictationButton.controlSize = .small
+        dictationButton.font = .systemFont(ofSize: 11.5)
+        dictationButton.target = self
+        dictationButton.action = #selector(startDictation)
+        watchButton.bezelStyle = .accessoryBarAction
+        watchButton.controlSize = .small
+        watchButton.font = .systemFont(ofSize: 11.5)
+        watchButton.setButtonType(.pushOnPushOff)
+        watchButton.target = self
+        watchButton.action = #selector(toggleWatch)
+        dictationButton.toolTip = L("話して入力する（Mac の音声入力。システム設定 › キーボード › 音声入力 のショートカットでも始められます。使えないときは、そこで音声入力をオンに）")
+        listenButton.setButtonType(.pushOnPushOff)
+        listenButton.toolTip = L("システムの音（会議・動画など）を聞き取って文字にする。止めると文字起こしを添付するので「議事録にして」「翻訳して」と頼める")
+        pcButton.setButtonType(.pushOnPushOff)
+        pcButton.toolTip = L("このエージェントに PC 操作（画面を見る・クリック・入力）を許す。操作中は画面の縁が光り、Esc で止まる。次の指示から反映")
+        renameButton.toolTip = L("このエージェントの名前を変える（仲間どうしはこの名前で呼び合います）")
+        retryButton.action = #selector(retryTask)
+        for b in [thumbsUpButton, thumbsDownButton] {
+            b.bezelStyle = .accessoryBarAction
+            b.controlSize = .small
+            b.target = self
+        }
+        thumbsUpButton.action = #selector(orgThumbsUp)
+        thumbsDownButton.action = #selector(orgThumbsDown)
+        thumbsUpButton.toolTip = L("よかった（この組織の選び方を強める）")
+        thumbsDownButton.toolTip = L("いまひとつ（次は別の組織を試す）")
+        orgLabel.font = .systemFont(ofSize: 11.5)
+        orgLabel.textColor = .secondaryLabelColor
+        orgLabel.lineBreakMode = .byTruncatingTail
+        orgLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        folderButton.action = #selector(chooseFolder)
+        folderButton.toolTip = L("作業フォルダを変更")
+        terminalButton.action = #selector(openInTerminal)
+        terminalButton.toolTip = L("同じセッションをターミナルの claude --resume で開く")
+
+        // モデルと強さは、ほかのボタンに押されて見えなくならないよう上の段に置く
+        let titleRow = NSStackView(views: [dot, titleLabel, NSView(), enginePopup, modelPopup, effortPopup, renameButton, retryButton])
+        titleRow.orientation = .horizontal
+        titleRow.spacing = 8
+        let infoRow = NSStackView(views: [stateLabel])
+        infoRow.orientation = .horizontal
+
+        for (p, items) in [(enginePopup, [L("AI: 既定")] + AgentEngine.allCases.map(\.displayName)),
+                           (modelPopup, AgentChatController.models.map(\.label)), (effortPopup, AgentChatController.efforts.map(\.label)),
+                           (screenPopup, ScreenMode.allCases.map(\.label))] {
+            p.addItems(withTitles: items)
+            p.controlSize = .small
+            p.font = .systemFont(ofSize: 11.5)
+            p.bezelStyle = .accessoryBarAction
+            p.target = self
+        }
+        modelPopup.action = #selector(modelChanged)
+        enginePopup.action = #selector(engineChanged)
+        // それぞれの AI の得意なこと（チームで分担するときの目安）
+        for (i, e) in AgentEngine.allCases.enumerated() { enginePopup.item(at: i + 1)?.toolTip = e.teamStrengths }
+        enginePopup.toolTip = L("このおもちが使う AI。変えると新しい会話になります（ログインはメニューバーのおもち › 🔑 アカウントと AI）")
+        screenPopup.action = #selector(screenModeChanged)
+        screenPopup.toolTip = L("「この画面」などと書いたとき、送信時の画面を撮って添付する（OMOCHI AI のウィンドウは写りません）")
+        for b in [attachButton, clearAttachButton] {
+            b.bezelStyle = .accessoryBarAction
+            b.controlSize = .small
+            b.font = .systemFont(ofSize: 11.5)
+            b.target = self
+        }
+        attachButton.action = #selector(attachFiles)
+        attachButton.toolTip = L("画像やファイルを添付（添付があるときは画面の自動添付より優先）")
+        clearAttachButton.action = #selector(clearAttachments)
+        attachLabel.font = .systemFont(ofSize: 11.5)
+        attachLabel.textColor = .secondaryLabelColor
+        attachLabel.lineBreakMode = .byTruncatingMiddle
+        effortPopup.action = #selector(effortChanged)
+        modelPopup.toolTip = L("このおもちが使うモデル。自動は依頼ごとに Haiku・Sonnet・Opus・Fable から選ぶ。既定はメニューバーの「🧠 モデル（既定）」に従う（次の指示から反映）")
+        effortPopup.toolTip = L("考える強さ（--effort。次の指示から反映）")
+        let controlsRow = NSStackView(views: [screenPopup, attachButton, dictationButton, pcButton, listenButton, watchButton, folderButton, NSView(), terminalButton])
+        controlsRow.orientation = .horizontal
+        controlsRow.spacing = 6
+        // 幅が足りないときはウィンドウを広げず、フォルダ名・ポップアップの文字を省略して縮める
+        controlsRow.setClippingResistancePriority(.defaultLow, for: .horizontal)
+        (folderButton.cell as? NSButtonCell)?.lineBreakMode = .byTruncatingMiddle
+        folderButton.setContentCompressionResistancePriority(.init(200), for: .horizontal)
+        let minFolder = folderButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 96)
+        minFolder.priority = .init(255)
+        minFolder.isActive = true
+        screenPopup.setContentCompressionResistancePriority(.init(240), for: .horizontal)
+        for p in [enginePopup, modelPopup, effortPopup] { p.setContentCompressionResistancePriority(.init(760), for: .horizontal) }
+        titleLabel.setContentCompressionResistancePriority(.init(200), for: .horizontal)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        // 長い作業フォルダの名前は真ん中を省いて、ほかのボタンを押し出さない
+        folderButton.setContentCompressionResistancePriority(.init(220), for: .horizontal)
+        (folderButton.cell as? NSButtonCell)?.lineBreakMode = .byTruncatingMiddle
+        terminalButton.setContentCompressionResistancePriority(.init(260), for: .horizontal)
+
+        transcriptView.onOpen = { [weak self] href in self?.openLink(href) }
+        transcriptView.onReload = { [weak self] in self?.reloadTranscript() }
+
+        configureScrollable(input)
+        input.font = .systemFont(ofSize: 14.5)
+        input.isRichText = false
+        input.allowsUndo = true
+        input.drawsBackground = false
+        input.textContainerInset = NSSize(width: 8, height: 9)
+        input.isAutomaticQuoteSubstitutionEnabled = false
+        input.isAutomaticDashSubstitutionEnabled = false
+        input.onSubmit = { [weak self] in self?.submit() }
+        input.onDropFiles = { [weak self] u in self?.addAttachments(u) }
+        input.onEscape = { [weak self] in self?.closeAndReturn() }
+        input.onStop = { [weak self] in self?.cancelTask() }
+        input.onHistory = { [weak self] older in self?.recallPrompt(older: older) ?? false }
+        input.delegate = self
+        inputScroll.documentView = input
+        inputScroll.hasVerticalScroller = true
+        inputScroll.autohidesScrollers = true
+        inputScroll.drawsBackground = false
+        inputScroll.borderType = .noBorder
+        inputScroll.wantsLayer = true
+        inputScroll.layer?.cornerRadius = 12
+        inputScroll.layer?.borderWidth = 1
+        inputScroll.layer?.borderColor = NSColor.separatorColor.cgColor
+        inputScroll.layer?.backgroundColor = NSColor.textBackgroundColor.withAlphaComponent(0.55).cgColor
+
+        footer.font = .systemFont(ofSize: 11)
+        footer.textColor = .tertiaryLabelColor
+        footer.lineBreakMode = .byTruncatingTail
+
+        let attachRow = NSStackView(views: [attachLabel, clearAttachButton, NSView()])
+        attachRow.orientation = .horizontal
+        attachRow.spacing = 6
+        self.attachRow = attachRow
+        let orgRow = NSStackView(views: [orgLabel, NSView(), thumbsUpButton, thumbsDownButton])
+        orgRow.orientation = .horizontal
+        orgRow.spacing = 6
+        orgRow.isHidden = true
+        self.orgRow = orgRow
+        setUpQueueView()
+        // 入力欄の右に「送信 / 予約」と「■ 止める」
+        let actions = NSStackView(views: [sendButton, cancelButton])
+        actions.orientation = .vertical
+        actions.alignment = .trailing
+        actions.spacing = 4
+        actions.setHuggingPriority(.required, for: .horizontal)
+        let inputRow = NSStackView(views: [inputScroll, actions])
+        inputRow.orientation = .horizontal
+        inputRow.alignment = .top
+        inputRow.spacing = 6
+        let stack = NSStackView(views: [titleRow, infoRow, transcriptView, orgRow, attachRow, queueView, inputRow, controlsRow, footer])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.edgeInsets = NSEdgeInsets(top: 34, left: 16, bottom: 12, right: 16)   // 上はタイトルバー（信号ボタン）の分
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.setHuggingPriority(.defaultLow, for: .vertical)
+        transcriptView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        bg.addSubview(stack)
+
+        inputHeight = inputScroll.heightAnchor.constraint(equalToConstant: 46)
+        var cs: [NSLayoutConstraint] = [
+            stack.leadingAnchor.constraint(equalTo: bg.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: bg.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: bg.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: bg.bottomAnchor),
+            transcriptView.heightAnchor.constraint(greaterThanOrEqualToConstant: 40),
+            inputHeight,
+        ]
+        attachRow.isHidden = true
+        queueView.isHidden = true
+        for v in [titleRow, infoRow, transcriptView, orgRow, attachRow, queueView, inputRow, controlsRow, footer] as [NSView] {
+            cs.append(v.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -32))
+        }
+        NSLayoutConstraint.activate(cs)
+    }
+
+    private func configureScrollable(_ tv: NSTextView) {
+        tv.minSize = NSSize(width: 0, height: 0)
+        tv.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        tv.isVerticallyResizable = true
+        tv.isHorizontallyResizable = false
+        tv.autoresizingMask = [.width]
+        tv.textContainer?.containerSize = NSSize(width: tv.frame.width, height: CGFloat.greatestFiniteMagnitude)
+        tv.textContainer?.widthTracksTextView = true
+    }
+
+    // MARK: 表示
+
+    /// activate: false なら、前面に出すだけでキーボードの入力先は奪わない（外のアプリ・Web ページからの omochi://。
+    /// 打っている途中の文字がチャットに入って、Enter で送られてしまわないように）
+    func show(near jelly: JellyController, focusInput: Bool = true, activate: Bool = true) {
+        self.jelly = jelly
+        let front = NSWorkspace.shared.frontmostApplication
+        if front?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = front; contextApp = front }
+        if window.isMiniaturized { window.deminiaturize(nil) }
+        if !window.isVisible && !isFullScreen { placeIfNeeded(near: jelly) }
+        // いま見ているスペース（ほかのアプリのフル画面でも）に先に出す。先にアプリを前面にすると、
+        // 窓が残っている別のスペースへ画面ごと切り替わり、最初に開いたスペースでしか開けなかった
+        // （フル画面のチャットは自分のスペースにいるので、今までどおりそのスペースへ切り替える）
+        if !isFullScreen { ActiveSpace.bringHere(window) }
+        // 窓を出したら必ず普通のアプリ（Dock・⌘Tab・メニューバーあり）にする（showing: 窓を数えずに）。
+        // Dock に出ないアプリのままだと、閉じる・しまう・フル画面の操作や戻る道が無くなっていた
+        manager?.chatWindowVisibilityChanged(showing: true)
+        lastActive = Date()
+        guard activate else {
+            window.orderFrontRegardless()
+            if focusInput { window.makeFirstResponder(input) }
+            refresh()
+            reloadTranscript()
+            return
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        if focusInput { window.makeFirstResponder(input) }
+        refresh()
+        reloadTranscript()
+    }
+
+    /// 保存された位置が無い（初回）なら、おもちの左側に出す
+    private func placeIfNeeded(near jelly: JellyController) {
+        let key = "NSWindow Frame OmochiChat-\(jelly.record.id.uuidString)"
+        if UserDefaults.standard.string(forKey: key) != nil, window.frame.width > 0,
+           NSScreen.screens.contains(where: { $0.visibleFrame.intersects(window.frame) }) { return }
+        let jf = jelly.panel.frame
+        let vf = (jelly.panel.screen ?? NSScreen.main ?? NSScreen.screens.first)?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        var f = window.frame
+        f.origin.x = jf.minX - f.width + 8
+        if f.minX < vf.minX + 8 { f.origin.x = jf.maxX - 8 }
+        f.origin.y = jf.maxY - f.height
+        f.origin.x = min(max(f.minX, vf.minX + 8), vf.maxX - f.width - 8)
+        f.origin.y = min(max(f.minY, vf.minY + 8), vf.maxY - f.height - 8)
+        window.setFrame(f, display: false)
+    }
+
+    func resizeKeepingTop(_ size: NSSize) {
+        var f = window.frame
+        f.origin.y = f.maxY - size.height
+        f.size = size
+        if let vf = (window.screen ?? NSScreen.main)?.visibleFrame {
+            f.origin.x = min(max(f.minX, vf.minX + 8), vf.maxX - f.width - 8)
+            f.origin.y = min(max(f.minY, vf.minY + 8), vf.maxY - f.height - 8)
+        }
+        window.setFrame(f, display: false)
+    }
+
+    func closeAndReturn() {
+        // フル画面のときは窓をしまわない。しまうと中身の無いフル画面のスペースだけが残り、Dock からも消えて戻れなくなる。
+        // フル画面をやめるかは本人が決める（Apple の HIG「Let people choose when to exit full-screen mode」）ので、
+        // 前のアプリに戻るだけにして、チャットはフル画面のまま残す（Dock・⌘Tab・ウインドウメニューから戻れる）
+        if isFullScreen {
+            AppLog.write("chat \(jelly?.record.number ?? -1): back to previous app (stays full screen)")
+            previousApp?.activate()
+            previousApp = nil
+            return
+        }
+        AppLog.write("chat \(jelly?.record.number ?? -1): hide (esc / sent)")
+        window.orderOut(nil)
+        manager?.chatWindowVisibilityChanged()
+        previousApp?.activate()
+        previousApp = nil
+    }
+
+    /// ヘッダー（状態・ボタン）を更新し、会話の再読込を予約する
+    func refresh() {
+        guard let jelly else { return }
+        let r = jelly.record
+        let sessionTitle = runtime.sessionTitle
+        let engineName = runtime.effectiveEngine == .claude ? "" : " · " + runtime.effectiveEngine.displayName
+        window.title = "\(r.title) · \(r.color.name)" + engineName + (sessionTitle.map { " — \($0)" } ?? "")
+        titleLabel.stringValue = sessionTitle ?? "\(r.title) · \(r.color.name)"
+        dot.image = MenuImages.dot(r.color, state: r.state)
+
+        let running = runtime.isRunning
+        var st = "\(r.title) · \(r.state.label)"
+        if running, let a = runtime.activity { st += " — \(a)" }
+        if capturing { st = L("%@ · 📷 画面を取り込んでいます…", r.title) }
+        if let c = runtime.autoChoice {
+            st += "  ·  🤖 " + L("自動: %@（%@）", ModelRouter.displayName(c.model), c.reason)
+        } else if let m = runtime.activeModel {
+            st += "  ·  \(m)"
+        }
+        if let p = manager?.team?.pendingDescription(for: r.id) { st += "  ·  \(p)" }
+        if let n = manager?.queues.noteForTarget(r.id) { st += "  ·  \(n)" }
+        // 線でつながった仲間（この人たちに分担を頼める）
+        let mates = (manager?.settings.teamEnabled ?? false) ? (manager?.team?.teammateNames(for: r.id) ?? []) : []
+        if !mates.isEmpty {
+            let shown = mates.prefix(3).joined(separator: L("・")) + (mates.count > 3 ? L(" ほか %ld 体", mates.count - 3) : "")
+            st += "  ·  " + L("👥 %@ とチーム", shown)
+        }
+        if running, !runtime.externalLoaded.isEmpty { st += "  ·  🧩 " + runtime.externalLoaded.joined(separator: L("・")) }
+        if running, let o = manager?.team?.orgStatus(for: r.id) { st += "  ·  " + o }
+        if !running, let e = manager?.team?.orgFeedback(for: r.id) {
+            let g = OrgGenome(key: e.usedKey)?.label ?? e.usedKey
+            orgLabel.stringValue = L("🧬 この依頼は「%@」で進めました。結果はどうでしたか？", g)
+            orgLabel.toolTip = L("自律組織モード：👍 / 👎 と、続けて送る指示（「違う」「ありがとう」など）から、次の依頼の組織の選び方を学びます（この Mac の中だけ）")
+            orgRow?.isHidden = false
+        } else {
+            orgRow?.isHidden = true
+        }
+        if let l = manager?.listeningStatus(jelly) { st = "\(r.title) · " + l }
+        screenPopup.selectItem(at: ScreenMode.allCases.firstIndex(of: manager?.settings.screenMode ?? .auto) ?? 0)
+        // 「既定のモデル」の項目に、いまの既定（メニューの設定）を書く
+        // AI：先頭の「既定」にいまの既定を書く。Claude 以外ではモデル・強さは CLI の既定に任せ、PC 操作は使えない
+        let eng = runtime.effectiveEngine
+        enginePopup.item(at: 0)?.title = L("AI: 既定（%@）", (manager?.settings.engine ?? .claude).displayName)
+        enginePopup.selectItem(at: runtime.engine.flatMap { e in AgentEngine.allCases.firstIndex(of: e).map { $0 + 1 } } ?? 0)
+        enginePopup.isEnabled = !running
+        // モデルと強さ：AI ごとの選択肢（Codex・Gemini はそれぞれの CLI が出す一覧から）
+        if eng != .claude, isVisible { manager?.refreshModels(eng) }
+        let models = modelChoices(eng)
+        if models.map(\.label) != shownModels.map(\.label) || models.map(\.value) != shownModels.map(\.value) {
+            shownModels = models
+            AgentChatController.fill(modelPopup, models.map(\.label))
+            for (i, m) in models.enumerated() {
+                if let id = m.value, let d = EngineModelCatalog.shared.model(eng, id: id)?.detail { modelPopup.item(at: i)?.toolTip = d }
+            }
+        }
+        let defaultIndex = eng == .claude ? 1 : 0
+        modelPopup.item(at: defaultIndex)?.title = eng == .claude
+            ? L("既定（%@）", manager?.defaultModelName ?? L("Claude Code に任せる"))
+            : L("既定（%@）", manager?.defaultModelLabel(eng) ?? eng.cliTitle)
+        modelPopup.selectItem(at: shownModels.firstIndex { $0.value == runtime.model } ?? defaultIndex)
+        modelPopup.isEnabled = !running
+        let efforts = effortChoices(eng, model: runtime.model ?? (manager?.defaultModelID(eng)).flatMap { $0.isEmpty ? nil : $0 })
+        if efforts.map(\.label) != shownEfforts.map(\.label) {
+            shownEfforts = efforts
+            AgentChatController.fill(effortPopup, efforts.map(\.label))
+        }
+        effortPopup.selectItem(at: shownEfforts.firstIndex { $0.value == runtime.effort } ?? 0)
+        effortPopup.isEnabled = !running && shownEfforts.count > 1 && (eng != .claude || (manager?.supportsEffort ?? true))
+        effortPopup.toolTip = eng == .gemini
+            ? L("Gemini CLI には考える強さを指定するオプションが無いため、Gemini CLI の設定に任せます")
+            : L("考える強さ（--effort。次の指示から反映）")
+        pcButton.isEnabled = eng.supportsOmochiTools
+        pcButton.toolTip = eng.supportsOmochiTools
+            ? L("このエージェントに PC 操作（画面を見る・クリック・入力）を許す。操作中は画面の縁が光り、Esc で止まる。次の指示から反映")
+            : L("PC 操作は Claude のおもちだけで使えます")
+        let listening = manager?.isListening(jelly) ?? false
+        listenButton.state = listening ? .on : .off
+        listenButton.title = listening ? L("🎧 停止") : "🎧"
+        if listening, listenTimer == nil {
+            let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.refresh() }
+            RunLoop.main.add(t, forMode: .common)
+            listenTimer = t
+        } else if !listening {
+            listenTimer?.invalidate()
+            listenTimer = nil
+        }
+        pcButton.state = runtime.pcControl ? .on : .off
+        watchButton.state = runtime.watchScreen ? .on : .off
+        watchButton.title = runtime.watchScreen ? L("👀 見守り中") : "👀"
+        watchButton.toolTip = L("見守り：前面のウィンドウを Mac の中だけで読み（トークン 0・どこにも送らない）、エラーっぽい表示に気づいたら「見る？」と聞きます。押したときだけ、その 1 枚を送ります")
+        pcButton.title = runtime.pcControl ? L("🖱 PC 操作: オン") : L("🖱 PC 操作")
+        stateLabel.stringValue = st
+        cancelButton.isHidden = !running
+        let last = runtime.lastTurn
+        retryButton.isHidden = running || last == nil || last?.state == .completed
+        // Claude：同じ会話をターミナルで。Gemini：このフォルダで Gemini を開く（フォルダの信頼もここで）。Codex：出さない
+        terminalButton.isHidden = eng == .codex || (eng == .claude && !runtime.sessionStarted)
+        terminalButton.title = eng == .gemini ? L("Gemini をこのフォルダで開く") : L("Claude Code で開く")
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        folderButton.title = "📁 " + runtime.cwd.path.replacingOccurrences(of: home, with: "~")
+
+        // 作業中も打てる（Enter で予約に足す）
+        input.isEditable = !capturing
+        let queueing = running || (manager?.queues.isActive(r.id) ?? false)
+        sendButton.title = queueing ? L("予約") : L("送信")
+        sendButton.toolTip = queueing ? L("いまの作業が終わったら送る指示として、予約に足します（Enter）") : L("送信（Enter）")
+        refreshQueue()
+        let hintNames = mates.prefix(2).joined(separator: L("・"))
+        let teamHint = mates.isEmpty ? "" : (mates.count > 2 ? L("（つながっている %@ たち に分担させることもできます）", hintNames)
+                                                              : L("（つながっている %@ に分担させることもできます）", hintNames))
+        input.placeholder = running ? L("作業中です。Enter で次の指示を予約できます（送るまで書き換えられます）")
+            : queueing ? L("Enter で予約の最後に足します")
+            : (runtime.turns.isEmpty && !runtime.sessionStarted ? L("%@ に頼みたいことを入力…", r.title) : L("この結果に続けて指示する…")) + teamHint
+        // 下の段：その AI の動かし方と、会話がどこに残るか
+        let keys = running ? L("⏎ 予約   ⇧⏎ 改行   ⌘. 止める   esc 閉じる")
+            : queueing ? L("⏎ 予約   ⇧⏎ 改行   esc 閉じる") : L("⏎ 送信   ⇧⏎ 改行   esc 閉じる")
+        switch eng {
+        case .claude:
+            footer.stringValue = keys + "   ·   " + (manager?.policyDescription ?? "") + "   ·   " + L("記録: Claude Code のセッション")
+        case .codex, .gemini:
+            let policy = eng == .codex ? "Codex · workspace-write" : "Gemini · auto_edit"
+            footer.stringValue = keys + "   ·   " + policy + "   ·   " + L("記録: %@ のセッション", eng.cliTitle)
+        }
+        footer.toolTip = eng.policyLine
+        scheduleReload()
+    }
+
+    private func scheduleReload() {
+        guard !reloadScheduled else { return }
+        reloadScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            self?.reloadScheduled = false
+            self?.reloadTranscript()
+        }
+    }
+
+    // MARK: 会話の表示
+
+    /// 画像・PDF のサムネイルと Web ページのプレビュー（できていないものは、できたらもう一度描く）
+    /// autoWeb：Web のページを自動で読みに行くか（自分の書いた URL だけ。エージェントの返答の URL は「表紙を見る」を押したとき）
+    private func mediaItems(_ refs: [ChatMedia.Ref], autoWeb: Bool, images: inout [String: String]) -> [[String: Any]] {
+        let web = manager?.settings.linkPreviews ?? true
+        var seen = Set<ChatMedia.Ref>()
+        var out: [[String: Any]] = []
+        for r in refs where seen.insert(r).inserted {
+            guard let p = ChatMediaCache.shared.preview(r, webPreviews: web, autoWeb: autoWeb) else { continue }
+            var d: [String: Any] = ["link": p.link, "label": p.label]
+            if let k = p.thumbKey, let data = p.thumbData { d["thumbKey"] = k; images[k] = data }
+            if let pl = p.previewLink { d["previewLink"] = pl; d["previewLabel"] = L("表紙を見る"); d["host"] = p.host ?? "" }
+            out.append(d)
+        }
+        return out
+    }
+
+    func reloadTranscript() {
+        guard let jelly else { return }
+        let accent = NSColor(srgbRed: CGFloat(jelly.record.color.flat.x), green: CGFloat(jelly.record.color.flat.y),
+                             blue: CGFloat(jelly.record.color.flat.z), alpha: 1)
+        var items: [[String: Any]] = []
+        var images: [String: String] = [:]
+        // 1 つぶん。中身が同じなら id も同じなので、ページは作り直さない
+        func add(_ kind: String, caption: String? = nil, style: String? = nil, color: NSColor? = nil,
+                 text: String, notes: [String] = [], media: [[String: Any]] = []) {
+            var h = Hasher()
+            h.combine(kind); h.combine(caption); h.combine(style); h.combine(text); h.combine(notes)
+            for m in media {
+                for k in ["link", "label", "thumbKey", "previewLink"] { h.combine(m[k] as? String) }
+            }
+            var d: [String: Any] = ["id": "\(items.count)-\(h.finalize())", "kind": kind, "text": text]
+            if let caption { d["caption"] = caption }
+            if let style { d["captionStyle"] = style }
+            if let color { d["captionColor"] = color.hexRGB }
+            if !notes.isEmpty { d["notes"] = notes }
+            if !media.isEmpty { d["media"] = media }
+            items.append(d)
+        }
+        var messages: [SessionMessage] = []
+        // 返答ごとの AI（見出しの名前）。Claude Code のセッション記録から読んだものは Claude
+        var speakers: [AgentEngine?] = []
+        if let f = runtime.sessionFile {
+            messages = ClaudeSessions.messages(in: f)
+            speakers = Array(repeating: .claude, count: messages.count)
+        }
+        if messages.isEmpty {
+            // セッション記録が無い（ChatGPT・Gemini、起動前に失敗した等）ときは自前の履歴から
+            for t in runtime.turns {
+                let who = t.engine.flatMap(AgentEngine.init(rawValue:))
+                messages.append(SessionMessage(role: .user, text: t.prompt, date: t.startedAt))
+                speakers.append(who)
+                if let r = t.result, !r.isEmpty, t.state != .error {
+                    messages.append(SessionMessage(role: .assistant, text: r, date: t.endedAt))
+                    speakers.append(who)
+                }
+            }
+        }
+        // 自分が打った指示（Web のページを自動で読みに行ってよいのはこれだけ。仲間の依頼・要約などはエージェントが書いたもの）
+        let typed = Set(runtime.turns.filter { !$0.prompt.hasPrefix(TeamCoordinator.requestMarker) }
+            .map { AgentChatController.typedText($0.prompt) })
+        for (index, m) in messages.enumerated() {
+            switch m.role {
+            case .user:
+                var text = m.text
+                var notes: [String] = []
+                let fromTeammate = text.hasPrefix(TeamCoordinator.requestMarker)
+                var cap = L("あなた"), style: String? = "muted", color: NSColor? = nil
+                // 仲間のエージェントからの依頼（TeamCoordinator が付けた目印）
+                if fromTeammate, let end = text.range(of: "]\n") {
+                    let from = String(text[text.index(text.startIndex, offsetBy: TeamCoordinator.requestMarker.count)..<end.lowerBound])
+                    text = String(text[end.upperBound...])
+                    if let f = text.range(of: TeamCoordinator.requestFooter) { text = String(text[..<f.lowerBound]) }
+                    cap = L("📨 %@ からの依頼", from); style = nil; color = accent
+                }
+                if let r = text.range(of: ScreenContext.marker) {
+                    let block = String(text[r.upperBound...])
+                    text = String(text[..<r.lowerBound])
+                    notes.append(block.contains(".png") ? L("📷 画面を添付しました") : L("📷 画面の添付に失敗しました"))
+                }
+                var attachedMedia: [ChatMedia.Ref] = []
+                if let r = text.range(of: AgentChatController.attachMarker) {
+                    let paths = text[r.upperBound...].split(separator: "\n").filter { $0.hasPrefix("- ") }.map { String($0.dropFirst(2)) }
+                    let names = paths.map { ($0 as NSString).lastPathComponent }
+                    attachedMedia = ChatMedia.refs(in: paths.joined(separator: "\n")).filter { $0.kind != .web }
+                    text = String(text[..<r.lowerBound])
+                    notes.append("📎 " + names.joined(separator: ", "))
+                }
+                // 予約で、前の手順の結果を添えて送った指示
+                if !fromTeammate, let r = text.range(of: PromptQueues.resultMarker) {
+                    let from = PromptQueues.passedFrom(text) ?? ""
+                    text = String(text[..<r.lowerBound])
+                    notes.insert(L("🔗 前の手順（%@）の結果を受け取りました", from), at: 0)
+                }
+                let userTyped = !fromTeammate && typed.contains(text.trimmingCharacters(in: .whitespacesAndNewlines))
+                // 自分の指示は右の吹き出し、仲間のおもちからの依頼は左の点線の枠（チャットの CSS）
+                add(fromTeammate ? "request" : "user", caption: cap, style: style, color: color, text: text, notes: notes,
+                    media: mediaItems(attachedMedia + ChatMedia.refs(in: text), autoWeb: userTyped, images: &images))
+            case .assistant:
+                let who = ((index < speakers.count ? speakers[index] : nil) ?? runtime.effectiveEngine).displayName
+                // 返答は Markdown（表・数式・図・コード）。出てきた画像・PDF・Web ページは文の下に
+                add("assistant", caption: who, color: accent, text: m.text,
+                    media: mediaItems(ChatMedia.refs(in: m.text), autoWeb: false, images: &images))
+            case .tool:
+                add("tool", text: "⚙︎ " + m.text)
+            }
+        }
+        if let last = runtime.lastTurn, last.state == .error || last.state == .cancelled, let e = last.error, !e.isEmpty {
+            add("error", caption: last.state == .error ? L("エラー") : L("キャンセル済み"), style: "error", text: e)
+        }
+        if runtime.isRunning {
+            add("running", caption: (runtime.runningEngine ?? runtime.effectiveEngine).displayName, color: accent,
+                text: "… " + (runtime.activity ?? L("作業中")))
+        }
+        let payload: [String: Any] = [
+            "accent": accent.hexRGB,
+            "items": items,
+            "images": transcriptView.takeNewImages(images),
+            "empty": L("まだ会話はありません。下の欄に指示を入力してください。"),
+            "labels": ["copy": L("コピー"), "copied": L("コピーしました"), "diagramFailed": L("図にできませんでした（Mermaid の書き方を確かめてください）")],
+        ]
+        // 開いた最初だけ一番下へ。あとは一番下を見ていたときだけ追従する（ページの側で）
+        transcriptView.update(payload, scrollToEnd: firstRender)
+        firstRender = false
+    }
+
+    // MARK: 操作
+
+    static let attachMarker = "\n\n---\n[添付ファイル]"
+
+    /// 指示のうち、本人が打った部分（添付・画面の欄の前まで）
+    static func typedText(_ prompt: String) -> String {
+        var t = prompt
+        for m in [attachMarker, ScreenContext.marker, PromptQueues.resultMarker] { if let r = t.range(of: m) { t = String(t[..<r.lowerBound]) } }
+        return t.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var history = PromptHistory()
+
+    /// ↑↓ で前に送った指示を入力欄に入れる
+    private func recallPrompt(older: Bool) -> Bool {
+        let text = older ? history.older(current: input.string, load: { promptHistory() }) : history.newer()
+        guard let text else { return false }
+        input.string = text
+        input.setSelectedRange(NSRange(location: (text as NSString).length, length: 0))
+        input.scrollRangeToVisible(input.selectedRange())
+        relayoutInput()
+        input.needsDisplay = true
+        return true
+    }
+
+    /// このセッションでユーザーが送った指示（古い順）。VS Code やターミナルで打ったものも Claude Code の記録から読む
+    private func promptHistory() -> [String] {
+        let fromSession = runtime.sessionFile.map { ClaudeSessions.messages(in: $0) } ?? []
+        var raw = fromSession.filter { $0.role == .user }.map(\.text)
+        if raw.isEmpty { raw = runtime.turns.map(\.prompt) }
+        return AgentChatController.typedPrompts(raw)
+    }
+
+    /// 記録の中の指示から、ユーザーが打った部分だけを取り出す（仲間からの依頼は除き、
+    /// OMOCHI AI が付けた画面・添付の情報は外す。続けて同じ指示は 1 つにまとめる）
+    static func typedPrompts(_ raw: [String]) -> [String] {
+        var out: [String] = []
+        for r in raw {
+            if r.hasPrefix(TeamCoordinator.requestMarker) { continue }
+            var t = r
+            for m in [ScreenContext.marker, attachMarker, PromptQueues.resultMarker] {
+                if let range = t.range(of: m) { t = String(t[..<range.lowerBound]) }
+            }
+            t = t.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty, out.last != t { out.append(t) }
+        }
+        return out
+    }
+
+    private func submit() {
+        guard !capturing, let id = jelly?.record.id else { return }
+        let text = input.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        let attach = pendingAttachments
+        let attachBlock = attach.isEmpty ? "" : AgentChatController.attachMarker + "\n" + attach.map { "- \($0.path)" }.joined(separator: "\n")
+            + "\n" + L("画像やファイルは Read ツールで開いて内容を確認してください。")
+        let prompt = text + attachBlock
+        input.string = ""
+        history.reset()
+        relayoutInput()
+        setAttachments([])
+
+        // 画面を指す指示なら、送信時点の画面を撮って添える（明示的な添付があればそちらを優先）
+        let mode = manager?.settings.screenMode ?? .auto
+        let wantScreen = attach.isEmpty && (mode == .always || (mode == .auto && ScreenIntent.refersToScreen(text)))
+
+        // 作業中（または予約が進んでいる途中）なら、送らずに予約に足す。画面は今のものを撮っておく
+        if runtime.isRunning || (manager?.queues.isActive(id) ?? false) {
+            guard wantScreen else {
+                manager?.queues.enqueue(owner: id, text: text, suffix: attachBlock.isEmpty ? nil : attachBlock, attachments: attach.count)
+                refresh()
+                return
+            }
+            capturing = true
+            refresh()
+            let app = contextApp
+            let target = manager?.settings.screenTarget ?? .activeDisplay
+            let dir = runtime.dir.appendingPathComponent("attachments", isDirectory: true)
+            Task { @MainActor [weak self] in
+                let ctx = await ScreenContext.capture(frontApp: app, target: target, into: dir)
+                guard let self else { return }
+                self.capturing = false
+                var suffix = ctx.promptSuffix
+                if let note = ctx.note { suffix += ScreenContext.marker + "\n" + note + L("（画像なしで進めてください）") }
+                self.manager?.queues.enqueue(owner: id, text: text, suffix: suffix.isEmpty ? nil : suffix)
+                self.refresh()
+            }
+            return
+        }
+        guard wantScreen else { send(prompt); return }
+
+        capturing = true
+        refresh()
+        let app = contextApp
+        let target = manager?.settings.screenTarget ?? .activeDisplay
+        let dir = runtime.dir.appendingPathComponent("attachments", isDirectory: true)
+        Task { @MainActor [weak self] in
+            let ctx = await ScreenContext.capture(frontApp: app, target: target, into: dir)
+            guard let self else { return }
+            self.capturing = false
+            var p = prompt + ctx.promptSuffix
+            if let note = ctx.note {
+                p += ScreenContext.marker + "\n" + note + L("（画像なしで進めてください）")
+                if !CGPreflightScreenCaptureAccess() { self.setInputHint(DesktopControl.screenRecordingHint) }
+            }
+            AppLog.write("screen capture images=\(ctx.images.count) app=\(ctx.appName ?? "-") note=\(ctx.note ?? "-")")
+            self.send(p)
+        }
+    }
+
+    private var typingTimer: Timer?
+
+    /// デモ録画・自動テスト用：入力欄に 1 文字ずつ打ち込み、少し間をおいて Enter と同じ送信をする
+    func typeAndSubmit(_ text: String, cps rawCPS: Double) {
+        let cps = rawCPS.isFinite ? min(max(rawCPS, 1), 60) : 14
+        typingTimer?.invalidate()
+        let chars = Array(text)
+        var i = 0
+        input.string = ""
+        let t = Timer(timeInterval: 1 / cps, repeats: true) { [weak self] t in
+            guard let self else { t.invalidate(); return }
+            if i < chars.count {
+                self.input.string.append(chars[i])
+                i += 1
+                self.input.needsDisplay = true
+                self.relayoutInput()
+            } else if i < chars.count + Int(cps * 0.6) {
+                i += 1   // 打ち終わってから送信まで少し待つ
+            } else {
+                t.invalidate()
+                self.typingTimer = nil
+                self.submit()
+            }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        typingTimer = t
+    }
+
+    private func send(_ prompt: String) {
+        runtime.submit(prompt)
+        refresh()
+        // PC 操作のときは、エージェントが実際の画面を見て操作できるようにチャットを閉じて元のアプリに戻す
+        if closeAfterFirstSubmit || runtime.pcControl {
+            closeAfterFirstSubmit = false
+            closeAndReturn()
+        }
+    }
+
+    /// 添付に加える（同じファイルは 1 回だけ）
+    func addAttachments(_ urls: [URL]) {
+        var cur = pendingAttachments
+        for u in urls where !cur.contains(u) { cur.append(u) }
+        setAttachments(cur)
+        window.makeFirstResponder(input)
+    }
+
+    private func setAttachments(_ urls: [URL]) {
+        pendingAttachments = urls
+        attachRow?.isHidden = urls.isEmpty
+        attachLabel.stringValue = "📎 " + urls.map(\.lastPathComponent).joined(separator: ", ")
+    }
+
+    @objc private func attachFiles() {
+        let op = NSOpenPanel()
+        op.canChooseFiles = true
+        op.canChooseDirectories = false
+        op.allowsMultipleSelection = true
+        op.prompt = L("添付")
+        op.beginSheetModal(for: window) { [weak self] resp in
+            guard resp == .OK, let self else { return }
+            self.setAttachments(self.pendingAttachments + op.urls)
+            self.window.makeFirstResponder(self.input)
+        }
+    }
+
+    @objc private func clearAttachments() { setAttachments([]) }
+
+    @objc private func screenModeChanged() {
+        let m = ScreenMode.allCases[max(0, screenPopup.indexOfSelectedItem)]
+        manager?.updateSettings { $0.screenMode = m }
+        window.makeFirstResponder(input)
+    }
+
+    /// その AI で選べるモデル（先頭のほうに「既定」。Claude は「自動」も）
+    private func modelChoices(_ e: AgentEngine) -> [(label: String, value: String?)] {
+        guard e != .claude else { return AgentChatController.models }
+        let list = EngineModelCatalog.shared.models(e)
+        var out: [(label: String, value: String?)] = [(L("既定（%@）", e.cliTitle), nil)]
+        out += list.map { ($0.name, Optional($0.id)) }
+        // 一覧にない（古い・まだ読めていない）モデルを選んでいたら、それも出す
+        if let cur = runtime.model, !list.contains(where: { $0.id == cur }) { out.append((cur, cur)) }
+        return out
+    }
+
+    /// その AI・モデルで選べる考える強さ（Codex はカタログのそのモデルの強さ、Gemini は無し）
+    private func effortChoices(_ e: AgentEngine, model: String?) -> [(label: String, value: String?)] {
+        switch e {
+        case .claude:
+            return AgentChatController.efforts
+        case .codex:
+            let cat = EngineModelCatalog.shared
+            let levels = model.flatMap { cat.model(.codex, id: $0)?.efforts }
+                ?? cat.models(.codex).reduce(into: [String]()) { acc, m in for x in m.efforts where !acc.contains(x) { acc.append(x) } }
+            return [(L("強さ: 既定"), nil)] + levels.map { ($0, Optional($0)) }
+        case .gemini:
+            return [(L("強さ: 既定"), nil)]
+        }
+    }
+
+    static func fill(_ p: NSPopUpButton, _ titles: [String]) {
+        p.removeAllItems()
+        p.addItems(withTitles: titles)
+        // 同じ名前があると addItems はまとめてしまうので、数が合わなければ 1 つずつ足す
+        if p.numberOfItems != titles.count {
+            p.removeAllItems()
+            for t in titles { p.menu?.addItem(NSMenuItem(title: t, action: nil, keyEquivalent: "")) }
+        }
+    }
+
+    @objc private func modelChanged() {
+        let i = max(0, modelPopup.indexOfSelectedItem)
+        runtime.model = i < shownModels.count ? shownModels[i].value : nil
+        // 強さはモデルによって選べるものが違うので、合わなければ既定に戻す
+        if runtime.effectiveEngine == .codex, let e = runtime.effort,
+           let m = runtime.model, let levels = EngineModelCatalog.shared.model(.codex, id: m)?.efforts, !levels.contains(e) {
+            runtime.effort = nil
+        }
+        if runtime.model == ModelRouter.auto { manager?.refreshUsageForAutoModel() }
+        refresh()
+        window.makeFirstResponder(input)
+    }
+
+    @objc private func effortChanged() {
+        let i = max(0, effortPopup.indexOfSelectedItem)
+        runtime.effort = i < shownEfforts.count ? shownEfforts[i].value : nil
+        window.makeFirstResponder(input)
+    }
+
+    /// おもちを作り直したとき（見た目・大きさの変更）に付け替える
+    func attach(jelly: JellyController) {
+        self.jelly = jelly
+        refresh()
+    }
+
+    @objc private func cancelTask() {
+        guard runtime.isRunning else { NSSound.beep(); return }
+        AppLog.write("chat \(jelly?.record.number ?? -1): stop")
+        runtime.cancel()
+    }
+
+    @objc private func sendTapped() {
+        window.makeFirstResponder(input)
+        submit()
+    }
+
+    // MARK: 予約
+
+    private func setUpQueueView() {
+        let q = queueView
+        q.onText = { [weak self] item, text in self?.withQueue { $0.update(owner: $1, item: item, text: text) } }
+        q.onEndEditing = { [weak self] item in self?.withQueue { $0.endEditing(owner: $1, item: item) } }
+        q.onTarget = { [weak self] item, t in self?.withQueue { $0.update(owner: $1, item: item, target: .some(t)) } }
+        q.onPass = { [weak self] item, on in self?.withQueue { $0.update(owner: $1, item: item, passResult: on) } }
+        q.onMove = { [weak self] item, by in self?.withQueue { $0.move(owner: $1, item: item, by: by) } }
+        q.onRemove = { [weak self] item in self?.withQueue { $0.remove(owner: $1, item: item) } }
+        q.onPause = { [weak self] in self?.withQueue { $0.pause(owner: $1) } }
+        q.onResume = { [weak self] in self?.withQueue { $0.resume(owner: $1) } }
+        q.onSkip = { [weak self] in self?.withQueue { $0.skipCurrent(owner: $1) } }
+        q.onClear = { [weak self] in self?.withQueue { $0.clear(owner: $1) } }
+        q.onDoneEditing = { [weak self] in
+            guard let self else { return }
+            self.window.makeFirstResponder(self.input)
+        }
+    }
+
+    private func withQueue(_ f: (PromptQueues, UUID) -> Void) {
+        guard let m = manager, let id = jelly?.record.id else { return }
+        f(m.queues, id)
+    }
+
+    /// 予約の欄だけ更新する（書き換えている途中の欄はそのまま）
+    func refreshQueue() {
+        guard let m = manager, let id = jelly?.record.id else { return }
+        let q = m.queues.queue(id)
+        let show = q.map { !$0.items.isEmpty || $0.watching != nil || $0.isPaused } ?? false
+        if queueView.isHidden == show { queueView.isHidden = !show }
+        guard show else { return }
+        let canSkip = q?.watching.map { m.queues.host?.queueAgentRunning($0) ?? false } ?? false
+        queueView.update(queue: q, owner: id, agents: m.queueAgents(), status: m.queues.statusLine(id), canSkip: canSkip)
+    }
+
+    /// テスト・自動化用：予約の欄に出している行の文
+    var shownQueueTexts: [String] { queueView.isHidden ? [] : queueView.shownTexts }
+
+    /// テスト・自動化用：入力欄に文を入れて、Enter と同じ送信（作業中なら予約）をする
+    func submitText(_ text: String) {
+        input.string = text
+        submit()
+    }
+    @objc private func renameAgent() { if let j = jelly { manager?.promptRename(j) } }
+
+    @objc private func toggleListen() {
+        if let j = jelly { manager?.toggleListening(j) }
+        refresh()
+    }
+
+    /// 入力欄のヒントを一時的に変える
+    func setInputHint(_ s: String) {
+        input.placeholder = s
+    }
+
+    @objc private func togglePC() {
+        let on = !runtime.pcControl
+        runtime.pcControl = on
+        AppLog.write("chat \(jelly?.record.number ?? -1): pc \(on ? "on" : "off") accessibility=\(DesktopControl.hasAccessibility) screen=\(DesktopControl.hasScreenRecording) running=\(runtime.isRunning)")
+        if on && !(DesktopControl.hasAccessibility && DesktopControl.hasScreenRecording) {
+            let a = NSAlert()
+            a.messageText = L("PC 操作には macOS の許可が必要です")
+            a.informativeText = L("「システム設定 › プライバシーとセキュリティ」の「アクセシビリティ」と「画面収録」で OMOCHI AI を許可してください（許可したあとアプリの再起動が必要なことがあります）。\n\n今の状態: %@", DesktopControl.permissionSummary)
+                + "\n\n" + L("システム設定でオンになっているのに使えないときは、前の版に付いた許可が残っています。「🔐 権限」の「まとめて許可する」で消して許可し直してください。")
+                + "\n\n" + DesktopControl.scopeNote
+            a.addButton(withTitle: L("🔐 権限の画面を開く"))
+            a.addButton(withTitle: L("あとで"))
+            if ActiveSpace.runModal(a) == .alertFirstButtonReturn { manager?.showPermissions() }
+        }
+        refresh()
+    }
+    @objc private func retryTask() { runtime.retry() }
+
+    @objc private func toggleWatch() {
+        if let j = jelly { manager?.setWatching(j, !runtime.watchScreen) }
+        refresh()
+    }
+
+    /// 見守りで「見る」を押されたとき：その 1 枚を添えて聞く（作業中なら、終わってから送れるように入力欄に）
+    func sendWatchFinding(image: URL, appName: String, windowTitle: String?) {
+        let what = windowTitle.flatMap { $0.isEmpty ? nil : L("%@「%@」", appName, $0) } ?? appName
+        let text = L("（見守り）%@ にエラーっぽい表示が出ました。添付の画像を見て、何が起きているかと、直し方を短く教えてください。", what)
+        if runtime.isRunning {
+            addAttachments([image])
+            input.string = text
+            relayoutInput()
+            setInputHint(L("いまは作業中です。Enter で予約に足せます"))
+            return
+        }
+        send(text + AgentChatController.attachMarker + "\n- " + image.path + "\n" + L("画像やファイルは Read ツールで開いて内容を確認してください。"))
+    }
+
+    /// Mac の音声入力を、この入力欄で始める（AI ではなく macOS の機能。話した言葉がそのまま入力欄に入る）
+    @objc private func startDictation() {
+        guard input.isEditable else { NSSound.beep(); return }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(input)
+        NSApp.sendAction(Selector(("startDictation:")), to: nil, from: self)
+    }
+
+    @objc private func orgThumbsUp() { orgReact(.thumbsUp) }
+    @objc private func orgThumbsDown() { orgReact(.thumbsDown) }
+
+    private func orgReact(_ r: OrgReaction) {
+        guard let id = jelly?.record.id else { return }
+        manager?.team?.react(id, r)
+        refresh()
+    }
+
+    @objc private func chooseFolder() {
+        let op = NSOpenPanel()
+        op.canChooseDirectories = true
+        op.canChooseFiles = false
+        op.allowsMultipleSelection = false
+        op.directoryURL = runtime.cwd
+        op.prompt = L("このフォルダで作業")
+        op.message = L("このおもちが作業するフォルダを選んでください（新しいセッションとして始まります）")
+        op.beginSheetModal(for: window) { [weak self] resp in
+            guard resp == .OK, let url = op.url, let self else { return }
+            self.runtime.changeFolder(url)
+            self.refresh()
+        }
+    }
+
+    /// 同じセッションをターミナルで開く（.command ファイル経由。オートメーション権限は不要）
+    @objc private func engineChanged() {
+        let i = enginePopup.indexOfSelectedItem
+        let e: AgentEngine? = i <= 0 ? nil : AgentEngine.allCases[i - 1]
+        guard e != runtime.engine else { return }
+        runtime.changeEngine(e)
+        // 選んだ AI にログインしていなければ、すぐ分かるように確かめ直す
+        manager?.refreshEngineStatus([runtime.effectiveEngine])
+        refresh()
+        reloadTranscript()
+        window.makeFirstResponder(input)
+    }
+
+    @objc private func openInTerminal() {
+        if runtime.effectiveEngine == .gemini {
+            manager?.openLogin(.gemini, folder: runtime.cwd)
+            return
+        }
+        guard runtime.sessionStarted, let claude = manager?.claudeExecutable else { return }
+        // ターミナルでも、許可していなければ API キー（従量課金）の環境変数を外して開く
+        let unset = BillingGuard.allowAPI ? "" : "unset " + BillingGuard.apiEnvKeys.joined(separator: " ") + "\n"
+        let script = """
+        #!/bin/zsh -l
+        \(unset)cd \(shellQuote(runtime.cwd.path)) && exec \(shellQuote(claude.path)) --resume \(shellQuote(runtime.sessionID))
+        """
+        let url = runtime.dir.appendingPathComponent("open-in-claude.command")
+        do {
+            try script.write(to: url, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
+            NSWorkspace.shared.open(url)
+        } catch {
+            NSSound.beep()
+        }
+    }
+
+    private func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+
+    // MARK: 入力欄の高さ（1〜7 行で伸びる）
+
+    func textDidChange(_ notification: Notification) { relayoutInput() }
+
+    /// 会話の中のリンク・サムネイルが押された：「表紙を見る」なら読みに行く。ファイルは、行き先が画像・PDF のふつうのファイルかを
+    /// もう一度確かめてから開く。Web は http / https・mailto だけ（ブラウザ・メールで）。それ以外は開かない
+    private func openLink(_ href: String) {
+        guard let url = URL(string: href) else { return }
+        if url.scheme == ChatMediaCache.previewScheme {
+            ChatMediaCache.shared.allow(link: url)
+            return
+        }
+        if url.isFileURL {
+            if let f = ChatMedia.resolvedFile(url.path) { NSWorkspace.shared.open(f) } else { NSSound.beep() }
+            return
+        }
+        if ["http", "https", "mailto"].contains(url.scheme?.lowercased() ?? "") { NSWorkspace.shared.open(url) }
+    }
+
+    private func relayoutInput() {
+        guard let tc = input.textContainer, let lm = input.layoutManager else { return }
+        lm.ensureLayout(for: tc)
+        let h = lm.usedRect(for: tc).height + input.textContainerInset.height * 2 + 2
+        inputHeight.constant = min(max(h, 46), 170)
+    }
+
+    // MARK: NSWindowDelegate
+
+    func windowDidEndLiveResize(_ notification: Notification) {
+        // ユーザーが端をドラッグして決めた大きさを、次に開くウィンドウの既定にする（⌘L の小さな入力欄の大きさは覚えない）
+        if !window.styleMask.contains(.fullScreen) { manager?.rememberChatSize(window.frame.size) }
+    }
+
+    /// おもちを消したとき・言語を変えたときに閉じる。フル画面なら先に画面から外さず閉じる
+    /// （外すだけだと中身の無いフル画面のスペースが残る。閉じればスペースごと終わる）
+    func dismiss() {
+        if !isFullScreen { window.orderOut(nil) }
+        window.close()
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) { lastActive = Date() }
+
+    // フル画面の窓は自分のスペースにいる。「前に出すと今のスペースへ移る」（moveToActiveSpace）はフル画面のあいだ外し、
+    // おもちを押したときなどは、ほかのアプリのフル画面と同じくそのスペースへ切り替える
+    func windowWillEnterFullScreen(_ notification: Notification) {
+        window.collectionBehavior.remove(.moveToActiveSpace)
+        AppLog.write("chat \(jelly?.record.number ?? -1): full screen on")
+    }
+    func windowDidFailToEnterFullScreen(_ window: NSWindow) { window.collectionBehavior.insert(.moveToActiveSpace) }
+    func windowDidExitFullScreen(_ notification: Notification) {
+        window.collectionBehavior.insert(.moveToActiveSpace)
+        AppLog.write("chat \(jelly?.record.number ?? -1): full screen off")
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        AppLog.write("chat \(jelly?.record.number ?? -1): window closed")
+        DispatchQueue.main.async { [weak self] in self?.manager?.chatWindowVisibilityChanged() }
+    }
+
+    func windowDidMiniaturize(_ notification: Notification) {
+        AppLog.write("chat \(jelly?.record.number ?? -1): minimized")
+        manager?.chatWindowVisibilityChanged()
+    }
+    func windowDidDeminiaturize(_ notification: Notification) { manager?.chatWindowVisibilityChanged() }
+}
+
+/// 返答の Markdown を読みやすく整形する（見出し・箇条書き・太字・斜体・インラインコード・リンク・コードブロック）
+enum Markdown {
+    static func render(_ text: String, size: CGFloat) -> NSAttributedString {
+        let out = NSMutableAttributedString()
+        let base = NSFont.systemFont(ofSize: size)
+        let mono = NSFont.monospacedSystemFont(ofSize: size - 1.5, weight: .regular)
+        let parts = text.components(separatedBy: "```")
+        for (i, part) in parts.enumerated() {
+            if i % 2 == 1 {
+                var code = part
+                if let nl = code.firstIndex(of: "\n") { code = String(code[code.index(after: nl)...]) }
+                code = code.trimmingCharacters(in: .newlines)
+                let ps = NSMutableParagraphStyle()
+                ps.headIndent = 10; ps.firstLineHeadIndent = 10; ps.paragraphSpacing = 4; ps.paragraphSpacingBefore = 4
+                out.append(NSAttributedString(string: code + "\n", attributes: [
+                    .font: mono, .foregroundColor: NSColor.labelColor,
+                    .backgroundColor: NSColor.quaternaryLabelColor.withAlphaComponent(0.18), .paragraphStyle: ps]))
+                continue
+            }
+            let lines = part.components(separatedBy: "\n")
+            for (j, rawLine) in lines.enumerated() {
+                var line = rawLine
+                var font = base
+                let ps = NSMutableParagraphStyle()
+                ps.lineSpacing = 2
+                if let m = line.range(of: #"^#{1,6}\s+"#, options: .regularExpression) {
+                    let level = line[m].filter { $0 == "#" }.count
+                    line.removeSubrange(m)
+                    font = NSFont.systemFont(ofSize: size + CGFloat(max(0, 4 - level)), weight: .bold)
+                    ps.paragraphSpacingBefore = 6
+                } else if let m = line.range(of: #"^(\s*)[-*+]\s+"#, options: .regularExpression) {
+                    let indent = line[m].prefix { $0 == " " }.count
+                    line.replaceSubrange(m, with: String(repeating: "  ", count: indent / 2) + "• ")
+                    ps.headIndent = 14 + CGFloat(indent) * 4
+                }
+                out.append(inline(line, font: font, mono: mono, paragraph: ps))
+                if j < lines.count - 1 { out.append(NSAttributedString(string: "\n", attributes: [.font: base])) }
+            }
+        }
+        return out
+    }
+
+    private static func inline(_ s: String, font: NSFont, mono: NSFont, paragraph: NSParagraphStyle) -> NSAttributedString {
+        let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.labelColor, .paragraphStyle: paragraph]
+        guard let parsed = try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) else {
+            return NSAttributedString(string: s, attributes: attrs)
+        }
+        let out = NSMutableAttributedString()
+        for run in parsed.runs {
+            let piece = String(parsed[run.range].characters)
+            var a = attrs
+            if let intent = run.inlinePresentationIntent {
+                var f = font
+                if intent.contains(.stronglyEmphasized) { f = NSFontManager.shared.convert(f, toHaveTrait: .boldFontMask) }
+                if intent.contains(.emphasized) { f = NSFontManager.shared.convert(f, toHaveTrait: .italicFontMask) }
+                if intent.contains(.code) {
+                    f = mono
+                    a[.backgroundColor] = NSColor.quaternaryLabelColor.withAlphaComponent(0.25)
+                }
+                a[.font] = f
+            }
+            // 返答の中のリンクは Web とメールだけ押せるようにする（omochi:// や他のアプリのスキームは開かない）
+            if let link = run.link, ["http", "https", "mailto"].contains(link.scheme?.lowercased() ?? "") { a[.link] = link }
+            out.append(NSAttributedString(string: piece, attributes: a))
+        }
+        return out
+    }
+}

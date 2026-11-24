@@ -1,16 +1,16 @@
-Jellyfish AI のインストール
+OMOCHI AI のインストール
 ==========================
 
-1. 「JellyfishAI」を右の「Applications」フォルダへドラッグします。
-2. アプリケーションフォルダの JellyfishAI を開きます。
+1. 「OMOCHI AI」を右の「Applications」フォルダへドラッグします。
+2. アプリケーションフォルダの OMOCHI AI を開きます。
 
 初回だけ「開けません」「Apple は検証できませんでした」と表示されます。
-Jellyfish AI は Apple の開発者署名・公証を受けていない個人の開発物のためです。
+OMOCHI AI は Apple の開発者署名・公証を受けていない個人の開発物のためです。
 内容を確認したうえで開く場合は、次の手順で許可してください（macOS の正規の手順です）。
 
   1. 表示されたダイアログは「完了」で閉じる
   2. システム設定 › プライバシーとセキュリティ を開く
-  3. 下の方にある JellyfishAI がブロックされたという表示の横の
+  3. 下の方にある OMOCHI AI がブロックされたという表示の横の
      「このまま開く」を押し、パスワード（または Touch ID）で確認する
 
 2 回目以降は普通に開けます。
@@ -24,21 +24,21 @@ Jellyfish AI は Apple の開発者署名・公証を受けていない個人の
 https://github.com/Rhizobium-gits/jellyfish-ai
 
 
-Installing Jellyfish AI
+Installing OMOCHI AI
 -----------------------
-Drag "JellyfishAI" to "Applications" and open it. Because the app is not
+Drag "OMOCHI AI" to "Applications" and open it. Because the app is not
 notarized by Apple, macOS blocks the first launch. To allow it, close the
 dialog, open System Settings > Privacy & Security, and click "Open Anyway"
-next to the message about JellyfishAI. Requires macOS 14+ and Claude Code
+next to the message about OMOCHI AI. Requires macOS 14+ and Claude Code
 (the `claude` CLI) installed and signed in.
-Switch the display language from the menu bar jellyfish > Language.
+Switch the display language from the menu bar omochi > Language.
 Details: https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.en.md
 
 
-安装 Jellyfish AI
+安装 OMOCHI AI
 -----------------
-把“JellyfishAI”拖到“Applications”（应用程序）后打开。由于没有经过 Apple 公证，
+把“OMOCHI AI”拖到“Applications”（应用程序）后打开。由于没有经过 Apple 公证，
 首次打开会被 macOS 阻止。请关闭对话框，打开 系统设置 > 隐私与安全性，
-在关于 JellyfishAI 的提示旁点击“仍要打开”。需要 macOS 14 及以上，并已安装、
-登录 Claude Code（claude 命令）。可以在菜单栏的水母 > 语言 中切换显示语言。
+在关于 OMOCHI AI 的提示旁点击“仍要打开”。需要 macOS 14 及以上，并已安装、
+登录 Claude Code（claude 命令）。可以在菜单栏的年糕 > 语言 中切换显示语言。
 详情：https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.zh-CN.md

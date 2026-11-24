@@ -3,11 +3,11 @@
 //   swiftc -O scripts/demo/recorder.swift -o .build/recorder
 //   .build/recorder scripts/demo/<take>.json <出力フォルダ>
 //
-// - 指定した範囲に無地の背景ウィンドウを出し、Jellyfish AI のウィンドウとその背景だけを
+// - 指定した範囲に無地の背景ウィンドウを出し、OMOCHI AI のウィンドウとその背景だけを
 //   ScreenCaptureKit で撮る（他のアプリ・通知・デスクトップは写らない）
-// - タイムラインに沿って jellyfish:// URL を開いてアプリを操作する。
+// - タイムラインに沿って omochi:// URL を開いてアプリを操作する。
 //   wait を付けた手順は、jellies.json の状態がそうなるまで待つ（Claude の応答時間に合わせる）
-// - 出力：frame-00001.png …、frames.json（各フレームの時刻）、events.json（手順の時刻とクラゲの位置）
+// - 出力：frame-00001.png …、frames.json（各フレームの時刻）、events.json（手順の時刻とおもちの位置）
 import AppKit
 import CoreImage
 import ScreenCaptureKit
@@ -26,16 +26,16 @@ struct Timeline: Decodable {
     var region: [Double]        // 左上原点のグローバル座標（ポイント）x, y, w, h
     var scale: Double?
     var fps: Double?
-    var dataDir: String         // デモ用 JELLYFISH_DATA_DIR（状態待ちに使う）
+    var dataDir: String         // デモ用 OMOCHI_DATA_DIR（状態待ちに使う）
     var background: [String]?   // グラデーションの色（#RRGGBB）
     var steps: [Step]
 }
 
 let args = CommandLine.arguments
-// 録画する Jellyfish（DEMO_APP・DEMO_BUNDLE_ID で、普段のアプリを止めずに別の ID の写しを撮れる。record.sh の DEMO_KEEP_APP=1）
+// 録画する OMOCHI AI（DEMO_APP・DEMO_BUNDLE_ID で、普段のアプリを止めずに別の ID の写しを撮れる。record.sh の DEMO_KEEP_APP=1）
 let demoApp = ProcessInfo.processInfo.environment["DEMO_APP"].map { URL(fileURLWithPath: $0) }
-    ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("dist/JellyfishAI.app")
-let demoBundleID = ProcessInfo.processInfo.environment["DEMO_BUNDLE_ID"] ?? "ai.jellyfish.desktop"
+    ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("dist/OMOCHI AI.app")
+let demoBundleID = ProcessInfo.processInfo.environment["DEMO_BUNDLE_ID"] ?? "ai.omochi.desktop"
 guard args.count >= 3 else { print("usage: recorder <timeline.json> <outdir>"); exit(2) }
 let timeline = try! JSONDecoder().decode(Timeline.self, from: Data(contentsOf: URL(fileURLWithPath: args[1])))
 let outDir = URL(fileURLWithPath: args[2], isDirectory: true)
@@ -91,7 +91,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         let me = ProcessInfo.processInfo.processIdentifier
         let apps = content.applications.filter { $0.processID == me || $0.bundleIdentifier == demoBundleID }
         guard apps.contains(where: { $0.bundleIdentifier == demoBundleID }) else {
-            print("JellyfishAI が起動していません"); exit(1)
+            print("OmochiAI が起動していません"); exit(1)
         }
         let r = regionTopLeft
         guard let display = content.displays.first(where: { $0.frame.contains(CGPoint(x: r.midX, y: r.midY)) }) else {
@@ -148,14 +148,14 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         return c.url
     }
 
-    /// jellies.json から各クラゲの状態を読む
+    /// jellies.json から各おもちの状態を読む
     func state(of agent: Int) -> String? {
         let url = URL(fileURLWithPath: (tl.dataDir as NSString).expandingTildeInPath).appendingPathComponent("jellies.json")
         guard let d = try? Data(contentsOf: url), let arr = try? JSONSerialization.jsonObject(with: d) as? [[String: Any]] else { return nil }
         return arr.first { ($0["number"] as? Int) == agent }?["state"] as? String
     }
 
-    /// その時点の Jellyfish のウィンドウ（位置は録画範囲内の座標）
+    /// その時点の OMOCHI AI のウィンドウ（位置は録画範囲内の座標）
     func jellyWindows() -> [[String: Any]] {
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return [] }
         let pids = Set(NSRunningApplication.runningApplications(withBundleIdentifier: demoBundleID).map(\.processIdentifier))
@@ -174,7 +174,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         print(String(format: "%6.2f  %@", t, mark))
     }
 
-    /// 全クラゲの状態を 10Hz で見て、変わったら events に残す（字幕のタイミング用）
+    /// 全おもちの状態を 10Hz で見て、変わったら events に残す（字幕のタイミング用）
     var lastStates: [Int: String] = [:]
     func watchStates() {
         let url = URL(fileURLWithPath: (tl.dataDir as NSString).expandingTildeInPath).appendingPathComponent("jellies.json")
@@ -187,7 +187,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     func run() async {
-        // アプリの起動を待つ（起動直後のクラゲ出現アニメーションが落ち着くまで）
+        // アプリの起動を待つ（起動直後のおもち出現アニメーションが落ち着くまで）
         for _ in 0..<100 where NSRunningApplication.runningApplications(withBundleIdentifier: demoBundleID).isEmpty {
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
@@ -210,7 +210,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
             }
             if let u = step.url, let url = await withToken(u) {
                 // 作業中のアプリからフォーカスを奪わないよう、前面化せずに URL を渡す。
-                // アプリケーションフォルダにも Jellyfish AI があるので、録画用に起動した dist/ の方へ明示して渡す
+                // アプリケーションフォルダにも OMOCHI AI があるので、録画用に起動した dist/ の方へ明示して渡す
                 await MainActor.run {
                     let cfg = NSWorkspace.OpenConfiguration()
                     cfg.activates = false

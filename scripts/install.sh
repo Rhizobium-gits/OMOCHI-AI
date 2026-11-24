@@ -1,11 +1,11 @@
 #!/bin/bash
-# この Mac で Jellyfish AI を普通のアプリとして使えるようにする（毎回ターミナルから起動しなくてよくなる）。
+# この Mac で OMOCHI AI を普通のアプリとして使えるようにする（毎回ターミナルから起動しなくてよくなる）。
 #   scripts/install.sh              ビルドして「アプリケーション」フォルダに入れ、起動する
-#   scripts/install.sh --no-build   いまの dist/JellyfishAI.app をそのまま入れる
+#   scripts/install.sh --no-build   いまの dist/OMOCHI AI.app をそのまま入れる
 # scripts/signing.sh で署名用の証明書を作ってあれば、それで署名する（ビルドし直しても macOS の許可が続く）。
 # 入れたあとは Launchpad・Spotlight・Finder の「アプリケーション」から開ける。Dock に置くこともできる。
 # 入れる先は /Applications（書き込めなければ ~/Applications）。dist/ の .app は移すので、同じアプリが 2 つ並ばない。
-# 動いている Jellyfish AI は終えてから入れ替える（作業中のエージェントがいるときは何もしない）。
+# 動いている OMOCHI AI は終えてから入れ替える（作業中のエージェントがいるときは何もしない）。
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -17,18 +17,18 @@ for a in "$@"; do
   esac
 done
 
-BUNDLE_ID=ai.jellyfish.desktop
-SRC="$ROOT/dist/JellyfishAI.app"
+BUNDLE_ID=ai.omochi.desktop
+SRC="$ROOT/dist/OMOCHI AI.app"
 DEST_DIR=/Applications
 [[ -w "$DEST_DIR" ]] || { DEST_DIR="$HOME/Applications"; mkdir -p "$DEST_DIR"; }
-DEST="$DEST_DIR/JellyfishAI.app"
+DEST="$DEST_DIR/OMOCHI AI.app"
 
 bundle_id() { /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$1/Contents/Info.plist" 2>/dev/null || true; }
 
 running_busy() {
   # エージェントが動いている間は claude などがアプリの子プロセスとしている
   local p
-  for p in $(pgrep -x JellyfishAI || true); do
+  for p in $(pgrep -x OmochiAI || true); do
     pgrep -P "$p" >/dev/null && return 0
   done
   return 1
@@ -44,20 +44,20 @@ fi
 [[ "$(bundle_id "$SRC")" == "$BUNDLE_ID" ]] || { echo "$SRC がありません（scripts/build.sh でビルドしてください）" >&2; exit 1; }
 # 入れ替える先に別のアプリがあれば触らない
 if [[ -e "$DEST" && "$(bundle_id "$DEST")" != "$BUNDLE_ID" ]]; then
-  echo "$DEST は Jellyfish AI ではないので、上書きしません。" >&2
+  echo "$DEST は OMOCHI AI ではないので、上書きしません。" >&2
   exit 1
 fi
 
-# 動いている Jellyfish AI を終える（終了の処理で、クラゲの位置などを保存してから終わる）
-if pgrep -x JellyfishAI >/dev/null; then
+# 動いている OMOCHI AI を終える（終了の処理で、おもちの位置などを保存してから終わる）
+if pgrep -x OmochiAI >/dev/null; then
   if running_busy; then
     echo "作業中のエージェントがいるので、入れ替えをやめました。終わってからもう一度実行してください（ビルドは dist/ に残っています。--no-build で入れられます）。" >&2
     exit 1
   fi
-  pkill -x JellyfishAI || true
-  for _ in $(seq 100); do pgrep -x JellyfishAI >/dev/null || break; /bin/sleep 0.1; done
-  if pgrep -x JellyfishAI >/dev/null; then
-    echo "Jellyfish AI が終わらないので、入れ替えをやめました。メニューバーのおもちから終了してから、もう一度実行してください。" >&2
+  pkill -x OmochiAI || true
+  for _ in $(seq 100); do pgrep -x OmochiAI >/dev/null || break; /bin/sleep 0.1; done
+  if pgrep -x OmochiAI >/dev/null; then
+    echo "OMOCHI AI が終わらないので、入れ替えをやめました。メニューバーのおもちから終了してから、もう一度実行してください。" >&2
     exit 1
   fi
 fi
@@ -65,7 +65,7 @@ fi
 rm -rf "$DEST"
 mv "$SRC" "$DEST"
 # ソースから入れたことを覚える（アプリの「ターミナルでアップデート」が、ここで git pull → install.sh を勧める）
-DATA_DIR="$HOME/Library/Application Support/JellyfishAI"
+DATA_DIR="$HOME/Library/Application Support/OmochiAI"
 if [[ -d "$DATA_DIR" ]]; then
   printf '%s\n' "$ROOT" > "$DATA_DIR/source-checkout"
   chmod 600 "$DATA_DIR/source-checkout"
@@ -73,8 +73,8 @@ fi
 open -g "$DEST"
 
 echo "Installed: $DEST  (v$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$DEST/Contents/Info.plist"))"
-echo "  ・Launchpad・Spotlight（⌘Space で「Jellyfish」）・Finder の「アプリケーション」から開けます。"
-echo "    Dock に置くなら、アプリケーションフォルダの Jellyfish AI を Dock へドラッグしてください。"
+echo "  ・Launchpad・Spotlight（⌘Space で「OMOCHI AI」）・Finder の「アプリケーション」から開けます。"
+echo "    Dock に置くなら、アプリケーションフォルダの OMOCHI AI を Dock へドラッグしてください。"
 echo "  ・動いているときにアイコンを開くと、隠したおもちを出します（1 体もいなければ新しいおもちを出します）。"
 SIG="$(codesign -d --verbose=2 "$DEST" 2>&1 || true)"
 if [[ "$SIG" == *$'\nAuthority='* ]]; then
@@ -82,10 +82,10 @@ if [[ "$SIG" == *$'\nAuthority='* ]]; then
   echo "    （初めてこの証明書の版を入れたときだけ、フォルダ・アクセシビリティ・画面収録をもう一度許可してください）。"
 else
   echo "  ・PC 操作・画面の添付を使っているなら、システム設定 › プライバシーとセキュリティ の「アクセシビリティ」"
-  echo "    「画面収録」で Jellyfish AI をいったん外して（−）、もう一度許可してください（アドホック署名のため、"
+  echo "    「画面収録」で OMOCHI AI をいったん外して（−）、もう一度許可してください（アドホック署名のため、"
   echo "    ビルドし直すと macOS は別のアプリとみなします。scripts/signing.sh create で証明書を作ると続くようになります）。"
 fi
-settings="$HOME/Library/Application Support/JellyfishAI/settings.json"
+settings="$HOME/Library/Application Support/OmochiAI/settings.json"
 if [[ "$(plutil -extract launchAtLogin raw "$settings" 2>/dev/null || true)" == "true" ]]; then
   echo "  ・アプリの場所が変わったので、ログイン時に起動しなくなっていたら、メニューバーのおもち ›"
   echo "    「ログイン時に自動起動」を一度オフにしてからオンにしてください。"

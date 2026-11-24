@@ -37,8 +37,8 @@ jobs:
         run: scripts/build.sh --universal
       - name: Verify bundle
         run: |
-          codesign --verify --strict --verbose=2 dist/JellyfishAI.app
-          codesign -d --verbose=2 dist/JellyfishAI.app 2>&1 | grep -q 'flags=.*runtime'
-          lipo -archs dist/JellyfishAI.app/Contents/MacOS/JellyfishAI | grep -q x86_64
-          lipo -archs dist/JellyfishAI.app/Contents/MacOS/JellyfishAI | grep -q arm64
-          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" dist/JellyfishAI.app/Contents/Info.plist
+          codesign --verify --strict --verbose=2 "dist/OMOCHI AI.app"
+          codesign -d --verbose=2 "dist/OMOCHI AI.app" 2>&1 | grep -q 'flags=.*runtime'
+          lipo -archs "dist/OMOCHI AI.app/Contents/MacOS/OmochiAI" | grep -q x86_64
+          lipo -archs "dist/OMOCHI AI.app/Contents/MacOS/OmochiAI" | grep -q arm64
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "dist/OMOCHI AI.app/Contents/Info.plist"

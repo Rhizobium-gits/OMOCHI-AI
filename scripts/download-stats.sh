@@ -6,7 +6,7 @@
 #   scripts/download-stats.sh --force    数が変わっていなくても書く（グラフの見た目を変えたときに）
 # 数えるもの（合計が total、バッジに出る数）：
 #   dmg    リリースの .dmg のダウンロード（README・リリースのページ・curl などで取って入れた）
-#   zip    リリースの JellyfishAI-<版>.zip のダウンロード（アプリの「アップデートする」・ターミナルの update.sh・手での .zip）
+#   zip    リリースの OmochiAI-<版>.zip のダウンロード（アプリの「アップデートする」・ターミナルの update.sh・手での .zip）
 #   clone  git clone（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラーの clone も入る。このリポジトリの CI はソースを git でなくアーカイブで取るので入らない）
 #   SHA256SUMS.txt はアップデートのたびに取るので数えない
 # clone 数は GitHub が直近 14 日の分しか残さないので、日ごとに stats.json に貯める（同じ日は大きいほうを取る）。
@@ -20,8 +20,8 @@
 # 自分の clone を数に入れないよう、リポジトリは clone しない（GitHub の API で読み書きする）
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO="${JELLYFISH_REPO:-Rhizobium-gits/jellyfish-ai}"
-BRANCH="${JELLYFISH_STATS_BRANCH:-stats}"
+REPO="${OMOCHI_REPO:-Rhizobium-gits/jellyfish-ai}"
+BRANCH="${OMOCHI_STATS_BRANCH:-stats}"
 DRY=0
 FORCE=0
 for a in "$@"; do

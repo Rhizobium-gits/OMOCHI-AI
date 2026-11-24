@@ -1,6 +1,6 @@
 #!/bin/bash
-# Jellyfish AI を .app にまとめる。Xcode 不要（Command Line Tools の swift だけで完結）。
-#   scripts/build.sh                  release ビルド（この Mac の CPU 用）→ dist/JellyfishAI.app
+# OMOCHI AI を .app にまとめる。Xcode 不要（Command Line Tools の swift だけで完結）。
+#   scripts/build.sh                  release ビルド（この Mac の CPU 用）→ dist/OMOCHI AI.app
 #   scripts/build.sh debug            debug ビルド
 #   scripts/build.sh --universal      Apple シリコン + Intel の両方で動く .app（配布用）
 #   scripts/build.sh --sign           scripts/signing.sh で作った証明書で署名する（無ければアドホック署名）。
@@ -24,7 +24,7 @@ done
 VERSION="$(tr -d '[:space:]' < VERSION)"
 BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 
-APP="$ROOT/dist/JellyfishAI.app"
+APP="$ROOT/dist/OMOCHI AI.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
@@ -32,22 +32,22 @@ if [[ $UNIVERSAL == 1 ]]; then
   bins=()
   for arch in arm64 x86_64; do
     swift build -c "$CONFIG" --arch "$arch"
-    bins+=("$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)/JellyfishAI")
+    bins+=("$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)/OmochiAI")
   done
-  lipo -create "${bins[@]}" -output "$APP/Contents/MacOS/JellyfishAI"
+  lipo -create "${bins[@]}" -output "$APP/Contents/MacOS/OmochiAI"
   # アイコン描画はこの Mac の CPU 用のバイナリで
-  NATIVE="$(swift build -c "$CONFIG" --arch "$(uname -m)" --show-bin-path)/JellyfishAI"
+  NATIVE="$(swift build -c "$CONFIG" --arch "$(uname -m)" --show-bin-path)/OmochiAI"
 else
   swift build -c "$CONFIG"
-  NATIVE="$(swift build -c "$CONFIG" --show-bin-path)/JellyfishAI"
-  cp "$NATIVE" "$APP/Contents/MacOS/JellyfishAI"
+  NATIVE="$(swift build -c "$CONFIG" --show-bin-path)/OmochiAI"
+  cp "$NATIVE" "$APP/Contents/MacOS/OmochiAI"
 fi
 
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
-# コマンド 1 つで新しい版に上げるスクリプト（ソースが無くても /Applications/JellyfishAI.app/Contents/Resources/update.sh で使える）
+# コマンド 1 つで新しい版に上げるスクリプト（ソースが無くても "/Applications/OMOCHI AI.app/Contents/Resources/update.sh" で使える）
 install -m 755 "$ROOT/scripts/update.sh" "$APP/Contents/Resources/update.sh"
 # チャットの会話の表示（表・数式・図）：HTML と、アプリの中で読み込むライブラリ（Resources/chat/vendor、ネットには取りに行かない）
 rm -rf "$APP/Contents/Resources/chat"
@@ -55,7 +55,7 @@ ditto "$ROOT/Resources/chat" "$APP/Contents/Resources/chat"
 # macOS の許可をまとめて扱うスクリプト（アプリの「🔐 権限」からも使う）
 install -m 755 "$ROOT/scripts/permissions.sh" "$APP/Contents/Resources/permissions.sh"
 
-# アイコン：Resources/AppIcon.png（正方形の絵）を macOS のアイコンの角丸の枠に収める。無ければクラゲのドット絵を描く
+# アイコン：Resources/AppIcon.png（正方形の絵）を macOS のアイコンの角丸の枠に収める。無ければおもちのドット絵を描く
 TMP="$(mktemp -d)"
 ICONSET="$TMP/AppIcon.iconset"
 mkdir -p "$ICONSET"
@@ -74,10 +74,10 @@ rm -rf "$TMP"
 # Hardened Runtime を付ける：このアプリはアクセシビリティ・画面収録の許可を持つので、DYLD_INSERT_LIBRARIES などで
 # 他のプログラムがこのプロセスに入り込み、その許可を使うことを OS に止めてもらう（entitlement は Apple Events の確認を出すためのものだけ）
 # --sign：scripts/signing.sh の証明書で署名する（macOS が署名のたびに確認する）。無い・使えないときはアドホック署名
-IDENTITY="${JELLYFISH_SIGN_IDENTITY:-Jellyfish AI Local Signing}"
+IDENTITY="${OMOCHI_SIGN_IDENTITY:-OMOCHI AI Local Signing}"
 SIGNED_WITH="ad-hoc"
-# Hardened Runtime の例外は Apple Events の確認を出せるようにすることだけ（Resources/JellyfishAI.entitlements）
-ENTITLEMENTS="$ROOT/Resources/JellyfishAI.entitlements"
+# Hardened Runtime の例外は Apple Events の確認を出せるようにすることだけ（Resources/OmochiAI.entitlements）
+ENTITLEMENTS="$ROOT/Resources/OmochiAI.entitlements"
 IDS="$(security find-identity -p codesigning 2>/dev/null || true)"
 if [[ $SIGN == 1 && "$IDS" == *"\"$IDENTITY\""* ]]; then
   if codesign --force --options runtime --entitlements "$ENTITLEMENTS" --sign "$IDENTITY" --timestamp=none "$APP" >/dev/null 2>&1; then
@@ -89,4 +89,4 @@ elif [[ $SIGN == 1 ]]; then
   echo "署名用の証明書「${IDENTITY}」がありません（scripts/signing.sh create で作れます）。アドホック署名にします" >&2
 fi
 [[ "$SIGNED_WITH" == "ad-hoc" ]] && codesign --force --options runtime --entitlements "$ENTITLEMENTS" --sign - --timestamp=none "$APP" >/dev/null
-echo "Built: $APP  (v$VERSION build $BUILD_NUMBER, $(lipo -archs "$APP/Contents/MacOS/JellyfishAI"), signed: $SIGNED_WITH)"
+echo "Built: $APP  (v$VERSION build $BUILD_NUMBER, $(lipo -archs "$APP/Contents/MacOS/OmochiAI"), signed: $SIGNED_WITH)"

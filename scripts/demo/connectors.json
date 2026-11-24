@@ -17,41 +17,41 @@
   {
    "delay": 1.0,
    "mark": "open",
-   "url": "jellyfish://connectors?x=990&y=60"
+   "url": "omochi://connectors?x=990&y=60"
   },
   {
    "delay": 2.6,
    "mark": "readOnly",
-   "url": "jellyfish://connectors?press=readOnly"
+   "url": "omochi://connectors?press=readOnly"
   },
   {
    "delay": 2.8,
    "mark": "recommended",
-   "url": "jellyfish://connectors?press=recommended"
+   "url": "omochi://connectors?press=recommended"
   },
   {
    "delay": 3.0,
    "mark": "claudeTop",
-   "url": "jellyfish://connectors?press=claudeTop"
+   "url": "omochi://connectors?press=claudeTop"
   },
   {
    "delay": 3.0,
    "mark": "custom",
-   "url": "jellyfish://connectors?press=calendar.codex"
+   "url": "omochi://connectors?press=calendar.codex"
   },
   {
    "delay": 1.4,
-   "url": "jellyfish://connectors?press=reminders.codex"
+   "url": "omochi://connectors?press=reminders.codex"
   },
   {
    "delay": 2.8,
    "mark": "confirm",
-   "url": "jellyfish://connectortest?agent=1"
+   "url": "omochi://connectortest?agent=1"
   },
   {
    "delay": 3.4,
    "mark": "approve",
-   "url": "jellyfish://connectortest?answer=yes"
+   "url": "omochi://connectortest?answer=yes"
   },
   {
    "delay": 2.2,

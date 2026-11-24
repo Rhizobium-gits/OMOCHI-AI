@@ -2,7 +2,7 @@
 
     python3 scripts/demo/make_gif.py .build/demo-frames docs/media [basic parallel states team link crossai connectors]
 
-- 字幕・タップの輪は録画時の events（手順の時刻・クラゲの位置・状態の変化）から付ける
+- 字幕・タップの輪は録画時の events（手順の時刻・おもちの位置・状態の変化）から付ける
 - 再生速度は実時間のまま。AI の返事を待つだけの長い間だけ早送りし、右上に「早送り ×3」を出す
 - フレームに写ったホームのパス（/Users/<名前>）は、scripts/demo/redact.sh が書いた redact.json の位置をぼかす
 - GIF の書き出しは ffmpeg（palettegen / paletteuse）
@@ -38,7 +38,7 @@ def load(name):
 
 
 def jellies(event):
-    """その時点のクラゲのウィンドウ（90x87 前後の小さいもの）を上から順に"""
+    """その時点のおもちのウィンドウ（90x87 前後の小さいもの）を上から順に"""
     ws = [w for w in event["windows"] if w["w"] < 200 and w["h"] < 200 and w["h"] > 60]
     return sorted(ws, key=lambda w: (w["y"], w["x"]))
 
@@ -249,7 +249,7 @@ if want("link"):
             (ev["scissors"]["t"], "線の ✂ でも切れる")]
     render("link", "demo-link.gif", ev["drag1"]["t"] - 0.8, ev["end"]["t"], caps)
 
-# ---- 6. 予約（作業中に次の指示を積む・ほかのクラゲへつなぐ） ----------------------------
+# ---- 6. 予約（作業中に次の指示を積む・ほかのおもちへつなぐ） ----------------------------
 if want("queue"):
     d, tl, ev = load("queue")
     first = lambda prefix, after=0: min((e["t"] for e in tl["events"] if e["mark"].startswith(prefix) and e["t"] > after), default=None)

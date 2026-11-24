@@ -1,20 +1,20 @@
 #!/bin/bash
-# Jellyfish AI 専用の署名用の証明書（自己署名）を、この Mac のログインキーチェーンに作る・確かめる・消す。
+# OMOCHI AI 専用の署名用の証明書（自己署名）を、この Mac のログインキーチェーンに作る・確かめる・消す。
 #   scripts/signing.sh status   あるかどうか
 #   scripts/signing.sh create   作る（有効期限 10 年）
 #   scripts/signing.sh delete   消す（証明書と秘密鍵）
 #
 # なぜ要るか：アドホック署名だと、macOS はビルドし直すたび・新しい版に入れ替えるたびに「別のアプリ」とみなし、
 #   フォルダ（デスクトップ・書類など）・アクセシビリティ・画面収録の許可をもう一度求める。
-#   同じ証明書で署名すると「ai.jellyfish.desktop をこの証明書で署名したもの」として同じアプリと扱われ、一度の許可が続く。
+#   同じ証明書で署名すると「ai.omochi.desktop をこの証明書で署名したもの」として同じアプリと扱われ、一度の許可が続く。
 # 安全のための決まり：
 #   - 秘密鍵はキーチェーンから取り出せない設定で入れる（-x）。作業用の一時ファイルはすぐ消す
 #   - codesign にも事前に許可しない。署名するたびに macOS が「codesign がキーを使おうとしています」と確認する
-#     （ほかのプログラムが黙ってこの証明書で署名し、Jellyfish に付いた許可を引き継ぐことができないように）
+#     （ほかのプログラムが黙ってこの証明書で署名し、OMOCHI AI に付いた許可を引き継ぐことができないように）
 #   - 信頼の設定（システムの証明書の信頼）は変えない。Gatekeeper の扱いはアドホック署名と同じ（初回は「このまま開く」）
 # scripts/build.sh --sign（scripts/install.sh・scripts/release.sh はあれば自動で）がこの証明書で署名する。
 set -euo pipefail
-NAME="${JELLYFISH_SIGN_IDENTITY:-Jellyfish AI Local Signing}"
+NAME="${OMOCHI_SIGN_IDENTITY:-OMOCHI AI Local Signing}"
 KC="$HOME/Library/Keychains/login.keychain-db"
 
 exists() { local ids; ids="$(security find-identity -p codesigning "$KC" 2>/dev/null || true)"; [[ "$ids" == *"\"${NAME}\""* ]]; }

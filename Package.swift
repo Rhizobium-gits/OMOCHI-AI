@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "JellyfishAI",
+    name: "OmochiAI",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "JellyfishAI",
-            path: "Sources/JellyfishAI",
+            name: "OmochiAI",
+            path: "Sources/OmochiAI",
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("Metal"),
@@ -19,9 +19,9 @@ let package = Package(
         ),
         // 画面や claude を使わない部分（設定の読み込み・判定ロジック）のテスト。`swift test` で実行（Xcode 不要）
         .testTarget(
-            name: "JellyfishAITests",
-            dependencies: ["JellyfishAI"],
-            path: "Tests/JellyfishAITests"
+            name: "OmochiAITests",
+            dependencies: ["OmochiAI"],
+            path: "Tests/OmochiAITests"
         ),
     ]
 )

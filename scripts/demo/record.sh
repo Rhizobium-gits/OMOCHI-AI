@@ -2,47 +2,47 @@
 # README の GIF を撮り直す。
 #   scripts/demo/record.sh [basic parallel states team link crossai connectors queue]
 #
-# - 普段の Jellyfish AI を一度終了し、JELLYFISH_DATA_DIR で空のデモ用データから起動して録画する
-#   （JELLYFISH_AUTOMATION=1 で、指示の送信などデモ用の jellyfish:// 操作を受け付ける）
-#   （普段のクラゲ・会話・設定には触れない。録画後に普段のアプリを起動し直す）
-#   （jellyfish:// は録画用に起動した dist/JellyfishAI.app へ明示して渡す。アプリケーションフォルダの方には届かない）
-# - basic / parallel / team は実際に Claude Code へ、crossai は Claude Code と Codex CLI へ指示を送る（作業フォルダは ~/jellyfish-demo）
+# - 普段の OMOCHI AI を一度終了し、OMOCHI_DATA_DIR で空のデモ用データから起動して録画する
+#   （OMOCHI_AUTOMATION=1 で、指示の送信などデモ用の omochi:// 操作を受け付ける）
+#   （普段のおもち・会話・設定には触れない。録画後に普段のアプリを起動し直す）
+#   （omochi:// は録画用に起動した dist/OMOCHI AI.app へ明示して渡す。アプリケーションフォルダの方には届かない）
+# - basic / parallel / team は実際に Claude Code へ、crossai は Claude Code と Codex CLI へ指示を送る（作業フォルダは ~/omochi-demo）
 #   （crossai には ChatGPT でログインした Codex CLI が要る）
 # - 背景は scripts/demo/*.json の background（いまは黒）
 # - 録画範囲は 1920x1080 pt のメインディスプレイ右上を前提にしている（scripts/demo/*.json の region）
-#   （メインディスプレイの大きさが違えば、右上からの位置を保つように録画範囲・シードのクラゲ・
+#   （メインディスプレイの大きさが違えば、右上からの位置を保つように録画範囲・シードのおもち・
 #    connectors の窓の位置をずらした写しを .build/demo-takes に作って撮る）
 # - 録画中はキーボード・マウスに触らない（チャットウィンドウがフォーカスを持つ）
 # - 撮影するプロセス（ターミナル / VS Code）に「画面収録」の許可が必要
-# - DEMO_KEEP_APP=1：普段の Jellyfish AI を止めずに撮る。dist/ の写しの ID を ai.jellyfish.desktop.demo に変えて動かす
+# - DEMO_KEEP_APP=1：普段の OMOCHI AI を止めずに撮る。dist/ の写しの ID を ai.omochi.desktop.demo に変えて動かす
 #   （同じ ID のアプリが動いていると 2 つ目はすぐ終わるため。写しは録画のあと LaunchServices から外す）
 set -e
 cd "$(dirname "$0")/../.."
 # zsh では ${@:-a b} が 1 語になるので、引数が無いときの一覧は別に書く
 if (( $# )); then takes=("$@"); else takes=(basic parallel states team link crossai connectors queue); fi
-[[ -d dist/JellyfishAI.app ]] || scripts/build.sh
-mkdir -p .build ~/jellyfish-demo
+[[ -d "dist/OMOCHI AI.app" ]] || scripts/build.sh
+mkdir -p .build ~/omochi-demo
 swiftc -O scripts/demo/recorder.swift -o .build/recorder
-app="dist/JellyfishAI.app"
-bid="ai.jellyfish.desktop"
+app="dist/OMOCHI AI.app"
+bid="ai.omochi.desktop"
 lsr=/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister
 if [[ "${DEMO_KEEP_APP:-}" == 1 ]]; then
-  bid="ai.jellyfish.desktop.demo"
-  app="$PWD/.build/demo-app/JellyfishAI.app"
+  bid="ai.omochi.desktop.demo"
+  app="$PWD/.build/demo-app/OMOCHI AI.app"
   rm -rf "$app"; mkdir -p "${app:h}"
-  ditto dist/JellyfishAI.app "$app"
+  ditto "dist/OMOCHI AI.app" "$app"
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $bid" "$app/Contents/Info.plist"
-  codesign --force --sign - --options runtime --entitlements Resources/JellyfishAI.entitlements --timestamp=none "$app" 2>/dev/null
+  codesign --force --sign - --options runtime --entitlements Resources/OmochiAI.entitlements --timestamp=none "$app" 2>/dev/null
   export DEMO_APP="$app" DEMO_BUNDLE_ID="$bid"
 fi
-# 録画用に動かした Jellyfish だけを止める（DEMO_KEEP_APP=1 なら写しだけ。普段のアプリには触れない）
+# 録画用に動かした OMOCHI AI だけを止める（DEMO_KEEP_APP=1 なら写しだけ。普段のアプリには触れない）
 stop_demo() {
   if [[ "${DEMO_KEEP_APP:-}" == 1 ]]; then
-    pkill -f "$app/Contents/MacOS/JellyfishAI" 2>/dev/null || true
-    while pgrep -f "$app/Contents/MacOS/JellyfishAI" >/dev/null; do /bin/sleep 0.1; done
+    pkill -f "$app/Contents/MacOS/OmochiAI" 2>/dev/null || true
+    while pgrep -f "$app/Contents/MacOS/OmochiAI" >/dev/null; do /bin/sleep 0.1; done
   else
-    pkill -x JellyfishAI || true
-    while pgrep -x JellyfishAI >/dev/null; do /bin/sleep 0.1; done
+    pkill -x OmochiAI || true
+    while pgrep -x OmochiAI >/dev/null; do /bin/sleep 0.1; done
   fi
 }
 # 終わったら（途中で失敗しても）普段のアプリを起動し直す（scripts/install.sh で入れたものがあればそちら）
@@ -50,11 +50,11 @@ stopped=0
 relaunch() {
   if [[ "${DEMO_KEEP_APP:-}" == 1 ]]; then stop_demo; "$lsr" -u "$app" 2>/dev/null || true; return 0; fi
   (( stopped )) || return 0
-  pkill -x JellyfishAI 2>/dev/null || true
+  pkill -x OmochiAI 2>/dev/null || true
   /bin/sleep 0.5
   local installed=""
-  for d in /Applications ~/Applications; do [[ -d "$d/JellyfishAI.app" ]] && { installed="$d/JellyfishAI.app"; break; }; done
-  open "${installed:-dist/JellyfishAI.app}"
+  for d in /Applications ~/Applications; do [[ -d "$d/OMOCHI AI.app" ]] && { installed="$d/OMOCHI AI.app"; break; }; done
+  open "${installed:-dist/OMOCHI AI.app}"
 }
 trap relaunch EXIT
 # メインディスプレイの大きさ（ポイント）。1920x1080 からの差だけ右上基準でずらす
@@ -87,11 +87,11 @@ for j in js:
 json.dump(js, open(jellies, "w"), ensure_ascii=False, indent=1)
 PY
   fi
-  # 前の録画で覚えたチャットウィンドウの位置・大きさを消す（シードのクラゲは毎回同じ ID）
+  # 前の録画で覚えたチャットウィンドウの位置・大きさを消す（シードのおもちは毎回同じ ID）
   for id in $(grep -oE '[0-9A-F]{8}-[0-9A-F-]{27}' scripts/demo/seed/$name/jellies.json); do
-    defaults delete "$bid" "NSWindow Frame JellyfishChat-$id" 2>/dev/null || true
+    defaults delete "$bid" "NSWindow Frame OmochiChat-$id" 2>/dev/null || true
   done
-  open -n --env JELLYFISH_DATA_DIR="$data" --env JELLYFISH_AUTOMATION=1 "$app"
+  open -n --env OMOCHI_DATA_DIR="$data" --env OMOCHI_AUTOMATION=1 "$app"
   .build/recorder "$take" ".build/demo-frames/$name"
   stop_demo
   /bin/sleep 0.5

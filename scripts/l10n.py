@@ -2,7 +2,7 @@
 """画面の文字の翻訳を管理する。
 
 ソースには日本語をそのまま書き、L("…") / L(\"\"\"…\"\"\") で包む。訳は l10n/en.json・l10n/zh.json（日本語 → 訳）に置き、
-このスクリプトで Swift の表（Sources/JellyfishAI/Localization/Strings+en.swift・+zh.swift）を作る。
+このスクリプトで Swift の表（Sources/OmochiAI/Localization/Strings+en.swift・+zh.swift）を作る。
 
   scripts/l10n.py keys [file.swift ...]   ソースの L("…") のキー（実行時の文字列そのもの）を JSON で出す
   scripts/l10n.py missing en|zh           訳が無いキーを JSON で出す（{キー: ""}。訳を埋めて merge に渡せる）
@@ -16,7 +16,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "Sources", "JellyfishAI")
+SRC = os.path.join(ROOT, "Sources", "OmochiAI")
 L10N = os.path.join(ROOT, "l10n")
 LANGS = ["en", "zh"]
 CALL = re.compile(r'(?<![A-Za-z0-9_.])L\(\s*"')
