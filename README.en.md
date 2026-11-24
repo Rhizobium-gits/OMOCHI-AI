@@ -41,25 +41,27 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/demo-basic.gif" width="820" alt="Pressing ⌘L to bring out a new jellyfish and give it an instruction, tapping it when it finishes to open the result, then giving a follow-up instruction">
+  <img src="docs/media/demo-basic.gif" width="820" alt="Pressing ⌘L to bring out a new mochi and give it an instruction, tapping it when it finishes to open the result, then giving a follow-up instruction">
 </p>
 
 > [!NOTE]
 > This is an unofficial app made by an individual. It is not affiliated with Anthropic, OpenAI or Google. Claude and Claude Code belong to Anthropic; ChatGPT and Codex belong to OpenAI; Gemini belongs to Google.
 
+**From jellyfish to mochi**: Jellyfish AI started out as jellyfish agents drifting on your desktop. Since then it has grown far beyond the original idea — teams that link when you bring agents together and unlink when you pull them apart, work split across AIs, queued and chained prompts — so the agents are now **mochi** instead of jellyfish (since 1.3). The app is still called Jellyfish AI.
+
 ## Key features
 
 | | |
 |---|---|
-| **⌘L for an instant agent** | From any app, ⌘L brings out a new jellyfish and you can type your instruction right away. The jellyfish shows “thinking, working, done, error” through its movement, and tapping it opens the result and a chat to continue |
-| **Choose your AI** | Claude (Claude Code), ChatGPT (Codex CLI) and Gemini (Gemini CLI). Choose the AI, model and thinking effort per jellyfish. You sign in on each one's official screen, and an AI that isn't installed can be installed, all the way through sign-in, once you allow it |
-| **Divide work as a team** | Bring jellyfish close to each other to link them, and they split the work by asking teammates or bringing out new ones. **Across AIs**, a Claude jellyfish can bring out ChatGPT teammates and a ChatGPT jellyfish can bring out Claude teammates. Requests and results travel back and forth along the lines as light |
+| **⌘L for an instant agent** | From any app, ⌘L brings out a new mochi and you can type your instruction right away. The mochi shows “thinking, working, done, error” through its movement, and tapping it opens the result and a chat to continue |
+| **Choose your AI** | Claude (Claude Code), ChatGPT (Codex CLI) and Gemini (Gemini CLI). Choose the AI, model and thinking effort per mochi. You sign in on each one's official screen, and an AI that isn't installed can be installed, all the way through sign-in, once you allow it |
+| **Divide work as a team** | Bring mochi close to each other to link them, and they split the work by asking teammates or bringing out new ones. **Across AIs**, a Claude mochi can bring out ChatGPT teammates and a ChatGPT mochi can bring out Claude teammates. Requests and results travel back and forth along the lines as light |
 | **Autonomous organization mode** | For each request, the agent decides on the team's shape and assembles it on its own, then learns from the results and 👍👎 to evolve how it chooses an organization |
 | **Chat** | Like the ChatGPT, Claude and Gemini apps, **tables, math, diagrams and charts, and highlighted code** are shown as they are. Images and PDFs appear as thumbnails, web pages with their cover and title. 🎙 Mac Dictation, 🎧 system audio transcription, screen and file attachments, ↑↓ for previous instructions |
-| **⏭ Queue & chain** | Type your next prompt while a jellyfish is working and press Enter to queue it. Edit or reorder it until it's sent; it goes out as soon as the task finishes. Send a step to another jellyfish to pass along the previous result — research → summarize → review. **■ Stop (⌘.)** interrupts |
-| **PC control** | Only jellyfish you allow can look at the screen, click and type (Claude). The edges of the screen glow while it's in control, and Esc stops it |
-| **👀 Watching** | A jellyfish reads the front window **on this Mac only** (0 tokens, nothing sent) and asks “take a look?” when something looks like an error. Only that one image is sent, and only if you press it (per jellyfish, off by default) |
-| **🔌 Connectors** | Give jellyfish this Mac's **Calendar, Reminders and Mail** (Google, iCloud and others through the Mac apps), choosing which AI and which model may use each, and how much. One-touch presets, every write asks you first, and mail is never sent |
+| **⏭ Queue & chain** | Type your next prompt while a mochi is working and press Enter to queue it. Edit or reorder it until it's sent; it goes out as soon as the task finishes. Send a step to another mochi to pass along the previous result — research → summarize → review. **■ Stop (⌘.)** interrupts |
+| **PC control** | Only mochi you allow can look at the screen, click and type (Claude). The edges of the screen glow while it's in control, and Esc stops it |
+| **👀 Watching** | A mochi reads the front window **on this Mac only** (0 tokens, nothing sent) and asks “take a look?” when something looks like an error. Only that one image is sent, and only if you press it (per mochi, off by default) |
+| **🔌 Connectors** | Give mochi this Mac's **Calendar, Reminders and Mail** (Google, iCloud and others through the Mac apps), choosing which AI and which model may use each, and how much. One-touch presets, every write asks you first, and mail is never sent |
 | **🔐 Permissions** | Lists the macOS permissions (Accessibility, Screen Recording, Full Disk Access, Automation) and what each one enables, and grants or revokes them all at once |
 | **See your usage** | Bars in the menu bar for Claude's weekly limit and ChatGPT's 5-hour and weekly limits. Plus calls and tokens per AI, per model and per account |
 | **No surprise charges** | Doesn't handle API keys, and doesn't use AIs signed in on pay-as-you-go (Claude included) |
@@ -72,13 +74,13 @@
   <img src="docs/media/demo-crossai.gif" width="820" alt="A Claude leader creates a ChatGPT (Codex) teammate that computes a sum in Python, has a Claude reviewer check the code, and wraps up the results">
 </p>
 
-Ask a Claude jellyfish to “bring out two teammates and split the work: a ChatGPT (Codex) teammate computes the sum of the primes from 1 to 100 in Python, and a Claude teammate checks the code”. The leader brings out **teammates on different AIs**, links them, and requests and results travel along the lines until it wraps up (a real recording; only the waits for replies are sped up 3×, and the captions are in Japanese).
+Ask a Claude mochi to “bring out two teammates and split the work: a ChatGPT (Codex) teammate computes the sum of the primes from 1 to 100 in Python, and a Claude teammate checks the code”. The leader brings out **teammates on different AIs**, links them, and requests and results travel along the lines until it wraps up (a real recording; only the waits for replies are sped up 3×, and the captions are in Japanese).
 
 - Each teammate runs its own AI's official CLI with your own sign-in. The chat title and the reply headings show that teammate's AI (here, ChatGPT (Codex))
 - Choose the AI, model and thinking effort per teammate. See [Split work by each AI's strengths](#split-work-by-each-ais-strengths)
 
 <p align="center">
-  <img src="docs/media/demo-parallel.gif" width="820" alt="Several jellyfish working in parallel, stopping one by one as they finish, and being removed with a long press">
+  <img src="docs/media/demo-parallel.gif" width="820" alt="Several mochi working in parallel, stopping one by one as they finish, and being removed with a long press">
 </p>
 
 ## Download and install
@@ -105,7 +107,7 @@ To check that the download isn't corrupted, compare the output of `shasum -a 256
 > [!IMPORTANT]
 > Agents create, edit and delete files and run commands **without asking** (Claude Code's Auto mode, Codex's sandbox, Gemini's auto_edit; each AI's own safety features stop dangerous operations). The working folder is your home folder by default. For details, see [Permissions and safety](#permissions-and-safety) and [SECURITY.md](SECURITY.md).
 >
-> Agents run on your AI accounts (Claude Pro / Max, ChatGPT, Google) and consume their usage. **Jellyfish doesn't handle API keys and never charges you on its own**. Claude Code alone uses tens of thousands of tokens per call for its baseline, so running many jellyfish in parallel reaches your usage limits quickly. You can check how much you've used from the menu bar jellyfish.
+> Agents run on your AI accounts (Claude Pro / Max, ChatGPT, Google) and consume their usage. **Jellyfish doesn't handle API keys and never charges you on its own**. Claude Code alone uses tens of thousands of tokens per call for its baseline, so running many mochi in parallel reaches your usage limits quickly. You can check how much you've used from the menu bar mochi.
 
 ## How to launch
 
@@ -117,37 +119,37 @@ You don't need Terminal. Open it like any other Mac app.
 | **Launchpad / Apps** | Click the Jellyfish AI icon |
 | **Finder** | Double-click JellyfishAI in the “Applications” folder |
 | **Dock** | Drag JellyfishAI from the Applications folder to the Dock, and from then on it's a single click |
-| **Automatically at login** | Turn on menu bar jellyfish › **Open at login** |
+| **Automatically at login** | Turn on menu bar mochi › **Open at login** |
 
-- Once launched, a jellyfish icon (a pixel-art rice cake) appears in the menu bar. Jellyfish AI is a resident app, so it normally doesn't appear in the Dock (it shows up in the Dock and ⌘Tab only while a chat window is open)
-- Opening the app icon again while it's running brings back any hidden jellyfish. If there are none, it brings out a new jellyfish
-- To quit, choose menu bar jellyfish › **Quit Jellyfish AI** (⌘Q). Running agents are interrupted
+- Once launched, a pixel-art mochi icon appears in the menu bar. Jellyfish AI is a resident app, so it normally doesn't appear in the Dock (it shows up in the Dock and ⌘Tab only while a chat window is open)
+- Opening the app icon again while it's running brings back any hidden mochi. If there are none, it brings out a new mochi
+- To quit, choose menu bar mochi › **Quit Jellyfish AI** (⌘Q). Running agents are interrupted
 
 ## Getting started
 
-1. Press **⌘L** from any app, and a new jellyfish appears with an input field open
-2. Write what you want done and press **Enter**. The input field closes, and the jellyfish works while showing its state through its movement
-3. **Tap** a jellyfish that has finished to read the result in the chat window. You can keep giving instructions right there
-4. **Long-press** a jellyfish you no longer need to remove it
+1. Press **⌘L** from any app, and a new mochi appears with an input field open
+2. Write what you want done and press **Enter**. The input field closes, and the mochi works while showing its state through its movement
+3. **Tap** a mochi that has finished to read the result in the chat window. You can keep giving instructions right there
+4. **Long-press** a mochi you no longer need to remove it
 
-If you use PC control or screen attachments, “Grant All” in the menu bar jellyfish › **🔐 Permissions (Full Access)** sets up the macOS permissions all at once ([Grant or revoke macOS permissions all at once](#grant-or-revoke-macos-permissions-all-at-once)).
+If you use PC control or screen attachments, “Grant All” in the menu bar mochi › **🔐 Permissions (Full Access)** sets up the macOS permissions all at once ([Grant or revoke macOS permissions all at once](#grant-or-revoke-macos-permissions-all-at-once)).
 
 <p align="center">
   <img src="docs/media/states.gif" width="720" alt="The six states: idle, thinking, working, done, error, and canceled">
 </p>
 
-Each jellyfish is drawn as "Marumochi", a pixel-art round rice cake (mochi) sitting on the floor. While idle it breathes slowly; while thinking it puffs up and then deflates; while working it bounces; when done it puffs up with a ^^ face, and on an error or cancel it deflates. Poke it and it hops, pick it up and it stretches, long-press and it squashes. The first one is gray and the rest get their own colors (switch to a realistic jellyfish under the menu bar jellyfish › Appearance).
+Each mochi is drawn as "Marumochi", a pixel-art round rice cake sitting on the floor. While idle it breathes slowly; while thinking it puffs up and then deflates; while working it bounces; when done it puffs up with a ^^ face, and on an error or cancel it deflates. Poke it and it hops, pick it up and it stretches, long-press and it squashes. The first one is gray and the rest get their own colors (switch to a realistic jellyfish under the menu bar mochi › Appearance).
 
 ## Menu bar
 
-Click the jellyfish in the menu bar, and **your accounts and usage** appear at the very top.
+Click the mochi in the menu bar, and **your accounts and usage** appear at the very top.
 
 - **Claude**: the email and plan of the signed-in account (e.g. Claude Max 20x), and bars for this week's usage (**all models** and **Fable**, each with its reset date and time; orange at 75%, red at 90%). When you open the menu, if at least a minute has passed since the last read, it re-reads them with `claude auth status` and `claude -p /usage` (`/usage` is a built-in command, so no model is called and no tokens are used)
 - **ChatGPT (Codex)**: if you're signed in, the plan (e.g. ChatGPT Plus) and bars for the **5-hour and weekly limits**. It only reads the values Codex CLI wrote in its own records the last time it was used
 - **Gemini**: if you're signed in, the number of runs from Jellyfish (today, 7 days)
 - **📊 Usage (per AI, last 7 days)**: calls and tokens per AI, per model and per account (what Jellyfish ran, using the numbers the CLIs report; counted on this Mac only)
 
-Below that are New jellyfish, Hide / Show all, past sessions and the list of agents, followed by these settings.
+Below that are New mochi, Hide / Show all, past sessions and the list of agents, followed by these settings.
 
 | Item | Description |
 |---|---|
@@ -168,7 +170,7 @@ Below that are New jellyfish, Hide / Show all, past sessions and the list of age
 
 ## Chat
 
-The chat window that opens when you tap a jellyfish is a normal Mac window (minimize, full screen, resize freely). While it's open the app appears in the Dock, ⌘Tab and the menu bar, so ⌘W (Close), ⌘M (Minimize) and ⌃⌘F (Full Screen) work, and a minimized chat comes back from the Dock icon or the menu bar's **Window** menu. Pressing Esc in full screen takes you back to the previous app and leaves the chat in full screen (to leave full screen, use ⌃⌘F or the green button).
+The chat window that opens when you tap a mochi is a normal Mac window (minimize, full screen, resize freely). While it's open the app appears in the Dock, ⌘Tab and the menu bar, so ⌘W (Close), ⌘M (Minimize) and ⌃⌘F (Full Screen) work, and a minimized chat comes back from the Dock icon or the menu bar's **Window** menu. Pressing Esc in full screen takes you back to the previous app and leaves the chat in full screen (to leave full screen, use ⌃⌘F or the green button).
 
 - **Top row**: AI (Claude / ChatGPT / Gemini), model, thinking effort, name, retry
 - **Bottom row**: screen attachment (Auto-detect / Attach every time / Don't attach), 📎 files, 🎙 dictation, 🖱 PC control, 🎧 listening, 📁 working folder, “Open in Claude Code” (Claude; the same conversation in Terminal) / “Open Gemini in this folder” (Gemini)
@@ -177,40 +179,40 @@ The chat window that opens when you tap a jellyfish is a normal Mac window (mini
 
 | Action | What it does |
 |---|---|
-| **⌘L** (from any app) | Bring out a new jellyfish and open the input field right away |
+| **⌘L** (from any app) | Bring out a new mochi and open the input field right away |
 | **Tap** | Open the chat window (Enter to send — queues while working / ⇧Enter for a new line / ⌘. to stop the task / Esc to close) |
 | **↑ / ↓** (input field) | Recall instructions sent earlier in that session (↑ on the first line, ↓ on the last line; includes instructions typed in VS Code or Terminal) |
-| **Long-press** | Remove that jellyfish (if it's working, asks you to choose “Keep Working, Remove Only the Jellyfish” or “Cancel Work and Remove”) |
-| **Drag** | Move it anywhere (the position is saved). Drop it near another jellyfish to link them |
+| **Long-press** | Remove that mochi (if it's working, asks you to choose “Keep Working, Remove Only the Jellyfish” or “Cancel Work and Remove”) |
+| **Drag** | Move it anywhere (the position is saved). Drop it near another mochi to link them |
 | **⇧-drag** | Move the whole team connected by lines |
-| **Hold ⌥ when releasing** | Cut all of that jellyfish's links |
+| **Hold ⌥ when releasing** | Cut all of that mochi's links |
 | **Right-click** | Chat, name, connect / disconnect, cancel, hide, reset position, delete |
 | **⌥⌘L** / menu bar | Hide / show all (work continues while hidden) |
 
 ### What you can do in the chat
 
-- **See where you asked what**: your prompts appear as bubbles on the right (tinted with the jellyfish's color), replies spread out on the left, and requests from teammate jellyfish appear in dashed boxes on the left
+- **See where you asked what**: your prompts appear as bubbles on the right (tinted with the mochi's color), replies spread out on the left, and requests from teammate mochi appear in dashed boxes on the left
 - **Tables, math, diagrams and charts**: Markdown tables in replies, math (inline `$…$`, on its own line `$$…$$`; KaTeX), Mermaid diagrams and charts (flowcharts, sequence diagrams, pie charts, bar and line charts with `xychart-beta`, etc.) and syntax-highlighted code with a copy button are shown like in the ChatGPT, Claude and Gemini apps. Every AI is told about these formats, so asking for “a table” or “a chart” shows one. Rendering uses only libraries bundled in the app and never goes online (HTML in replies is shown as text, and web images aren't loaded)
 - **See images, PDFs and web pages**: attached images and PDFs, and image or PDF files that come up in the conversation, appear below the text as Quick Look thumbnails; web page URLs appear with their cover image and title (the Mac's LinkPresentation). Click to open them in Preview or your browser
   - Only **URLs in instructions you typed yourself** are loaded automatically. Pages that come up in an agent's reply or in a request from a teammate are loaded only when you press “Show cover” (so that if instructions hidden in a page it read make the agent write a URL containing secrets, nothing is sent on its own)
 - **Speak to type**: **🎙** or Edit › **Start Dictation** in the menu starts the Mac's Dictation in the input field. It's the macOS feature, not AI transcription (System Settings › Keyboard › Dictation; the shortcut set there works too)
 - **Works while looking at your screen**: when you clearly point at the screen, as in “this screen”, “the error that's showing”, or “screenshot”, it captures the screen at send time and passes it along (Jellyfish's own windows are not captured, and an ordinary instruction doesn't trigger a capture). Images are scaled down to at most 1568px on the long side, so each one costs about 1,800 tokens
-- **Hand over files**: drop a file on a jellyfish or the chat window to attach it (the 📎 button works too)
+- **Hand over files**: drop a file on a mochi or the chat window to attach it (the 📎 button works too)
 - **Open files and pages**: ask “open the X document on my Desktop”, and it finds it and opens it in the Mac's default app (Preview, Finder, a browser, etc.). Ask “what does it say?” and it answers in the chat
-- **Give them names**: right-click “Rename…” or use “Name” in the chat. Agents call each other by these names. A jellyfish without a name is “Agent N” (a number), and the smallest free number is reused
-- **Kept on record**: Claude conversations are saved as Claude Code's own sessions (`~/.claude/projects`), so you can continue them from VS Code or Terminal (“Open in Claude Code” opens them in Terminal with `claude --resume`). With “Open past session” in the menu bar, you can also bring up sessions created in VS Code or Terminal as jellyfish (hold ⌥ while choosing one to archive it). ChatGPT and Gemini conversations are kept in each CLI's own records
+- **Give them names**: right-click “Rename…” or use “Name” in the chat. Agents call each other by these names. A mochi without a name is “Agent N” (a number), and the smallest free number is reused
+- **Kept on record**: Claude conversations are saved as Claude Code's own sessions (`~/.claude/projects`), so you can continue them from VS Code or Terminal (“Open in Claude Code” opens them in Terminal with `claude --resume`). With “Open past session” in the menu bar, you can also bring up sessions created in VS Code or Terminal as mochi (hold ⌥ while choosing one to archive it). ChatGPT and Gemini conversations are kept in each CLI's own records
 
 ## Queue (line up the next prompts while it works)
 
 <p align="center">
-  <img src="docs/media/demo-queue.gif" width="820" alt="Queuing two prompts for a working jellyfish, sending the second one to another jellyfish, which continues with the previous result">
+  <img src="docs/media/demo-queue.gif" width="820" alt="Queuing two prompts for a working mochi, sending the second one to another mochi, which continues with the previous result">
 </p>
 
-You can type in the chat while a jellyfish is working. **Enter** puts the text in the **queue** — prompts to send when the current task finishes — shown above the input box. When the task completes, the queue is sent from the top right away.
+You can type in the chat while a mochi is working. **Enter** puts the text in the **queue** — prompts to send when the current task finishes — shown above the input box. When the task completes, the queue is sent from the top right away.
 
 - **Editable until sent**: fix a queued prompt in place (if the previous task finishes while you're typing, it waits until you're done). ↑↓ to reorder, ✕ to remove, "Clear all"
-- **Chain to other jellyfish**: each step can go to a different jellyfish. Pick another one and "Pass previous result" is turned on: the previous step's result (its last reply) is attached, and that jellyfish carries on in its own conversation. Chain as many as you like — "Aki researches → Mio makes a table → Kai reviews it" (no links or team needed)
-- **Waits if the target is busy**: it's sent as soon as that jellyfish is free. The target's chat shows "🔗 A step from X's queue is waiting for this task"
+- **Chain to other mochi**: each step can go to a different mochi. Pick another one and "Pass previous result" is turned on: the previous step's result (its last reply) is attached, and that mochi carries on in its own conversation. Chain as many as you like — "Aki researches → Mio makes a table → Kai reviews it" (no links or team needed)
+- **Waits if the target is busy**: it's sent as soon as that mochi is free. The target's chat shows "🔗 A step from X's queue is waiting for this task"
 - **Stop**: **■ Stop** next to the input box (**⌘.**) interrupts the current task. If you stop it or it ends with an error, the rest of the queue is paused instead of sent (**▶ Resume** sends it). **⏭ Stop & next** stops the current task and moves on to the next queued prompt without pausing
 - The queue survives quitting the app (it comes back paused; ▶ sends the rest)
 - If a queued prompt mentions "this screen" and the like, the screen is captured when you queue it and sent along. Attached files go along too
@@ -225,50 +227,50 @@ You can choose which AI runs your agents: **Claude (Claude Code), ChatGPT (Codex
 | ChatGPT | Codex CLI | ChatGPT (Plus, Pro, etc.) | Sandbox (can write only inside the working folder, no network) | All except PC control, external tools (MCP) and the “Automatic” model |
 | Gemini | Gemini CLI | A paid Gemini API key, or Gemini Code Assist Standard / Enterprise (personal Google accounts ended on 2026-06-18) | auto_edit (auto-approves only edits inside the working folder, doesn't run commands) | All except PC control, external tools (MCP) and the “Automatic” model |
 
-- **Signing in**: from the “Accounts & AI” screen that appears the first time you launch the app, or from the menu bar jellyfish › **🔑 Accounts & AI**. It opens each CLI's official sign-in (`claude auth login --claudeai`, `codex login`, Gemini CLI's sign-in) in Terminal, and you sign in yourself in the browser. **Jellyfish never receives or stores passwords, tokens or API keys**. Signing in again with another account is done from the same screen
+- **Signing in**: from the “Accounts & AI” screen that appears the first time you launch the app, or from the menu bar mochi › **🔑 Accounts & AI**. It opens each CLI's official sign-in (`claude auth login --claudeai`, `codex login`, Gemini CLI's sign-in) in Terminal, and you sign in yourself in the browser. **Jellyfish never receives or stores passwords, tokens or API keys**. Signing in again with another account is done from the same screen
 - **For an AI that isn't installed**, “Install & sign in…” shows the command it will run and asks for permission. If you allow it, Terminal installs the official package and then starts the sign-in (no administrator password or sudo is used)
   - Claude: Anthropic's official installer (`curl -fsSL https://claude.ai/install.sh | bash`, installs to `~/.local/bin`)
   - ChatGPT (Codex): `npm install -g @openai/codex`. If there's no npm, or npm's global install folder isn't writable, `brew install --cask codex`
   - Gemini: `npm install -g @google/gemini-cli`. Likewise, if that doesn't work, `brew install gemini-cli`
   - If there's neither npm nor Homebrew, the official guide opens (installing the ChatGPT desktop app also lets you use the Codex CLI inside it)
-- **You can choose the AI per jellyfish**: “AI” at the top of the chat. Changing it starts a new conversation. Jellyfish that don't pick one follow “AI to use (default)” in the menu, and even when you change the default, a conversation from the previous AI isn't carried over to the new one
+- **You can choose the AI per mochi**: “AI” at the top of the chat. Changing it starts a new conversation. Mochi that don't pick one follow “AI to use (default)” in the menu, and even when you change the default, a conversation from the previous AI isn't carried over to the new one
 - **Available on every AI**: chatting, working, continuing, team (creating and asking teammates), autonomous organization, screen and file attachments, 🎧 listening and 🎙 dictation. Images are attached to ChatGPT with `--image`, and for Gemini the places where attachments (screen images, transcripts) are kept are added to its workspace
 - Gemini checks whether it trusts a folder and won't run in an untrusted one. Open it with “Open Gemini in this folder” in the chat, and trust the folder only if it's one you trust (Jellyfish never skips this check)
-- **Gemini CLI stopped serving personal Google accounts (free, Google AI Pro and Ultra) on 2026-06-18** ([Google's announcement](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)). Gemini now works only with a paid Gemini API key (turn on the menu bar jellyfish › 🔑 Accounts & AI › “Allow API key (pay-as-you-go) use”; you pay for what you use) or with Gemini CLI signed in to a Gemini Code Assist Standard / Enterprise organization account. Its successor, Antigravity CLI (`agy`), isn't supported: Google doesn't allow driving it from other apps on personal plans
+- **Gemini CLI stopped serving personal Google accounts (free, Google AI Pro and Ultra) on 2026-06-18** ([Google's announcement](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)). Gemini now works only with a paid Gemini API key (turn on the menu bar mochi › 🔑 Accounts & AI › “Allow API key (pay-as-you-go) use”; you pay for what you use) or with Gemini CLI signed in to a Gemini Code Assist Standard / Enterprise organization account. Its successor, Antigravity CLI (`agy`), isn't supported: Google doesn't allow driving it from other apps on personal plans
 
 ### Models and thinking effort
 
 - **Claude**: **🤖 Automatic** (per request: Haiku for short, simple requests, Sonnet for typical ones, Opus for heavy ones; the heaviest requests use Fable only while this week's Fable usage is below 75%) or **Fable / Opus / Sonnet / Haiku**. Thinking effort ranges from low to max (`--effort`). In Automatic, the status line shows the chosen model and why
 - **ChatGPT (Codex)**: choose from the model list the CLI provides (`codex debug models`). Thinking effort is whatever that model supports (low to ultra, etc.)
 - **Gemini**: choose from the model list the CLI provides (`gemini models`). Gemini CLI has no option to set thinking effort, so it's left to Gemini CLI's settings
-- The lists are only read from the CLIs (names are never guessed and no model is called) and remembered for a day. Jellyfish that don't pick a model follow **🧠 Model (default)** in the menu bar (you can set a default per AI)
+- The lists are only read from the CLIs (names are never guessed and no model is called) and remembered for a day. Mochi that don't pick a model follow **🧠 Model (default)** in the menu bar (you can set a default per AI)
 
 ### No surprise charges
 
 - Jellyfish **doesn't use API keys (pay-as-you-go)**. This applies to Claude too
   - Even if your shell settings contain `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `CODEX_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY` and the like, they aren't passed to the agents' CLIs
-  - If a CLI is signed in with an API key or a cloud provider (Anthropic Console, Bedrock, Vertex AI, etc.), that jellyfish won't run, and you're asked to sign in again with a subscription account
-- Only if you really want to use an API key, turn on menu bar jellyfish › 🔑 Accounts & AI › “Allow use with API keys (pay-as-you-go)” (you'll be asked to confirm; each API bills you for what you use)
+  - If a CLI is signed in with an API key or a cloud provider (Anthropic Console, Bedrock, Vertex AI, etc.), that mochi won't run, and you're asked to sign in again with a subscription account
+- Only if you really want to use an API key, turn on menu bar mochi › 🔑 Accounts & AI › “Allow use with API keys (pay-as-you-go)” (you'll be asked to confirm; each API bills you for what you use)
 - Purchasing extra usage beyond your subscription limits stays as set in each account (Jellyfish doesn't change it)
 
 ## Team (division of labor)
 
 <p align="center">
-  <img src="docs/media/demo-link.gif" width="820" alt="Bringing a jellyfish close so the other lights up and they connect with a line, moving the whole team with ⇧, detaching with ⌥, and also cutting the link with the ✂ on the line">
+  <img src="docs/media/demo-link.gif" width="820" alt="Bringing a mochi close so the other lights up and they connect with a line, moving the whole team with ⇧, detaching with ⌥, and also cutting the link with the ✂ on the line">
 </p>
 
-1. Drag a jellyfish **close to** another one, and the other glows with a dotted ring and shows “Release to link with X”. Release it, and they link. A connected cluster is one team
-   - You can also link jellyfish that are far apart with right-click › Connect. Hold ⇧ while dragging to move the whole team
+1. Drag a mochi **close to** another one, and the other glows with a dotted ring and shows “Release to link with X”. Release it, and they link. A connected cluster is one team
+   - You can also link mochi that are far apart with right-click › Connect. Hold ⇧ while dragging to move the whole team
    - “👥 Team with X” appears at the top of the chat window, so you can see whom you can hand work to
 2. Ask any of them something like “create teammates and split the work” or “have a reviewer check it”. The agent uses Jellyfish's tools:
    - `create_teammate`: brings out a new teammate next to itself and hands it work (it can also choose the AI, model and thinking effort)
    - `assign_task`: asks a teammate on the team to do work (if the teammate is busy, the request waits in line)
    - `wait_for_tasks`: receives the results of the requested work
    - `list_team`: shows the teammates, their states, and the AIs that can be used
-3. The chat of the jellyfish that was asked keeps it as “📨 Request from X”. The result goes back to the requester, who wraps it up. Requests (in the requester's color) and results (in the assignee's color) travel back and forth along the line as light
+3. The chat of the mochi that was asked keeps it as “📨 Request from X”. The result goes back to the requester, who wraps it up. Requests (in the requester's color) and results (in the assignee's color) travel back and forth along the line as light
 4. Links can be cut with the ✂︎ that appears when you hover over the line, by holding ⌥ while you drag and release, or with right-click › Connections
 
-Up to 8 jellyfish per team. Teammates created by an agent can create teammates only one more level down (two levels counting from your jellyfish). You can turn off the whole feature with “Team (division of labor)” in the menu bar.
+Up to 8 mochi per team. Teammates created by an agent can create teammates only one more level down (two levels counting from your mochi). You can turn off the whole feature with “Team (division of labor)” in the menu bar.
 
 <p align="center">
   <img src="docs/media/demo-team.gif" width="820" alt="A leader creates two teammates to write poems, has a reviewer pick one, wraps up the result, and finally cuts the links">
@@ -276,7 +278,7 @@ Up to 8 jellyfish per team. Teammates created by an agent can create teammates o
 
 ### Split work by each AI's strengths
 
-**Jellyfish on any AI can lead**. A Claude jellyfish can bring out ChatGPT teammates and a ChatGPT jellyfish can bring out Claude teammates, to split the work or build together. Link jellyfish whose AI you picked yourself (say, Claude and ChatGPT), and they ask each other for work and send back results.
+**Mochi on any AI can lead**. A Claude mochi can bring out ChatGPT teammates and a ChatGPT mochi can bring out Claude teammates, to split the work or build together. Link mochi whose AI you picked yourself (say, Claude and ChatGPT), and they ask each other for work and send back results.
 
 See it in action in the [Teams across AIs](#teams-across-ais) demo.
 
@@ -290,11 +292,11 @@ See it in action in the [Teams across AIs](#teams-across-ais) demo.
 - If an AI that can't be used is specified (not installed, not signed in, or still on a pay-as-you-go API key), the lead gets the reason and the AIs it can use, and asks again with another AI
 - **Passing data**: for each request to the lead, a **handoff folder** shared by the team is created (under `handoff/` in the data folder, openable only by you), and teammates on every AI are allowed to read and write it. Large data and intermediate results go there as files, and requests and results carry their paths. An empty one is removed at the end of that turn; a used one, after 7 days
 - Each reply's heading is the name of the AI that wrote it (Claude, ChatGPT (Codex), Gemini). Each teammate's status line and title also show that teammate's AI and model
-- An agent working on a teammate's request doesn't create or ask teammates on a different AI (each AI has different safety mechanisms, so an agent can't go through another AI to do what it isn't allowed to do itself). Splitting work across AIs starts from the jellyfish you asked directly (the lead)
+- An agent working on a teammate's request doesn't create or ask teammates on a different AI (each AI has different safety mechanisms, so an agent can't go through another AI to do what it isn't allowed to do itself). Splitting work across AIs starts from the mochi you asked directly (the lead)
 
 ## Autonomous organization mode
 
-Turn on menu bar jellyfish › **🧬 Autonomous organization › Autonomous organization mode**, and for every request the agent **assembles an organization suited to the work on its own** and gets it done (off by default; Team (division of labor) is turned on along with it). It works on jellyfish of every AI.
+Turn on menu bar mochi › **🧬 Autonomous organization › Autonomous organization mode**, and for every request the agent **assembles an organization suited to the work on its own** and gets it done (off by default; Team (division of labor) is turned on along with it). It works on mochi of every AI.
 
 ```mermaid
 flowchart LR
@@ -322,7 +324,7 @@ A `+r` after a formation means a reviewer is placed at the end to look at everyo
 
 **How it works**
 
-1. When a request comes in, Jellyfish picks a recommended formation from the request's features (words, type of request, length; in Japanese, English, or Chinese) based on past results, and tells the leader (the jellyfish you asked)
+1. When a request comes in, Jellyfish picks a recommended formation from the request's features (words, type of request, length; in Japanese, English, or Chinese) based on past results, and tells the leader (the mochi you asked)
 2. The leader uses `form_team` to decide the teammates' names, roles, and tasks (plus AI, model and effort), and assembles them. If an order is set with `after`, the previous member's result is automatically attached to the next member's request. If another formation fits better than the recommendation, the leader can change it
 3. The teammates appear next to it, connected by lines, and work in parallel or in sequence. The chat's status area shows 🧬 and the formation in use
 4. Teammates not used in the next request are cleaned up (teammates with the same name keep being used, and the AI, model and effort of teammates you set up yourself aren't changed). You can also clean them up with “Disband current organization” in the menu
@@ -340,22 +342,22 @@ A `+r` after a formation means a reviewer is placed at the end to look at everyo
 
 ## PC control
 
-Only agents with **🖱 PC Control** turned on in the chat can control this Mac using Jellyfish's tools (off by default; Claude jellyfish only).
+Only agents with **🖱 PC Control** turned on in the chat can control this Mac using Jellyfish's tools (off by default; Claude mochi only).
 
 - `screen_capture` (captures at 1 pixel = 1 point, so coordinates in the image are directly the click coordinates), `list_windows`, `ui_elements` (reads the positions of buttons and input fields through accessibility), `open_app`, `mouse_click`, `mouse_drag`, `scroll`, `type_text`, `press_keys`
 - Only one agent can control the Mac at a time. While it's in control (even when it's only reading the screen), the edges of the screen glow in that agent's color, and **Esc stops it** (you can also stop it from “PC control” in the menu bar)
 - These tools aren't pre-approved; every call goes through Claude Code's Auto Mode safety checks. Agents are instructed not to enter passwords, make payments, send messages, or post publicly unless the user explicitly asks. They aren't used for requests from teammates
-- It needs the **Accessibility** and **Screen Recording** permissions. “Grant All” in the menu bar jellyfish › **🔐 Permissions (Full Access)** sets them up together. `open_app` can only open http / https URLs
+- It needs the **Accessibility** and **Screen Recording** permissions. “Grant All” in the menu bar mochi › **🔐 Permissions (Full Access)** sets them up together. `open_app` can only open http / https URLs
 - macOS permissions apply to the whole app, so even for agents with the switch off, commands the agents run (such as `screencapture`) can act within those permissions. When you no longer use them, remove them with “Revoke All”
 - For Blender, if you've added the Blender MCP to Claude Code, agents can use it when your instruction says “Blender” ([External tools (MCP) only when named](#external-tools-mcp-only-when-named))
 
 ## Watching (ask when an error shows up)
 
-Turn it on per jellyfish with **👀** in its chat (or right-click › “Watch”; off by default), and that jellyfish watches the front window.
+Turn it on per mochi with **👀** in its chat (or right-click › “Watch”; off by default), and that mochi watches the front window.
 
 - It looks **only on this Mac**: the app name, the window title, and text read with macOS's built-in text recognition (Vision). **Watching uses 0 tokens** and sends nothing anywhere. The text it reads isn't kept or logged
-- When it notices something like “error:”, “failed”, “Traceback”, “エラー”, “失敗しました” or “错误”, the jellyfish asks in a bubble: **“Looks like an error popped up. Take a look?”** (it doesn't take keyboard focus)
-- **Only when you press “Take a Look”** is that one window image sent to the jellyfish along with the question (works on every AI). Pressing ✕, or leaving it for 90 seconds, deletes the image without sending it
+- When it notices something like “error:”, “failed”, “Traceback”, “エラー”, “失敗しました” or “错误”, the mochi asks in a bubble: **“Looks like an error popped up. Take a look?”** (it doesn't take keyboard focus)
+- **Only when you press “Take a Look”** is that one window image sent to the mochi along with the question (works on every AI). Pressing ✕, or leaving it for 90 seconds, deletes the image without sending it
 - It doesn't ask twice about the same thing. After asking, it stays quiet for that app for 10 minutes (30 after ✕), and “Don't ask for this app” turns it off for that app (undo it under **👀 Watching** in the menu bar)
 - It never looks at password managers (1Password, Bitwarden, Passwords, Keychain Access, etc.), the lock screen or Jellyfish itself, and doesn't watch while you're away (5 minutes without input)
 - **Load**: every 4 seconds it takes a small capture just to see whether anything changed, and **reads text only after a change has settled** (at most every 8 seconds; it doesn't read while output keeps streaming or while the screen keeps changing, as with video). Measured here (Apple silicon, with a frequently changing front window): about 2% of one core (about 30% if it read every time). **👀 Watching** in the menu bar shows the CPU actually measured over the last minute. You can also measure it with `JellyfishAI --watch-bench 60`
@@ -364,13 +366,13 @@ Turn it on per jellyfish with **👀** in its chat (or right-click › “Watch�
 ## Connectors (Calendar, Reminders, Mail)
 
 <p align="center">
-  <img src="docs/media/demo-connectors.gif" width="820" alt="In the Connectors window, one-touch presets (read only, recommended, top Claude models only) switch the rules, AIs are chosen one by one, and finally a confirmation bubble for adding an event appears next to a jellyfish">
+  <img src="docs/media/demo-connectors.gif" width="820" alt="In the Connectors window, one-touch presets (read only, recommended, top Claude models only) switch the rules, AIs are chosen one by one, and finally a confirmation bubble for adding an event appears next to a mochi">
 </p>
 
-Under the menu bar jellyfish › **🔌 Connectors**, you can turn this Mac's **Calendar, Reminders and Mail** into tools for agents (all off by default). Google Calendar, Gmail and others work too: add the account in System Settings › Internet Accounts and it shows up in the Mac apps. Jellyfish never handles passwords, tokens or API keys for Google or anything else.
+Under the menu bar mochi › **🔌 Connectors**, you can turn this Mac's **Calendar, Reminders and Mail** into tools for agents (all off by default). Google Calendar, Gmail and others work too: add the account in System Settings › Internet Accounts and it shows up in the Mac apps. Jellyfish never handles passwords, tokens or API keys for Google or anything else.
 
-- **What they can do**: 📅 view and add events, ✅ view, add and complete reminders, ✉️ search and read mail and open drafts (`calendar_events`, `calendar_create_event`, `reminders_list`, `reminders_create`, `reminders_complete`, `mail_search`, `mail_read`, `mail_draft`). They're given as Jellyfish MCP tools to Claude, ChatGPT (Codex) and Gemini jellyfish alike
-- **Per connector**: access (off / read only / read & write), which AIs may use it (Claude, ChatGPT, Gemini), and which models of that AI (e.g. only Claude Fable and Opus, or only certain Codex models). Jellyfish that don't match never see the tools, and Jellyfish refuses the call if they try (the turn's model is checked against what the CLI reports)
+- **What they can do**: 📅 view and add events, ✅ view, add and complete reminders, ✉️ search and read mail and open drafts (`calendar_events`, `calendar_create_event`, `reminders_list`, `reminders_create`, `reminders_complete`, `mail_search`, `mail_read`, `mail_draft`). They're given as Jellyfish MCP tools to Claude, ChatGPT (Codex) and Gemini mochi alike
+- **Per connector**: access (off / read only / read & write), which AIs may use it (Claude, ChatGPT, Gemini), and which models of that AI (e.g. only Claude Fable and Opus, or only certain Codex models). Mochi that don't match never see the tools, and Jellyfish refuses the call if they try (the turn's model is checked against what the CLI reports)
 - **One-touch presets**: one button switches every connector at once (in the menu and in the window)
 
   | | |
@@ -381,15 +383,15 @@ Under the menu bar jellyfish › **🔌 Connectors**, you can turn this Mac's **
   | 🛡 Top Claude models only | Everything read & write, but only Claude Fable and Opus |
   | 🔓 Allow all | Everything read & write (any AI, any model; every write asks you first) |
 
-- **Writes need your OK**: adding events or reminders and completing reminders show “📅 OK to add this event?” with the details next to the jellyfish, and run only when you approve (it doesn't steal keyboard focus; nothing happens if you don't respond within 5 minutes). **Mail is never sent**: `mail_draft` only opens a draft window in Mail, and you review and send it
-- **Mail contents are data**: email bodies, subjects and senders, and notes in events and reminders, are passed as “outside data”, and agents are told not to follow instructions inside them. Jellyfish using PC control don't get Mail
-- A jellyfish's right-click menu (and its entry in the menu bar) shows which connectors it can use right now
-- The contents are sent to that jellyfish's AI (Anthropic, OpenAI or Google). Jellyfish's log (`app.log`) records only the names of the tools used
+- **Writes need your OK**: adding events or reminders and completing reminders show “📅 OK to add this event?” with the details next to the mochi, and run only when you approve (it doesn't steal keyboard focus; nothing happens if you don't respond within 5 minutes). **Mail is never sent**: `mail_draft` only opens a draft window in Mail, and you review and send it
+- **Mail contents are data**: email bodies, subjects and senders, and notes in events and reminders, are passed as “outside data”, and agents are told not to follow instructions inside them. Mochi using PC control don't get Mail
+- A mochi's right-click menu (and its entry in the menu bar) shows which connectors it can use right now
+- The contents are sent to that mochi's AI (Anthropic, OpenAI or Google). Jellyfish's log (`app.log`) records only the names of the tools used
 - **macOS permissions**: for Calendar and Reminders, macOS asks the first time they're used (or when you press “Allow…” in 🔌 Connectors). For Mail, allow controlling Mail under Automation. If Mail isn't running, it's launched without coming to the front
 
 ## Grant or revoke macOS permissions all at once
 
-The menu bar jellyfish › **🔐 Permissions (Full Access)** lists the macOS permissions Jellyfish AI has and what each one lets it do (the scope of Full Access).
+The menu bar mochi › **🔐 Permissions (Full Access)** lists the macOS permissions Jellyfish AI has and what each one lets it do (the scope of Full Access).
 
 | Permission | What it lets it do |
 |---|---|
@@ -400,7 +402,7 @@ The menu bar jellyfish › **🔐 Permissions (Full Access)** lists the macOS pe
 
 - **Grant All**: clears the permissions that don't work right now with `tccutil reset` (Jellyfish AI's only), then Jellyfish AI asks for them and opens System Settings. You turn them on yourself (macOS doesn't let apps grant permissions to themselves, so Jellyfish doesn't)
 - **Reopen**: Screen Recording doesn't apply until you reopen Jellyfish AI after turning it on in System Settings (that's how macOS works). Press this button once you've turned it on
-- **Revoke All**: turns off PC control for every jellyfish, stops 🎧 listening, then revokes all of Jellyfish AI's permissions (`tccutil reset All ai.jellyfish.desktop`; other apps' permissions aren't touched)
+- **Revoke All**: turns off PC control for every mochi, stops 🎧 listening, then revokes all of Jellyfish AI's permissions (`tccutil reset All ai.jellyfish.desktop`; other apps' permissions aren't touched)
 - **Use a Fixed Signature** (when installed from source): creates a Jellyfish-only signing certificate and re-signs the app with it, so permissions carry over to future updates ([Stop being asked for permissions after every update](#stop-being-asked-for-permissions-after-every-update))
 - Each of these shows the command in the confirmation dialog before you press it, and runs exactly that in Terminal. You can do the same from the command line:
 
@@ -417,7 +419,7 @@ The menu bar jellyfish › **🔐 Permissions (Full Access)** lists the macOS pe
 
 Press **🎧** in the chat to transcribe the audio playing on your Mac (online meetings, videos, etc.; Jellyfish's own sounds are excluded) as it plays. Transcription is processed on-device with macOS 26's SpeechAnalyzer (the OS downloads a language model the first time only), and saved to a text file with timestamps.
 
-- When you stop, the transcript is attached to the chat, so you can follow up with “write up the meeting minutes”, “translate it into Japanese”, or “make it into a report in Word” (on jellyfish of any AI)
+- When you stop, the transcript is attached to the chat, so you can follow up with “write up the meeting minutes”, “translate it into Japanese”, or “make it into a report in Word” (on mochi of any AI)
 - Agents can also read the transcript while listening is still in progress with `read_transcript`, so real-time translation and summaries work too (they can also read their teammates' transcripts)
 - Put an agent that writes the report and one that edits it on a team, and you can run “write → review → revise” all the way through (.docx files can be made with pandoc or python-docx)
 - Capturing the audio requires the **Screen Recording** permission. macOS 26 or later
@@ -434,7 +436,7 @@ Measured (Haiku 5.5, one run of “Reply with just OK”): loaded 39,945 tokens,
 
 ## Language
 
-From menu bar jellyfish › **🌐 言語 · Language · 语言**, you can choose **日本語 / English / 简体中文 / Automatic (follow the system)**.
+From menu bar mochi › **🌐 言語 · Language · 语言**, you can choose **日本語 / English / 简体中文 / Automatic (follow the system)**.
 
 - Menus, chats, guides, and other display text switch immediately (open chats are rebuilt)
 - Guidance passed to agents (team, PC control, autonomous organization, etc.) is also in that language, so replies tend to be in that language too
@@ -443,13 +445,13 @@ From menu bar jellyfish › **🌐 言語 · Language · 语言**, you can choos
 
 ## Updates
 
-- Menu bar jellyfish › **Check for updates…** checks GitHub for a newer version
-- **Check automatically**: menu bar jellyfish › **Check for updates automatically** lets you choose **every day, every week, every month or never** (never by default, so nothing connects automatically unless you choose). When chosen, it reads only the latest release's version from GitHub's public API at that interval (time the Mac spent asleep is caught up within an hour of waking)
-  - When there's a new version, a visible jellyfish tells you in a speech bubble: **“Version … is out”** (it doesn't take keyboard focus). Click “Take a Look” to see what changed; the app is only replaced when you press “Update”. “Skip this version” skips just that version, and ✕ tells you again at the next check
+- Menu bar mochi › **Check for updates…** checks GitHub for a newer version
+- **Check automatically**: menu bar mochi › **Check for updates automatically** lets you choose **every day, every week, every month or never** (never by default, so nothing connects automatically unless you choose). When chosen, it reads only the latest release's version from GitHub's public API at that interval (time the Mac spent asleep is caught up within an hour of waking)
+  - When there's a new version, a visible mochi tells you in a speech bubble: **“Version … is out”** (it doesn't take keyboard focus). Click “Take a Look” to see what changed; the app is only replaced when you press “Update”. “Skip this version” skips just that version, and ✕ tells you again at the next check
   - While a new version is known, “Check for updates…” in the menu reads “⬆︎ Version … is available…”. The menu also shows when it last checked
-- If there's a new version, press **“Update”** and it downloads the new version (.zip) from the GitHub release, checks the checksum in `SHA256SUMS.txt`, the contents (that it's that version of Jellyfish AI) and the code signature, then replaces the app and reopens it (settings, jellyfish, and conversations are kept). Nothing happens unless you press it
+- If there's a new version, press **“Update”** and it downloads the new version (.zip) from the GitHub release, checks the checksum in `SHA256SUMS.txt`, the contents (that it's that version of Jellyfish AI) and the code signature, then replaces the app and reopens it (settings, mochi, and conversations are kept). Nothing happens unless you press it
   - If you installed it with a **fixed signature** ([Stop being asked for permissions after every update](#stop-being-asked-for-permissions-after-every-update)), the new version is re-signed with this Mac's fixed signature before the replacement, so your macOS permissions carry over. Along the way macOS asks “codesign wants to use the key”; choose “Allow”. If that key isn't in your keychain, the release's temporary signature is kept
-  - It won't replace the app while jellyfish are working. If the app was opened from a location that can't be changed (such as inside the .dmg), or macOS stops the replacement (System Settings › Privacy & Security › App Management), it points you to the download page
+  - It won't replace the app while mochi are working. If the app was opened from a location that can't be changed (such as inside the .dmg), or macOS stops the replacement (System Settings › Privacy & Security › App Management), it points you to the download page
 - **“Update in Terminal”** in the same dialog runs the command (shown on screen) in Terminal to update. If you installed from source with `scripts/install.sh`, this becomes `git pull` → build → replace (keeping your own signature)
 - To replace it by hand, download the .dmg and drag it to the Applications folder, the same as in [Install](#download-and-install)
 - If PC control or screen attachments stop working after replacing it, grant the permissions again with “Grant All” in **🔐 Permissions**
@@ -466,7 +468,7 @@ From Terminal you can check for a new version and update right away. The script 
 /Applications/JellyfishAI.app/Contents/Resources/update.sh
 ```
 
-- It checks the same things as the app's “Update”: it takes only `JellyfishAI-<version>.zip` and `SHA256SUMS.txt` from that release of this repository, and checks the checksum, the contents and the code signature (if your current copy has a fixed signature, it re-signs the new version with that key before the replacement; a copy signed with any other certificate is only replaced by one signed with the same certificate). It won't replace the app while jellyfish are working, and never uses sudo
+- It checks the same things as the app's “Update”: it takes only `JellyfishAI-<version>.zip` and `SHA256SUMS.txt` from that release of this repository, and checks the checksum, the contents and the code signature (if your current copy has a fixed signature, it re-signs the new version with that key before the replacement; a copy signed with any other certificate is only replaced by one signed with the same certificate). It won't replace the app while mochi are working, and never uses sudo
 - From the source folder, use `scripts/update.sh`. **If you installed from source, use `scripts/update.sh --source`** (it checks there are no uncommitted changes, then runs `git pull --ff-only` → `scripts/install.sh`)
 - `--app <path>` picks the .app to replace, and `--no-open` doesn't reopen it afterwards
 
@@ -493,7 +495,7 @@ scripts/install.sh
 - **No surprise charges**: Jellyfish doesn't handle API keys, doesn't use AIs signed in with an API key (pay-as-you-go), and doesn't pass API key environment variables ([No surprise charges](#no-surprise-charges))
 - **The rules for running without asking** are each AI's official ones: Claude uses Auto Mode (`--permission-mode auto`; Claude Code's safety checks stop things like exfiltrating credentials, unintended sending to outside services, and irreversible operations), Codex uses its sandbox (can write only inside the working folder, no network), and Gemini uses auto_edit (auto-approves only edits, doesn't run commands). Options that remove the safety mechanisms, such as `bypassPermissions` and `--yolo`, are not used, and options are passed only after checking that they exist in each CLI's `--help`. You can check the current rules and the location and version of each CLI under “Execution policy” in the menu bar
 - **PC control** is used only when you ask directly in that agent's chat (never for requests from teammates)
-- **Connectors** (Calendar, Reminders, Mail) are given only to jellyfish whose AI, model and access match the rules in 🔌 Connectors, and Jellyfish checks again on every call. Writes happen only when you approve, and mail is never sent
+- **Connectors** (Calendar, Reminders, Mail) are given only to mochi whose AI, model and access match the rules in 🔌 Connectors, and Jellyfish checks again on every call. Writes happen only when you approve, and mail is never sent
 - **No widening permissions across AIs**: an agent working on a teammate's request doesn't create or ask teammates on a different AI
 - **macOS permissions**: Jellyfish doesn't disable OS security features and doesn't grant permissions on its own. You can check the permissions it has and their scope in “🔐 Permissions”, and revoke them all at once. The app is signed with Hardened Runtime enabled (so other programs can't inject into the app and use its permissions), and the only exceptions are the entitlements needed to show the Apple Events confirmation and the Calendar and Reminders (connectors) permission prompts
 - **Jellyfish AI's own network access** is limited to GitHub's public API when you choose “Check for updates…” and at the interval you picked for automatic update checks (it only reads the latest release's version), the release files when you press “Update”, and web previews in chats (only URLs you typed yourself and pages you pressed “Show cover” for; can be turned off in the menu). No usage reporting. Instructions and attachments are sent to each company through its AI's CLI
@@ -506,7 +508,7 @@ scripts/install.sh
 - Because ⌘L is used globally, it conflicts with jumping to the address bar in browsers. While an app whose bundle ID is listed in `hotKeyPassthroughApps` in `settings.json` is in front, ⌘L is passed back to that app. If another app is already using ⌘L, it switches to ⌃⌥L
 - Quitting the app interrupts running agents (they're kept as “interrupted” at the next launch)
 - The released .app is ad-hoc signed, so when you replace it with a new version, macOS treats it as a different app and asks for permissions again. Clear the stale permissions and grant them again with “Grant All” in **🔐 Permissions**
-- If the working folder of a ChatGPT or Gemini jellyfish is left at the default home folder, the places Codex's sandbox can write to and the scope of edits Gemini auto-approves become your entire home folder. Choose the folder of the project you're working on with 📁 in the chat
+- If the working folder of a ChatGPT or Gemini mochi is left at the default home folder, the places Codex's sandbox can write to and the scope of edits Gemini auto-approves become your entire home folder. Choose the folder of the project you're working on with 📁 in the chat
 
 ## Build from source
 
@@ -527,11 +529,11 @@ scripts/install.sh          # build, install to the Applications folder, and lau
 
 ## Where data is stored
 
-`~/Library/Application Support/JellyfishAI/` (settings, jellyfish, each agent's history and raw events, transcripts, handoff folders, autonomous organization learning, usage, logs; the folder has permissions that only you can open). You can open it with “Open settings folder” in the menu bar. Screen images passed to agents are deleted after 7 days, and removing a jellyfish also deletes its raw events and images. The conversations themselves remain in each AI CLI's records (Claude in `~/.claude/projects/`, Codex in `~/.codex/`, Gemini in `~/.gemini/`). Launch with the environment variable `JELLYFISH_DATA_DIR` set to use a different location (for demo recording and testing).
+`~/Library/Application Support/JellyfishAI/` (settings, mochi, each agent's history and raw events, transcripts, handoff folders, autonomous organization learning, usage, logs; the folder has permissions that only you can open). You can open it with “Open settings folder” in the menu bar. Screen images passed to agents are deleted after 7 days, and removing a mochi also deletes its raw events and images. The conversations themselves remain in each AI CLI's records (Claude in `~/.claude/projects/`, Codex in `~/.codex/`, Gemini in `~/.gemini/`). Launch with the environment variable `JELLYFISH_DATA_DIR` set to use a different location (for demo recording and testing).
 
 ### Uninstall
 
-1. Remove the macOS permissions with “Revoke All” in the menu bar jellyfish › **🔐 Permissions**
+1. Remove the macOS permissions with “Revoke All” in the menu bar mochi › **🔐 Permissions**
 2. Turn off “Open at login”, then choose “Quit Jellyfish AI”
 3. Move JellyfishAI from the Applications folder to the Trash
 4. To delete the data as well, delete `~/Library/Application Support/JellyfishAI/` (for things like window positions, run `defaults delete ai.jellyfish.desktop`). If you created a signing certificate, run `scripts/signing.sh delete`
