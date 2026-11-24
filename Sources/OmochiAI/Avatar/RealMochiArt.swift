@@ -15,6 +15,8 @@ enum RealMochiArt {
 
     // MARK: - 元の絵
 
+    /// 絵のキャッシュ（アプリではメインスレッドからだけ使うが、テストは並列に呼ぶので鍵をかける。中で呼び合うので再入できる鍵）
+    private static let lock = NSRecursiveLock()
     private static var bases: [Level: CGImage] = [:]
     private static var boxes: [Level: CGRect] = [:]
     private static var missing = false
@@ -33,6 +35,7 @@ enum RealMochiArt {
     static var available: Bool { Level.allCases.allSatisfy { base($0) != nil } }
 
     static func base(_ level: Level) -> CGImage? {
+        lock.lock(); defer { lock.unlock() }
         if let img = bases[level] { return img }
         if missing { return nil }
         guard let url = url(level), let src = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -48,6 +51,7 @@ enum RealMochiArt {
 
     /// 体のある範囲（マス、左下原点。不透明度が半分を超えるところ）
     static func box(_ level: Level) -> CGRect {
+        lock.lock(); defer { lock.unlock() }
         if let b = boxes[level] { return b }
         _ = base(level)
         return boxes[level] ?? CGRect(x: 1, y: 1, width: 13, height: 5)
@@ -138,6 +142,7 @@ enum RealMochiArt {
 
     /// 元の絵に色を掛けたもの（陰影はそのまま）
     static func tintedBase(_ level: Level, colors: SpriteColors, key: String, tone: JellyPose.Tone) -> CGImage? {
+        lock.lock(); defer { lock.unlock() }
         let t = tint(colors, tone: tone)
         let k = "\(level.rawValue)|\(key)|\(tone)"
         if let img = tinted[k] { return img }
@@ -168,6 +173,7 @@ enum RealMochiArt {
 
     /// 体（目つき）の絵。px = 1 マスの出力ピクセル数
     static func body(_ pose: JellyPose, colors: SpriteColors, key: String, px: CGFloat) -> CGImage? {
+        lock.lock(); defer { lock.unlock() }
         let k = "body|\(key)|\(px)|\(pose.hashValue)"
         if let img = cache[k] { return img }
         let lv = level(pose)
@@ -323,6 +329,7 @@ enum RealMochiArt {
 
     /// 頭上の「…」「!」「✓」（ドット絵と同じ場所に、なめらかな形で）
     static func marks(_ pose: JellyPose, colors: SpriteColors, key: String, px: CGFloat) -> CGImage? {
+        lock.lock(); defer { lock.unlock() }
         if pose.mark == .none { return nil }
         let k = "marks|\(key)|\(px)|\(pose.mark)"
         if let img = cache[k] { return img }
