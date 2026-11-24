@@ -286,66 +286,83 @@ private final class FakeHost: PromptQueueHost {
 }
 
 @Suite struct MochiSpriteTests {
-    /// 待機のポーズ（JS の案のページの B と同じ。1 文字 = サブピクセル、b 体 h つや k ほっぺ e 目 t 触手）
+    /// 待機のポーズ（~/Desktop/mochi_ref の案 1 まるもちと同じ。1 文字 = サブピクセル、b 体 e 目 s 足元の影）
     static let idle = """
-    ..........bbbbbbbbbb..........
-    ..........bbbbbbbbbb..........
-    ........bbhhbbbbbbbbbb........
-    ........bbhhbbbbbbbbbb........
-    ......bbbbbbbbbbbbbbbbbb......
-    ......bbbbeebbbbbbeebbbb......
-    ......bbbbeebbbbbbeebbbb......
-    ......bkkbbbbbbbbbbbbkkb......
-    ......bbbbbbbbbbbbbbbbbb......
-    ......bb..bb..bb..bb..bb......
-    .......b....t....t....b.......
-    ......b.....t....t.....b......
-    ......b.....t....t.....b......
-    .....b.....t......t.....b.....
-    .....b.....t......t.....b.....
-    ......b....t......t....b......
+    ........bbbbbbbbbbbbbb........
+    ........bbbbbbbbbbbbbb........
+    ....bbbbbbbbbbbbbbbbbbbbbb....
+    ....bbbbbbbbbbbbbbbbbbbbbb....
+    ..bbbbbbbbbbbbbbbbbbbbbbbbbb..
+    ..bbbbbbbbbbbbbbbbbbbbbbbbbb..
+    ..bbbbbbbbeebbbbbbeebbbbbbbb..
+    ..bbbbbbbbeebbbbbbeebbbbbbbb..
+    ..bbbbbbbbbbbbbbbbbbbbbbbbbb..
+    ..bbbbbbbbbbbbbbbbbbbbbbbbbb..
+    ....bbbbbbbbbbbbbbbbbbbbbb....
+    ....bbbbbbbbbbbbbbbbbbbbbb....
+    ....ssssssssssssssssssssss....
     """
 
     static func ascii(_ g: MochiSprite.Grid, rows: Range<Int>) -> String {
-        let letter: [MochiSprite.Role: Character] = [.body: "b", .shine: "h", .cheek: "k", .eye: "e", .tentacle: "t", .mark: "m", .warn: "y"]
+        let letter: [MochiSprite.Role: Character] = [.body: "b", .eye: "e", .shadow: "s", .mark: "m", .warn: "y"]
         return rows.map { y in String((0..<MochiSprite.pixelWidth).map { x in g[x, y].map { letter[$0]! } ?? "." }) }.joined(separator: "\n")
     }
 
     @Test func idlePoseMatchesTheChosenDesign() {
-        #expect(Self.ascii(MochiSprite.grid(JellyPose()), rows: 6..<22) == Self.idle)
+        #expect(Self.ascii(MochiSprite.grid(JellyPose()), rows: 10..<23) == Self.idle)
     }
 
-    @Test func everyPoseStaysOnTheCanvasAndIsSymmetricAtRest() {
-        // 腕・触手が左右対称になるポーズは、絵も左右対称（つやを除く）
-        for arms in [JellyPose.Arms.normal, .up, .down, .raised] {
-            for legs in [JellyPose.Legs.stand, .crouch, .dangle] {
-                let g = MochiSprite.grid(JellyPose(arms: arms, legs: legs))
+    @Test func puffGrowsUpAndDeflatesSideways() {
+        func size(_ puff: Int) -> (w: Int, h: Int) { var p = JellyPose(); p.puff = puff; let ws = MochiSprite.widths(p); return (ws.max()!, ws.count) }
+        // ふくらむほど高く（幅は同じか広く）、しぼむと低く広い
+        #expect(size(-1).h < size(0).h && size(-1).w > size(0).w)
+        for i in 0..<3 { #expect(size(i + 1).h >= size(i).h && size(i + 1).w >= size(i).w) }
+        #expect(size(3).h == 8)
+        // 足元（いちばん下の体の行）は床から動かない。跳ねると体だけ上がり、影は残る
+        var up = JellyPose(); up.lift = 1
+        let g0 = MochiSprite.grid(JellyPose()), g1 = MochiSprite.grid(up)
+        #expect(g0[14, MochiSprite.floor * 2 + 1] == .body)
+        #expect(g1[14, MochiSprite.floor * 2 + 1] == nil)
+        #expect(g1[14, (MochiSprite.floor + 1) * 2] == .shadow)
+    }
+
+    @Test func everyPoseStaysSymmetricAtRest() {
+        for legs in [JellyPose.Legs.stand, .crouch, .dangle] {
+            for puff in -1...3 {
+                var p = JellyPose(legs: legs); p.puff = puff
+                let g = MochiSprite.grid(p)
                 for y in 0..<MochiSprite.pixelHeight {
-                    for x in 0..<MochiSprite.pixelWidth where g[x, y] != .shine && g[MochiSprite.pixelWidth - 1 - x, y] != .shine {
-                        #expect((g[x, y] == nil) == (g[MochiSprite.pixelWidth - 1 - x, y] == nil), "\(arms) \(legs) \(x),\(y)")
+                    for x in 0..<MochiSprite.pixelWidth {
+                        #expect((g[x, y] == nil) == (g[MochiSprite.pixelWidth - 1 - x, y] == nil), "\(legs) \(puff) \(x),\(y)")
                     }
                 }
             }
         }
     }
 
-    @Test func marksAndToneChangeColorsNotShape() {
-        let c = SpriteColors.from(Palette.named[1])
+    @Test func defaultColorIsGrayAndCancelledIsDarker() {
+        #expect(Palette.named[0].key == "gray")
+        #expect(!Palette.named.contains { $0.key == "orange" })
+        let c = SpriteColors.from(Palette.named[0])
+        let gray = c.color(.body, tone: .normal), cancelled = c.color(.body, tone: .cancelled)
+        #expect(cancelled.x < gray.x - 0.2)
         #expect(c.color(.body, tone: .error) == SpriteColors.errorBody)
         #expect(c.color(.mark, tone: .error) == c.flat)
-        let g = MochiSprite.grid(JellyPose(mark: .check))
-        #expect(g[29, 1] == .mark)
+        #expect(MochiSprite.grid(JellyPose(mark: .check))[29, 1] == .mark)
     }
 
     @Test func menuBarIconIsTheSameCharacter() {
         let rows = MenuImages.statusRows(MenuImages.StatusPose())
-        #expect(rows.count == 13)
-        #expect(rows.allSatisfy { $0.count == 16 })
-        // 目はくり抜き（2×2）、左右対称
-        #expect(rows[5] == ".###..####..###.")
+        #expect(rows.count == MochiSprite.floor)
+        #expect(rows.allSatisfy { $0.count == MochiSprite.cols })
+        // 目はくり抜き、左右対称、まばたきは目をふさぐ
+        #expect(rows[7] == ".####.###.####.")
         for r in rows { #expect(String(r.reversed()) == r) }
         let blink = MenuImages.statusRows(MenuImages.StatusPose(blink: true))
-        #expect(blink[5] == ".##############.")
+        #expect(blink[7] == ".#############.")
+        // ふくらむと高くなる
+        let big = MenuImages.statusRows(MenuImages.StatusPose(puff: 3))
+        #expect(big.filter { $0.contains("#") }.count > rows.filter { $0.contains("#") }.count)
     }
 }
 

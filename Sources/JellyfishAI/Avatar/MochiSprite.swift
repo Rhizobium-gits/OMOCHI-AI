@@ -1,9 +1,9 @@
 import CoreGraphics
 import Foundation
 
-/// ドット絵のクラゲ「もち」の表情・手足のポーズ。
-/// キャンバスは 15×12 マス（上 3 マスは「…」「!」「✓」などの表示用）で、1 マスを 2×2 のサブピクセルで描く。
-/// 触手・腕・目は半マス（サブピクセル）単位で描くので、細い線や目の動きが出せる。
+/// ドット絵のお餅「まるもち」の表情とポーズ。
+/// キャンバスは 15×12 マス（上 3 マスは「…」「!」「✓」などの表示用、いちばん下の行は足元の影）で、1 マスを 2×2 のサブピクセルで描く。
+/// 体はマス単位の四角だけ。目だけは半マス単位で動かせる。
 struct JellyPose: Hashable {
     enum Eyes: Hashable { case open(dx: Int, dy: Int), closed, happy, cross }
     enum Arms: Hashable { case normal, up, down, leftUp, rightUp, raised }
@@ -12,16 +12,19 @@ struct JellyPose: Hashable {
     enum Tone: Hashable { case normal, error, cancelled }
 
     var eyes: Eyes = .open(dx: 0, dy: 0)
+    /// 前のキャラの腕のポーズ（お餅には腕が無いので絵には使わない。状態の組み立てとの互換のため残す）
     var arms: Arms = .normal
-    /// 触手の揺れ（walkA / walkB）・縮む（crouch）・つままれて垂れる（dangle）
+    /// crouch = ぎゅっとつぶれる（着地・長押し）、dangle = つままれて「のび〜」と伸びる。ほかは形を変えない
     var legs: Legs = .stand
     var mark: Mark = .none
     var tone: Tone = .normal
-    /// 体を何マス持ち上げるか（ぴょんと跳ねるコマ）
+    /// 体を何マス持ち上げるか（ぴょんと跳ねるコマ。影は床に残る）
     var lift: Int = 0
+    /// ふくらみ：-1 しぼむ（横にぺたん）、0 ふつう、1〜3 ふくらむ（上へ丸く盛り上がる）
+    var puff: Int = 0
 }
 
-/// ドット絵の色（エージェントの色から、つや・ほっぺ・触手の色を作る）
+/// ドット絵の色（体の色はエージェントの色。エラーは赤、中止は濃い灰色）
 struct SpriteColors {
     let flat: SIMD3<Double>
 
@@ -30,44 +33,42 @@ struct SpriteColors {
     }
 
     static let errorBody = SIMD3<Double>(0.90, 0.33, 0.30)
-    static let cancelledBody = SIMD3<Double>(0.56, 0.55, 0.54)
+    /// 中止：既定の灰色のお餅と見分けられるよう、濃い灰色
+    static let cancelledBody = SIMD3<Double>(0.40, 0.39, 0.38)
     static let warn = SIMD3<Double>(1.00, 0.78, 0.27)
-    static let eye = SIMD3<Double>(0.08, 0.07, 0.12)
+    static let eye = SIMD3<Double>(0.09, 0.07, 0.06)
 
-    static func mix(_ a: SIMD3<Double>, _ b: SIMD3<Double>, _ t: Double) -> SIMD3<Double> { a + (b - a) * t }
-
-    /// 役割ごとの色（体の色は状態で変わる。頭上の記号はいつもエージェントの色）
+    /// 役割ごとの色（頭上の記号はいつもエージェントの色）。影は shadowAlpha の黒
     func color(_ role: MochiSprite.Role, tone: JellyPose.Tone) -> SIMD3<Double> {
-        let body: SIMD3<Double>
-        switch tone {
-        case .normal: body = flat
-        case .error: body = SpriteColors.errorBody
-        case .cancelled: body = SpriteColors.cancelledBody
-        }
-        let white = SIMD3<Double>(1, 1, 1)
         switch role {
-        case .body: return body
-        case .shine: return SpriteColors.mix(body, white, 0.55)
-        case .cheek: return SpriteColors.mix(body, SIMD3(1.0, 0.42, 0.55), 0.62)
+        case .body:
+            switch tone {
+            case .normal: return flat
+            case .error: return SpriteColors.errorBody
+            case .cancelled: return SpriteColors.cancelledBody
+            }
         case .eye: return SpriteColors.eye
-        case .tentacle: return SpriteColors.mix(body, white, 0.22)
+        case .shadow: return SIMD3(0, 0, 0)
         case .mark: return flat
         case .warn: return SpriteColors.warn
         }
     }
+    static let shadowAlpha: CGFloat = 0.32
 }
 
-/// クラゲのドット絵「もち」：背の高いおもちのようなかさ、細い 2 本の腕、2 本の触手、点の目とほっぺ。
-/// 作業中は腕を交互に上げ、つままれるとバンザイ、長押しで腕を下ろして縮こまる。
+/// お餅のドット絵「まるもち」：床にぽてっと座った丸餅。体と目だけ。
+/// ふくらむと上へ丸く盛り上がり、しぼむと横にぺたんと広がる。足元に影（宙には浮かない）
 enum MochiSprite {
     static let cols = 15
     static let rows = 12
     static let sub = 2                       // 1 マス = 2×2 サブピクセル
     static var pixelWidth: Int { cols * sub }
     static var pixelHeight: Int { rows * sub }
+    /// 体のいちばん下の行（その下の行に影）
+    static let floor = 10
 
     /// ドットの役割（色は SpriteColors が決める）
-    enum Role: UInt8 { case body, shine, cheek, eye, tentacle, mark, warn }
+    enum Role: UInt8 { case body, eye, shadow, mark, warn }
 
     /// サブピクセルの格子（y は上から）。nil = 透明
     struct Grid {
@@ -83,104 +84,64 @@ enum MochiSprite {
             guard x >= 0, y >= 0, x < Grid.W, y < Grid.H else { return }
             cells[y * Grid.W + x] = r
         }
-        mutating func clear(_ x: Int, _ y: Int) {
-            guard x >= 0, y >= 0, x < Grid.W, y < Grid.H else { return }
-            cells[y * Grid.W + x] = nil
-        }
         mutating func cell(_ c: Int, _ r: Int, _ role: Role) {
             for i in 0..<MochiSprite.sub { for j in 0..<MochiSprite.sub { px(c * MochiSprite.sub + i, r * MochiSprite.sub + j, role) } }
-        }
-        mutating func row(_ r: Int, _ c0: Int, _ c1: Int, _ role: Role) {
-            for c in c0...c1 { cell(c, r, role) }
         }
     }
 
     // MARK: - 形
 
-    /// 触手の 1 段（サブピクセル）ごとの横ずれ（左の 1 本ぶん）。sym なら右は左右反転、そうでなければ同じ向きに揺れる
-    private struct Sway { let sym: Bool; let offsets: [Int] }
-    private static func sway(_ p: JellyPose) -> Sway {
-        if p.legs == .dangle { return Sway(sym: true, offsets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) }
-        if p.legs == .crouch { return Sway(sym: true, offsets: [0, 0, -1, -1, -1]) }
-        if p.arms == .down { return Sway(sym: true, offsets: [0, 0, 0, 0]) }
+    /// 形ごとの段の幅（上から。奇数マス、列 7 が中心）
+    static func widths(_ p: JellyPose) -> [Int] {
         switch p.legs {
-        case .walkA: return Sway(sym: false, offsets: [0, 0, -1, -1, -2, -2, -2, -1])
-        case .walkB: return Sway(sym: false, offsets: [0, 0, 1, 1, 2, 2, 2, 1])
-        default: return Sway(sym: true, offsets: [0, 0, 0, -1, -1, -1, 0, 0])
+        case .crouch: return [13, 15]
+        case .dangle: return [5, 7, 7, 7, 7, 7, 7, 5]
+        default: break
         }
-    }
-
-    /// 腕の通り道（左腕。根元からの [dx, dy]、サブピクセル）。右腕は左右反転
-    private static func armPath(_ a: String) -> [(Int, Int)] {
-        switch a {
-        case "up": return [(-1, 0), (-2, -1), (-3, -2), (-3, -3), (-3, -4), (-2, -5)]
-        case "raised": return [(-1, 0), (-2, -1), (-3, -2), (-3, -3), (-3, -4), (-3, -5), (-3, -6), (-3, -7), (-2, -8)]
-        case "down": return [(0, 0), (0, 1), (0, 2)]
-        default: return [(0, 0), (0, 1), (-1, 2), (-1, 3), (-2, 4), (-2, 5), (-1, 6)]
+        switch max(-1, min(3, p.puff)) {
+        case -1: return [11, 15, 15]
+        case 1: return [7, 11, 13, 13, 13, 13, 11]
+        case 2: return [5, 9, 11, 13, 13, 13, 13, 11]
+        case 3: return [7, 11, 13, 15, 15, 15, 15, 13]
+        default: return [7, 11, 13, 13, 13, 11]
         }
     }
 
     /// そのポーズのドットの配置
     static func grid(_ p: JellyPose) -> Grid {
         var g = Grid()
-        let W = Grid.W
-        let crouch = p.legs == .crouch
-        let T = 3 - p.lift + (crouch ? 1 : 0)
-
-        // かさ（行ごとの左端・右端のマス）。いちばん下の段の下半分は 1 マスおきの波形
-        let rows: [(Int, Int)] = crouch ? [(4, 10), (3, 11), (2, 12), (2, 12)] : [(5, 9), (4, 10), (3, 11), (3, 11), (3, 11)]
-        for (r, (c0, c1)) in rows.enumerated() { g.row(T + r, c0, c1, .body) }
-        let last = T + rows.count - 1
-        let (l0, l1) = rows[rows.count - 1]
-        for c in l0...l1 {
-            let y = last * 2 + 1
-            if (c - l0) % 2 == 0 { g.px(c * 2, y, .body); g.px(c * 2 + 1, y, .body) } else { g.clear(c * 2, y); g.clear(c * 2 + 1, y) }
-        }
-        let y0 = last * 2 + 2            // 触手・腕の付け根の y（サブピクセル）
-
-        // つや
-        g.cell(5, T + 1, .shine)
-
-        // 腕（かさの下の角から出る細い線）
-        var la = "normal", ra = "normal"
-        switch p.arms {
-        case .up: la = "up"; ra = "up"
-        case .leftUp: la = "up"
-        case .rightUp: ra = "up"
-        case .raised: la = "raised"; ra = "raised"
-        case .down: la = "down"; ra = "down"
-        case .normal: break
-        }
-        let ax = l0 * 2 + 1
-        for (dx, dy) in armPath(la) { g.px(ax + dx, y0 - 1 + dy, .body) }
-        for (dx, dy) in armPath(ra) { g.px((W - 1) - (ax + dx), y0 - 1 + dy, .body) }
-
-        // 触手（2 本。体より少し明るい色）
-        let s = sway(p)
-        let n = max(1, min(s.offsets.count, 6))
-        for x in [12, 17] {
-            let right = Double(x) > Double(W - 1) / 2
-            for j in 0..<n { g.px(x + (right && s.sym ? -s.offsets[j] : s.offsets[j]), y0 + j, .tentacle) }
+        let ws = widths(p)
+        let bottom = floor - p.lift
+        let top = bottom - ws.count + 1
+        for (i, w) in ws.enumerated() {
+            let h = (w - 1) / 2
+            for c in (7 - h)...(7 + h) { g.cell(c, top + i, .body) }
         }
 
-        // 目（2×2 の点）とほっぺ
-        let ey = (T + 2) * 2 + (crouch ? 0 : 1)
-        let lx = 10, w = 2, h = 2
-        let rx = (W - 1) - lx - (w - 1)
+        // 足元の影（床の行の上半分。体のいちばん下より少し短く、跳ねると小さくなる）
+        let sw = max(1, (ws[ws.count - 1] + 1) / 2 - 1 - p.lift)
+        for x in ((7 - sw) * sub)..<((8 + sw) * sub) { g.px(x, (floor + 1) * sub, .shadow) }
+
+        // 目（1 マス）。顔は下のほう。ぺたんとしたときは 2 段のまん中、いちばんふくらむと目の間が広がる
+        let flat = ws.count <= 3
+        let off = (ws.max() ?? 13) >= 15 ? 3 : 2
+        let lc = 7 - off, rc = 7 + off
+        // 2 段（つぶれた）なら 1 段目から、3 段（しぼんだ）なら 2 段目から半マス下げて、目が体からはみ出さないように
+        let y = (flat ? (ws.count == 2 ? top : top + 1) : bottom - 2) * sub + (flat ? 1 : 0)
+        let xs = [lc * sub, rc * sub]
         switch p.eyes {
         case .open(let dx, let dy):
-            for x in [lx, rx] { for i in 0..<w { for j in 0..<h { g.px(x + dx + i, ey + dy + j, .eye) } } }
+            for x in xs { for i in 0..<2 { for j in 0..<2 { g.px(x + dx + i, y + dy + j, .eye) } } }
         case .closed:
-            for x in [lx, rx] { for i in 0..<w { g.px(x + i, ey + h - 1, .eye) } }
+            for x in xs { g.px(x, y + 1, .eye); g.px(x + 1, y + 1, .eye) }
         case .happy:
             // ^ ^（3 サブピクセル幅。左右対称になるよう外側へ半マスずらす）
-            for x in [lx - 1, rx] { g.px(x, ey + 1, .eye); g.px(x + 1, ey, .eye); g.px(x + 2, ey + 1, .eye) }
+            for x in [xs[0] - 1, xs[1]] { g.px(x, y + 1, .eye); g.px(x + 1, y, .eye); g.px(x + 2, y + 1, .eye) }
         case .cross:
-            for x in [lx - 1, rx] {
-                g.px(x, ey, .eye); g.px(x + 2, ey, .eye); g.px(x + 1, ey + 1, .eye); g.px(x, ey + 2, .eye); g.px(x + 2, ey + 2, .eye)
+            for x in [xs[0] - 1, xs[1]] {
+                g.px(x, y, .eye); g.px(x + 2, y, .eye); g.px(x + 1, y + 1, .eye); g.px(x, y + 2, .eye); g.px(x + 2, y + 2, .eye)
             }
         }
-        if p.eyes != .cross { for x in [7, 8, 21, 22] { g.px(x, ey + 2, .cheek) } }
 
         // 頭上の表示（キャンバス上 3 マス）
         switch p.mark {
@@ -219,7 +180,7 @@ enum MochiSprite {
                 guard let r = g[x, y] else { continue }
                 let c = shades[r] ?? {
                     let v = colors.color(r, tone: pose.tone)
-                    let cg = CGColor(srgbRed: CGFloat(v.x), green: CGFloat(v.y), blue: CGFloat(v.z), alpha: 1)
+                    let cg = CGColor(srgbRed: CGFloat(v.x), green: CGFloat(v.y), blue: CGFloat(v.z), alpha: r == .shadow ? SpriteColors.shadowAlpha : 1)
                     shades[r] = cg
                     return cg
                 }()

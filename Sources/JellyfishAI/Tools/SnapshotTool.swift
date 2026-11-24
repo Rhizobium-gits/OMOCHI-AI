@@ -119,11 +119,15 @@ enum SnapshotTool {
         値段の $5 と $10 は数式になりません。詳しくは [Mermaid の書き方](https://mermaid.js.org) を見てください。
         """
         let payload: [String: Any] = [
-            "accent": "#D97757",
+            "accent": "#B8B5B0",
             "items": [
                 ["id": "u", "kind": "user", "caption": L("あなた"), "captionStyle": "muted", "text": "四季の詩を比べて、表・数式・グラフで見せて"],
                 ["id": "t", "kind": "tool", "text": "⚙︎ Bash: python3 score.py"],
-                ["id": "a", "kind": "assistant", "caption": "Claude", "captionColor": "#D97757", "text": answer],
+                ["id": "a", "kind": "assistant", "caption": "Claude", "captionColor": "#B8B5B0", "text": answer],
+                ["id": "u2", "kind": "user", "caption": L("あなた"), "captionStyle": "muted", "text": "いちばん点の高い詩を、英語にもして"],
+                ["id": "a2", "kind": "assistant", "caption": "Claude", "captionColor": "#B8B5B0", "text": "「月の舟」を英語にしました。\n\n> A boat of moonlight drifts across the autumn sky."],
+                ["id": "r", "kind": "request", "caption": "📨 Mio からの依頼", "captionColor": "#5B8DEF", "text": "この詩を 3 行に縮めて、結果を返してください"],
+                ["id": "a3", "kind": "assistant", "caption": "Claude", "captionColor": "#B8B5B0", "text": "月の舟 / 秋の空を / わたる"],
             ],
             "labels": ["copy": L("コピー"), "copied": L("コピーしました"), "diagramFailed": L("図にできませんでした（Mermaid の書き方を確かめてください）")],
         ]
@@ -254,6 +258,8 @@ enum SnapshotTool {
     static func pixelPoses() -> [(String, JellyPose)] {
         var a: [(String, JellyPose)] = []
         a.append(("idle", JellyPose()))
+        a.append(("puff3", { var p = JellyPose(); p.puff = 3; return p }()))
+        a.append(("deflate", { var p = JellyPose(); p.puff = -1; return p }()))
         a.append(("blink", JellyPose(eyes: .closed)))
         a.append(("glance", JellyPose(eyes: .open(dx: 1, dy: -1))))
         a.append(("think1", JellyPose(eyes: .open(dx: -1, dy: -1), mark: .dots(1))))
@@ -286,12 +292,8 @@ enum SnapshotTool {
                 let img = MochiSprite.image(pose, colors: colors, key: jc.key)
                 let rect = CGRect(x: CGFloat(i * tileW), y: CGFloat(H - (ci + 1) * tileH) + P * 0.5,
                                   width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
-                ctx.saveGState()
-                let f = jc.flat
-                ctx.setShadow(offset: .zero, blur: P * 0.9 * 2,
-                              color: CGColor(srgbRed: CGFloat(f.x), green: CGFloat(f.y), blue: CGFloat(f.z), alpha: 0.55))
+                // お餅は光らせない（足元の影は絵に入っている）
                 ctx.draw(img, in: rect)
-                ctx.restoreGState()
             }
         }
         return write(ctx.makeImage()!, out)
@@ -444,17 +446,17 @@ enum SnapshotTool {
     /// メニューバーのアイコンのコマを並べた画像（確認用）
     static func statusFrames(_ out: String) -> Int32 {
         typealias P = MenuImages.StatusPose
-        let poses: [P] = [P(), P(lift: 1), P(blink: true), P(dots: 1), P(dots: 2), P(dots: 3),
-                          P(lift: 1, legs: 1, arms: true), P(legs: 2)]
-        let scale: CGFloat = 4, cell: CGFloat = 18 * scale
-        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cell) * poses.count, pixelsHigh: Int(cell) * 2,
+        let poses: [P] = [P(), P(puff: 1), P(puff: 2), P(blink: true), P(puff: 1, dots: 1), P(puff: 3, dots: 3),
+                          P(puff: -1), P(lift: 1, puff: 2)]
+        let scale: CGFloat = 4, cell: CGFloat = 23 * scale, cellH: CGFloat = 18 * scale
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cell) * poses.count, pixelsHigh: Int(cellH) * 2,
                                    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
                                    bytesPerRow: 0, bitsPerPixel: 0)!
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
         for (row, bg) in [NSColor(white: 0.93, alpha: 1), NSColor(white: 0.15, alpha: 1)].enumerated() {
             bg.setFill()
-            NSRect(x: 0, y: CGFloat(row) * cell, width: cell * CGFloat(poses.count), height: cell).fill()
+            NSRect(x: 0, y: CGFloat(row) * cellH, width: cell * CGFloat(poses.count), height: cellH).fill()
             for (i, p) in poses.enumerated() {
                 let img = MenuImages.statusFrame(p).copy() as! NSImage
                 img.isTemplate = false
@@ -464,7 +466,7 @@ enum SnapshotTool {
                     r.fill(using: .sourceAtop)
                     return true
                 }
-                tinted.draw(in: NSRect(x: CGFloat(i) * cell, y: CGFloat(row) * cell, width: cell, height: cell))
+                tinted.draw(in: NSRect(x: CGFloat(i) * cell, y: CGFloat(row) * cellH, width: cell, height: cellH))
             }
         }
         NSGraphicsContext.restoreGraphicsState()

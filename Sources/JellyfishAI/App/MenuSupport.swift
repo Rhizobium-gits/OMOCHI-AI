@@ -44,67 +44,54 @@ enum MenuImages {
         }
     }
 
-    /// メニューバー用のクラゲ「もち」のシルエット（テンプレート画像、目は抜き）
+    /// メニューバー用のお餅「まるもち」のシルエット（テンプレート画像、目は抜き）
     static func statusIcon() -> NSImage { statusFrame(StatusPose()) }
 
-    /// メニューバーのアイコンのコマ（16×13 の「もち」。目はくり抜き、テンプレート画像なので明暗に追従）
+    /// メニューバーのアイコンのコマ（ドット絵と同じ「まるもち」を 1 マス 1.5pt で。目はくり抜き、影は描かない。
+    /// テンプレート画像なので明暗に追従）
     struct StatusPose: Hashable {
-        var lift = 0          // 0 / 1（1 段浮く）
+        var lift = 0          // 0 / 1（1 マス跳ねる）
         var blink = false
-        var legs = 0          // 0 = まっすぐ, 1 / 2 = 触手が左右に揺れる
+        var puff = 0          // -1〜3（ふくらみ）
         var dots = 0          // 考え中の「…」（0〜3）
-        var arms = false      // 作業中に腕を上げる
     }
 
     private static var frameCache: [StatusPose: NSImage] = [:]
 
-    /// アイコンの点の配置（上から。# = 塗る）
+    /// アイコンのマス（上から 1〜10 行目、15 列。# = 塗る）
     static func statusRows(_ p: StatusPose) -> [String] {
-        var g: [[Character]] = [
-            ".....######.....",
-            "...##########...",
-            "..############..",
-            ".##############.",
-            ".##############.",
-            ".###..####..###.",
-            ".###..####..###.",
-            ".##############.",
-            "..############..",
-            "................",
-            "................",
-            "................",
-            "................",
-        ].map(Array.init)
-        func set(_ x: Int, _ y: Int, _ c: Character = "#") { if y >= 0, y < g.count, x >= 0, x < 16 { g[y][x] = c } }
-        // まばたき：目を下の 1 段だけに
-        if p.blink { for x in [4, 5, 10, 11] { set(x, 5) } }
-        // 腕（かさの下の角から外へ。作業中は上へ）
-        if p.arms { set(1, 9); set(0, 8); set(14, 9); set(15, 8) } else { set(1, 9); set(0, 10); set(14, 9); set(15, 10) }
-        // 触手 2 本（下の 2 段が揺れる）
-        let sway: [[Int]]
-        switch p.legs {
-        case 1: sway = [[6, 9], [6, 9], [5, 8], [4, 7]]
-        case 2: sway = [[6, 9], [6, 9], [7, 10], [8, 11]]
-        default: sway = [[6, 9], [6, 9], [6, 9], [5, 10]]
+        var pose = JellyPose()
+        pose.eyes = p.blink ? .closed : .open(dx: 0, dy: 0)
+        pose.puff = p.puff
+        pose.lift = p.lift
+        pose.mark = p.dots > 0 ? .dots(p.dots) : .none
+        let g = MochiSprite.grid(pose)
+        let s = MochiSprite.sub
+        return (1...MochiSprite.floor).map { r in
+            String((0..<MochiSprite.cols).map { c -> Character in
+                var filled = 0, eye = 0
+                for i in 0..<s { for j in 0..<s {
+                    switch g[c * s + i, r * s + j] {
+                    case .body?, .mark?: filled += 1
+                    case .eye?: eye += 1
+                    default: break
+                    }
+                } }
+                // 開いた目（1 マスまるごと）だけくり抜く。閉じた目は細すぎるので、まばたきは目をふさいで見せる
+                return eye >= 3 ? "." : (filled + eye > 0 ? "#" : ".")
+            })
         }
-        for (i, xs) in sway.enumerated() { for x in xs { set(x, 9 + i) } }
-        return g.map { String($0) }
     }
 
     static func statusFrame(_ p: StatusPose) -> NSImage {
         if let img = frameCache[p] { return img }
         let rows = statusRows(p)
-        let dots = p.dots
-        let lift = CGFloat(p.lift)
-        let img = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { _ in
+        let img = NSImage(size: NSSize(width: 23, height: 18), flipped: true) { _ in
             NSColor.black.setFill()
-            let ox: CGFloat = 1, oy: CGFloat = 4 - lift
-            for i in 0..<min(dots, 3) {
-                NSRect(x: ox + CGFloat(3 + i * 4), y: 0, width: 2, height: 2).fill()
-            }
+            let c: CGFloat = 1.5, ox: CGFloat = 0.5, oy: CGFloat = 1.5
             for (y, row) in rows.enumerated() {
                 for (x, ch) in row.enumerated() where ch == "#" {
-                    NSRect(x: ox + CGFloat(x), y: oy + CGFloat(y), width: 1, height: 1).fill()
+                    NSRect(x: ox + CGFloat(x) * c, y: oy + CGFloat(y) * c, width: c, height: c).fill()
                 }
             }
             return true

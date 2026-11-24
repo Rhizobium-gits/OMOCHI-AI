@@ -1296,7 +1296,7 @@ final class TeamCoordinator {
         let key = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let mates = team(of: caller).dropFirst().compactMap { controller($0) }
         if let c = mates.first(where: { $0.record.title.lowercased() == key }) { return c }
-        let alias = ["青": "blue", "あお": "blue", "橙": "orange", "だいだい": "orange", "紫": "purple", "むらさき": "purple",
+        let alias = ["青": "blue", "あお": "blue", "橙": "amber", "だいだい": "amber", "灰": "gray", "灰色": "gray", "はいいろ": "gray", "グレー": "gray", "ぐれー": "gray", "紫": "purple", "むらさき": "purple",
                      "緑": "green", "みどり": "green", "桃": "pink", "もも": "pink", "黄": "yellow", "黄色": "yellow", "きいろ": "yellow",
                      "水色": "cyan", "黄緑": "lime", "藍": "indigo"]
         let colorKey = alias[key.replacingOccurrences(of: "の", with: "").replacingOccurrences(of: "色", with: "")] ?? alias[key] ?? key

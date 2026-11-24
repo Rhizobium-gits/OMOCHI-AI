@@ -9,6 +9,7 @@
   --error: #d70015;
   --accent: #0a84ff;
   --link: #0a66d8;
+  --bubble-base: rgba(255, 255, 255, 0.55);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -21,6 +22,7 @@
     --table-stripe: rgba(255, 255, 255, 0.025);
     --error: #ff6961;
     --link: #64a8ff;
+    --bubble-base: rgba(255, 255, 255, 0.06);
   }
 }
 
@@ -40,7 +42,27 @@ body {
 }
 .caption.muted { color: var(--muted); }
 .caption.error { color: var(--error); }
-.user .body { font-weight: 500; white-space: pre-wrap; }
+/* 自分の指示：右寄せの吹き出し（クラゲの色をうすく敷く）。返答は左に広く、そのまま */
+.item.user { display: flex; flex-direction: column; align-items: flex-end; margin: 16px 0 10px; }
+.item.user .caption { margin: 0 4px 4px; }
+.item.user .body {
+  max-width: 84%; box-sizing: border-box; white-space: pre-wrap; font-weight: 500;
+  padding: 8px 12px; border-radius: 14px 14px 4px 14px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--bubble-base));
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+}
+.item.user .notes { text-align: right; margin-right: 4px; }
+.item.user .media { max-width: 84%; }
+/* 仲間のクラゲからの依頼：左寄せの点線の枠 */
+.item.request { margin: 16px 0 10px; }
+.item.request .caption { margin-top: 0; }
+.item.request .body {
+  max-width: 92%; box-sizing: border-box; white-space: pre-wrap;
+  padding: 8px 12px; border-radius: 4px 14px 14px 14px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+}
+/* 返答のあとに次の指示が来たら、区切りがわかるよう少し間をあける */
+.item.assistant + .item.user, .item.tool + .item.user { margin-top: 22px; }
 .notes { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .tool { font: 11.5px/1.45 ui-monospace, "SF Mono", Menlo, monospace; color: var(--faint); margin: 2px 0; white-space: pre-wrap; }
 .error .body { font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: var(--error); white-space: pre-wrap; }

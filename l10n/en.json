@@ -418,6 +418,7 @@
  "クラゲを隠す": "Hide jellyfish",
  "クリックしました (%ld, %ld)": "Clicked (%ld, %ld)",
  "グリーン": "Green",
+ "グレー": "Gray",
  "グローバル座標 (x, y) をクリックする。": "Clicks at global coordinates (x, y).",
  "コネクタ": "Connectors",
  "コネクタの画面を開く（AI・モデルごとに決める）…": "Open Connectors (set per AI and model)…",

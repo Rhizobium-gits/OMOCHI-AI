@@ -19,7 +19,8 @@ enum Palette {
     /// 生成順に割り当てる固定色。赤系はエラー表示用に予約しているので使わない。
     /// 名前を今の言語にするため、使うたびに作る（言語を切り替えると変わる）
     static var named: [JellyColor] { [
-        JellyColor(key: "orange", name: L("オレンジ"), jaName: "オレンジ", flat: [0.851, 0.467, 0.341], base: [1.00, 0.56, 0.20], deep: [0.86, 0.30, 0.04]),
+        // 1 体目（既定）は灰色のお餅（前のオレンジ #D97757 は Claude の色なのでやめた）
+        JellyColor(key: "gray",   name: L("グレー"), jaName: "グレー", flat: [0.72, 0.71, 0.69], base: [0.84, 0.84, 0.88], deep: [0.42, 0.42, 0.46]),
         JellyColor(key: "blue",   name: L("ブルー"), jaName: "ブルー", flat: [0.357, 0.553, 0.937],   base: [0.32, 0.64, 1.00], deep: [0.08, 0.30, 0.86]),
         JellyColor(key: "purple", name: L("パープル"), jaName: "パープル", flat: [0.616, 0.482, 0.918], base: [0.68, 0.48, 1.00], deep: [0.40, 0.16, 0.84]),
         JellyColor(key: "green",  name: L("グリーン"), jaName: "グリーン", flat: [0.298, 0.718, 0.510], base: [0.32, 0.92, 0.58], deep: [0.04, 0.56, 0.30]),

@@ -20,7 +20,7 @@ Framer Motion / CSS Animation の役割は Core Animation が担う（アニメ�
 │      │                                                                    │
 │ JellyManager ── 配置・表示/非表示・永続化・クリック透過のポインタ追跡          │
 │      ├── JellyController ×N   透明 NSPanel（nonactivating）+ マウス操作       │
-│      │      └── Avatar        PixelAvatar（既定, ドット絵「もち」）           │
+│      │      └── Avatar        PixelAvatar（既定, ドット絵「まるもち」）       │
 │      │                        RealisticAvatar（Metal シェーダ）               │
 │      ├── AgentRuntime ×N      セッション・履歴・状態遷移・ログ                 │
 │      │      └── AgentBackend  ClaudeCodeBackend（他の AI もこの口で差し替え）  │

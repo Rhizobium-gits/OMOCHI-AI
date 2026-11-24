@@ -8,11 +8,10 @@ final class PassthroughView: NSView {
 
 /// ドット絵のクラゲ「もち」（MochiSprite）。
 ///
-/// 負荷を抑える設計：
-/// - ふわふわ浮く・跳ねる・揺れるといった連続的な動きは Core Animation に任せる
-///   （WindowServer 側で補間されるので、アプリのメインスレッドは毎フレーム起きない）
-/// - アプリが描き替えるのはドット絵のコマ（まばたき・手足）だけで、最大 8fps
-/// - 完了・キャンセルでは揺れを減衰させて止め、タイマーもアニメーションも完全に無くす
+/// お餅なので宙には浮かず、床に座ったまま（足元の影は絵に入っている）。
+/// 動きはドット絵のコマ（ふくらむ・しぼむ・小さく跳ねる・まばたき）だけで、最大 8fps で描き替える。
+/// エラーの横ゆれ・長押しの縮み・着地のはずみは Core Animation。
+/// 完了・キャンセルでは少しして止まり、タイマーもアニメーションも無くす
 final class PixelAvatar: Avatar {
     static func cell(scale: Double) -> Double { (6.0 * scale).rounded() }
     static let topMarginCells: CGFloat = 2.0
@@ -28,7 +27,6 @@ final class PixelAvatar: Avatar {
     let size: CGSize
     private let P: CGFloat
     private let colors: SpriteColors
-    private let glow: CGColor
     private let cacheKey: String
 
     private let root = CALayer()
@@ -61,8 +59,6 @@ final class PixelAvatar: Avatar {
         P = CGFloat(PixelAvatar.cell(scale: scale))
         size = PixelAvatar.windowSize(scale: scale)
         colors = SpriteColors.from(record.color)
-        let f = record.color.flat
-        glow = CGColor(srgbRed: CGFloat(f.x), green: CGFloat(f.y), blue: CGFloat(f.z), alpha: 1)
         cacheKey = record.color.key
         state = record.state
         seed = Double(record.number) * 0.618
@@ -86,13 +82,6 @@ final class PixelAvatar: Avatar {
         spriteLayer.minificationFilter = .nearest
         spriteLayer.contentsGravity = .resize
         spriteLayer.actions = ["contents": NSNull(), "opacity": NSNull()]
-        // やわらかい発光（エージェント色の影）
-        spriteLayer.shadowColor = glow
-        spriteLayer.shadowOpacity = 0.55
-        spriteLayer.shadowRadius = P * 0.9
-        spriteLayer.shadowOffset = .zero
-        spriteLayer.shouldRasterize = true
-        spriteLayer.rasterizationScale = NSScreen.screens.map(\.backingScaleFactor).max() ?? 2
 
         root.addSublayer(floatLayer)
         floatLayer.addSublayer(hopLayer)
@@ -122,30 +111,23 @@ final class PixelAvatar: Avatar {
         var p = JellyPose()
         switch s {
         case .idle, .thinking, .working: break
-        case .completed: p.eyes = .happy; p.mark = .check
-        case .error: p.eyes = .cross; p.tone = .error; p.mark = .exclaim
-        case .cancelled: p.eyes = .closed; p.tone = .cancelled
+        case .completed: p.eyes = .happy; p.mark = .check; p.puff = 2
+        case .error: p.eyes = .cross; p.tone = .error; p.mark = .exclaim; p.puff = -1
+        case .cancelled: p.eyes = .closed; p.tone = .cancelled; p.puff = -1
         }
         return p
     }
 
-    /// 状態ごとの「連続的な動き」（Core Animation）を設定する
+    /// 状態ごとの動きを設定する（宙には浮かない。エラーだけ横にゆれる）
     private func applyStateMotion(transition: Bool) {
         hopLayer.removeAnimation(forKey: "shake")
         hopLayer.removeAnimation(forKey: "hopLoop")
-        spriteLayer.opacity = state == .cancelled ? 0.78 : 1.0
+        floatLayer.removeAllAnimations()
+        spriteLayer.opacity = state == .cancelled ? 0.85 : 1.0
         switch state {
-        case .idle:
-            setFloat(amplitude: P * 0.45, period: 3.6)
-        case .thinking:
-            setFloat(amplitude: P * 0.45, period: 2.3)
-        case .working:
-            setFloat(amplitude: P * 0.18, period: 1.6)
-        case .error:
-            setFloat(amplitude: P * 0.22, period: 3.8)
-            addShakeLoop()
-        case .completed, .cancelled:
-            settleFloat()
+        case .error: addShakeLoop()
+        case .completed, .cancelled: settleSoon()
+        default: break
         }
         startTimer()
     }
@@ -154,55 +136,21 @@ final class PixelAvatar: Avatar {
         (layer.presentation()?.value(forKeyPath: "transform.translation.y") as? CGFloat) ?? 0
     }
 
-    private func sineKeyframes(_ A: CGFloat, period: Double) -> CAKeyframeAnimation {
-        let a = CAKeyframeAnimation(keyPath: "transform.translation.y")
-        a.values = [0, A, 0, -A, 0]
-        a.keyTimes = [0, 0.25, 0.5, 0.75, 1]
-        let out = CAMediaTimingFunction(name: .easeOut), inn = CAMediaTimingFunction(name: .easeIn)
-        a.timingFunctions = [out, inn, out, inn]
-        a.duration = period
-        a.repeatCount = .infinity
-        return a
-    }
-
-    /// 浮遊ループ。今の位置から滑らかにつないで、新しい振幅・周期で浮かぶ
-    private func setFloat(amplitude A: CGFloat, period: Double) {
-        let cur = currentY(floatLayer)
-        floatLayer.removeAllAnimations()
-        let lead = 0.4
-        let tin = CABasicAnimation(keyPath: "transform.translation.y")
-        tin.fromValue = cur
-        tin.toValue = 0
-        tin.duration = lead
-        tin.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        floatLayer.add(tin, forKey: "floatIn")
-        let loop = sineKeyframes(A, period: period)
-        loop.beginTime = floatLayer.convertTime(CACurrentMediaTime(), from: nil) + lead
-        floatLayer.add(loop, forKey: "float")
-    }
-
-    /// 揺れを数回で減衰させて完全に止める
-    private func settleFloat() {
-        let cur = currentY(floatLayer)
-        floatLayer.removeAllAnimations()
+    /// 完了・キャンセル：ふくらみが落ち着いたら止める（タイマーは tick が止める）
+    private func settleSoon() {
         settling = true
-        let A = max(abs(cur), P * 0.35)
-        let s: CGFloat = cur >= 0 ? 1 : -1
-        let a = CAKeyframeAnimation(keyPath: "transform.translation.y")
-        a.values = [cur, -s * A * 0.55, s * A * 0.28, -s * A * 0.10, 0]
-        a.keyTimes = [0, 0.28, 0.56, 0.8, 1]
-        a.timingFunctions = Array(repeating: CAMediaTimingFunction(name: .easeInEaseOut), count: 4)
-        a.duration = 2.4
-        CATransaction.begin()
-        CATransaction.setCompletionBlock { [weak self] in
-            guard let self, self.settling, self.state.isTerminal else { return }
+        let start = stateStart
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            guard let self, self.settling, self.state.isTerminal, self.stateStart == start else { return }
             self.settling = false
             self.settled = true
-            self.stopTimer()
-            self.render(force: false)
+            if self.active { self.tick() }
         }
-        floatLayer.add(a, forKey: "settle")
-        CATransaction.commit()
+    }
+
+    /// 状態が始まってからの位置（0〜1。クラゲごとに少しずらす）
+    private func phase(_ now: Double, _ period: Double) -> Double {
+        ((now - stateStart + seed) / period).truncatingRemainder(dividingBy: 1)
     }
 
     private func addShakeLoop() {
@@ -241,26 +189,31 @@ final class PixelAvatar: Avatar {
                 nextGlance = now + Double.random(in: 5...9)
             }
             if let g = glance { if now < g.until { p.eyes = .open(dx: g.dx, dy: g.dy) } else { glance = nil } }
-            // ときどき脚をトントン
-            let tap = (el + seed * 3).truncatingRemainder(dividingBy: 7.0)
-            if tap < 0.25 { p.legs = .walkA } else if tap < 0.5 { p.legs = .walkB }
+            // ゆっくり呼吸：ふつう → ぷく 1 → ふつう（4 秒）。4 回に 1 回は大きく吸う
+            let ph = phase(now, 4)
+            p.puff = [0, 0, 0, 1, 1, 1, 0, 0][min(7, Int(ph * 8))]
+            if Int((now - stateStart + seed) / 4) % 4 == 3 && ph > 0.35 && ph < 0.6 { p.puff = 2 }
         case .thinking:
-            // 目がきょろきょろ、頭上に「…」が増えていく
+            // 目がきょろきょろ、頭上に「…」が増えていく。体は「ぷくー」とふくらんで「しゅん」としぼむ（2.6 秒）
             let gl = [(-1, -1), (-1, -1), (1, -1), (1, -1), (0, -1), (0, 0)]
             let gi = Int(el / 0.45) % gl.count
             p.eyes = .open(dx: gl[gi].0, dy: gl[gi].1)
             p.mark = .dots(Int(el / 0.38) % 4)
+            let ph = phase(now, 2.6)
+            p.puff = ph < 0.7 ? Int(ph / 0.7 * 4) : (ph < 0.82 ? -1 : 0)
         case .working:
-            // 腕を交互にせわしなく、脚は足踏み、ときどき小さく跳ねる
+            // 「ぽよん」：ふくらむ → 跳ねる → 着地でつぶれる（1/8 秒ごと、8 コマで 1 回）
             let f = Int(el * 8)
-            p.arms = f % 2 == 0 ? .leftUp : .rightUp
-            p.legs = (f / 2) % 2 == 0 ? .walkA : .walkB
-            let beat = f % 8
-            if beat == 3 { p.legs = .crouch } else if beat == 4 || beat == 5 { p.lift = 1 }
+            p.puff = [1, 2, 2, 1, 1, 0, 0, 1][f % 8]
+            if f % 8 == 2 || f % 8 == 3 { p.lift = 1 }
+            if f % 8 == 5 { p.legs = .crouch }
             p.eyes = .open(dx: 0, dy: f % 16 < 8 ? 1 : 0)
         case .error:
             p.mark = Int(el / 0.4) % 3 == 2 ? .none : .exclaim
-        case .completed, .cancelled:
+        case .completed:
+            // できた瞬間だけいちばんふくらむ
+            p.puff = el < 0.35 ? 3 : 2
+        case .cancelled:
             break
         }
 
@@ -276,10 +229,17 @@ final class PixelAvatar: Avatar {
         }
 
         // 操作への反応
-        if now < pokeEnd { p.arms = .raised; if case .open = p.eyes { p.eyes = .open(dx: 0, dy: -1) } }
-        if dragging { p.arms = .raised; p.legs = .dangle; p.eyes = state.isTerminal ? p.eyes : .open(dx: 0, dy: 1); p.lift = 0 }
+        // つつく：ぷくっとふくらんで、ちょっと跳ねる（影は床に残る）
+        if now < pokeEnd {
+            let k = pokeEnd - now
+            p.puff = 3
+            p.lift = k > 0.12 && k < 0.32 ? 1 : 0
+            if case .open = p.eyes { p.eyes = .open(dx: 0, dy: -1) }
+        }
+        // つまむと「のび〜」、着地・長押しでぎゅっとつぶれる
+        if dragging { p.legs = .dangle; p.eyes = state.isTerminal ? p.eyes : .open(dx: 0, dy: 1); p.lift = 0 }
         if now < landEnd { p.legs = .crouch }
-        if pressing { p.eyes = .closed; p.arms = .down; p.mark = .none }
+        if pressing { p.eyes = .closed; p.legs = .crouch; p.mark = .none }
 
         pose = p
         render(force: false)
@@ -299,8 +259,8 @@ final class PixelAvatar: Avatar {
 
     // MARK: - 操作
 
-    /// 体（足を除く）の中心：キャンバスの上から 6 行目あたり
-    var anchor: CGPoint { CGPoint(x: size.width / 2, y: (PixelAvatar.bottomMarginCells + 6) * P) }
+    /// 体の中心：お餅は低いので、キャンバスの下から 4 行目あたり
+    var anchor: CGPoint { CGPoint(x: size.width / 2, y: (PixelAvatar.bottomMarginCells + 4) * P) }
     /// 足のすぐ下
     var labelY: CGFloat { PixelAvatar.bottomMarginCells * P + 0.6 * P }
 
@@ -321,7 +281,7 @@ final class PixelAvatar: Avatar {
         }
         // 目でカーソルを追う
         let cx = size.width / 2
-        let cy = PixelAvatar.bottomMarginCells * P + (CGFloat(MochiSprite.rows) - 5) * P
+        let cy = PixelAvatar.bottomMarginCells * P + 4 * P
         let dx = local.x < cx - P * 1.5 ? -1 : (local.x > cx + P * 1.5 ? 1 : 0)
         let dy = local.y > cy + P ? -1 : (local.y < cy - P * 1.5 ? 1 : 0)
         if hoverLook?.dx != dx || hoverLook?.dy != dy {
@@ -331,14 +291,8 @@ final class PixelAvatar: Avatar {
     }
 
     func poke() {
-        pokeEnd = CACurrentMediaTime() + 0.42
-        let hop = CAKeyframeAnimation(keyPath: "transform.translation.y")
-        hop.values = [0, P * 1.4, 0]
-        hop.keyTimes = [0, 0.42, 1]
-        hop.timingFunctions = [CAMediaTimingFunction(name: .easeOut), CAMediaTimingFunction(name: .easeIn)]
-        hop.duration = 0.4
-        hop.isAdditive = true
-        hopLayer.add(hop, forKey: "poke")
+        // ぷくっとふくらんで跳ね、着地で少しつぶれる（コマで描く）
+        pokeEnd = CACurrentMediaTime() + 0.45
         landEnd = pokeEnd + 0.12
         startTimer()
         tick()

@@ -772,7 +772,8 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
                     notes.insert(L("🔗 前の手順（%@）の結果を受け取りました", from), at: 0)
                 }
                 let userTyped = !fromTeammate && typed.contains(text.trimmingCharacters(in: .whitespacesAndNewlines))
-                add("user", caption: cap, style: style, color: color, text: text, notes: notes,
+                // 自分の指示は右の吹き出し、仲間のクラゲからの依頼は左の点線の枠（チャットの CSS）
+                add(fromTeammate ? "request" : "user", caption: cap, style: style, color: color, text: text, notes: notes,
                     media: mediaItems(attachedMedia + ChatMedia.refs(in: text), autoWeb: userTyped, images: &images))
             case .assistant:
                 let who = ((index < speakers.count ? speakers[index] : nil) ?? runtime.effectiveEngine).displayName

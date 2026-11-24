@@ -53,17 +53,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let states = manager.controllers.map(\.record.state)
         var p = MenuImages.StatusPose()
         if states.contains(.working) {
-            p.legs = tick % 2 == 0 ? 1 : 2
-            p.lift = tick % 4 < 2 ? 1 : 0
-            p.arms = tick % 4 < 2
+            // 「ぽよん」：ふくらんで跳ねて、着地でしぼむ
+            p.puff = [1, 2, 2, 0][tick % 4]
+            p.lift = tick % 4 == 1 || tick % 4 == 2 ? 1 : 0
         } else if states.contains(.thinking) {
+            // 「ぷくー…しゅん」と「…」
             p.dots = (tick / 2) % 4
-            p.lift = (tick / 6) % 2
+            p.puff = [0, 1, 2, 3, -1][(tick / 2) % 5]
         } else {
-            // 6fps のうち 3 コマごとに判定（実質 2fps）。2 秒ごとに上下、たまにまばたき
+            // 6fps のうち 3 コマごとに判定（実質 2fps）。ゆっくり呼吸、たまにまばたき
             if tick % 3 != 0 { return }
             let slow = tick / 3
-            p.lift = (slow / 4) % 2
+            p.puff = [0, 0, 1, 1][slow % 4]
             p.blink = slow % 11 == 0
         }
         let img = MenuImages.statusFrame(p)
