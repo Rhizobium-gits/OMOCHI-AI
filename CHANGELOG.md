@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 変更
+
+- **GitHub のリポジトリの名前を jellyfish-ai から OMOCHI-AI に**（`https://github.com/Rhizobium-gits/OMOCHI-AI`）。前の URL（clone・リリース・README のリンク）は GitHub が新しい URL へ転送します。アプリのアップデートと `scripts/update.sh` は、新しい名前と前の名前のどちらの URL のリリースのファイルも受け付け、前の名前で clone したフォルダも「ソースから入れたもの」として扱います。README・.dmg の案内・スクリプトのリンクとバッジも新しい名前に
+
 ## [2.0.0] - 2026-11-25
 
 **Jellyfish AI は OMOCHI AI になりました。** 名前だけでなく、エージェントの扱い方も「お餅の性質」で作り直した版です。おもちを **ちぎって** 分身を作り、**くっつけて** 1 つにまとめ、**串に刺して** 仕事を流し、**鏡餅に積んで** 上下関係を作り、**餅まき** で何体にも同じ指示をまいて比べられます。
@@ -56,7 +60,7 @@
 
 ### 上げるときの注意
 
-- **Jellyfish AI（1.3.2 まで）からは、アプリの中の「アップデートする」では上げられません**（アプリの ID が変わったため）。[OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg) から入れてください。初めて開くと、おもち・設定・会話を引き継ぎ、前のアプリをゴミ箱に入れるかを聞きます
+- **Jellyfish AI（1.3.2 まで）からは、アプリの中の「アップデートする」では上げられません**（アプリの ID が変わったため）。[OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg) から入れてください。初めて開くと、おもち・設定・会話を引き継ぎ、前のアプリをゴミ箱に入れるかを聞きます
 - macOS の許可（アクセシビリティ・画面収録など）はアプリごとなので、メニューバーのおもち › 🔐 権限 の「まとめて許可する」で付け直してください
 
 ### Why the new name (English)
@@ -411,24 +415,24 @@ Jellyfish AI 最初是一群在桌面上漂浮的水母智能体。如今它能�
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
-[2.0.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v2.0.0
-[1.3.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.2
-[1.3.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.1
-[1.3.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.3.0
-[1.2.5]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.5
-[1.2.4]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.4
-[1.2.3]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.3
-[1.2.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.2
-[1.2.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.1
-[1.2.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.2.0
-[1.1.9]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.1.9
-[1.1.8]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.1.8
-[1.0.8]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.8
-[1.0.7]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.7
-[1.0.6]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.6
-[1.0.5]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.5
-[1.0.4]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.4
-[1.0.3]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.3
-[1.0.2]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.2
-[1.0.1]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.1
-[1.0.0]: https://github.com/Rhizobium-gits/jellyfish-ai/releases/tag/v1.0.0
+[2.0.0]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v2.0.0
+[1.3.2]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.3.2
+[1.3.1]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.3.1
+[1.3.0]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.3.0
+[1.2.5]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.2.5
+[1.2.4]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.2.4
+[1.2.3]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.2.3
+[1.2.2]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.2.2
+[1.2.1]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.2.1
+[1.2.0]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.2.0
+[1.1.9]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.1.9
+[1.1.8]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.1.8
+[1.0.8]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.8
+[1.0.7]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.7
+[1.0.6]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.6
+[1.0.5]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.5
+[1.0.4]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.4
+[1.0.3]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.3
+[1.0.2]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.2
+[1.0.1]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.1
+[1.0.0]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.0.0

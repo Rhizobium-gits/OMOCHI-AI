@@ -16,7 +16,9 @@
 #   ・作業中のおもち（アプリの子プロセス）がいるときは入れ替えない。sudo は使わない
 set -euo pipefail
 
-REPO=Rhizobium-gits/jellyfish-ai
+REPO=Rhizobium-gits/OMOCHI-AI
+# 前のリポジトリ名（2.0.0 まで）。GitHub が新しい名前へ転送するので、前の名前の URL のファイルも受け付ける
+OLD_REPO=Rhizobium-gits/jellyfish-ai
 # テストのときだけ（OMOCHI_UPDATE_TEST=1）、取り込み元とリリースの情報を差し替えられる。ふだんは使わない
 if [[ "${OMOCHI_UPDATE_TEST:-}" == 1 ]]; then REPO="${OMOCHI_REPO:-$REPO}"; else unset OMOCHI_RELEASE_JSON; fi
 BUNDLE_ID=ai.omochi.desktop
@@ -153,6 +155,7 @@ fi
 # このリポジトリのこのリリースのファイルだけを使う
 ZIP_NAME="OmochiAI-$VERSION.zip"
 PREFIX="https://github.com/$REPO/releases/download/$TAG/"
+OLD_PREFIX="https://github.com/$OLD_REPO/releases/download/$TAG/"
 ZIP_URL="" SUMS_URL=""
 N="$(plist_value "$J" assets)"
 [[ "$N" =~ ^[0-9]+$ ]] || N=0
@@ -160,8 +163,8 @@ for (( i = 0; i < N; i++ )); do
   name="$(plist_value "$J" "assets.$i.name")"
   url="$(plist_value "$J" "assets.$i.browser_download_url")"
   case "$name" in
-    "$ZIP_NAME") [[ "$url" == "$PREFIX$ZIP_NAME" ]] && ZIP_URL="$url" ;;
-    SHA256SUMS.txt) [[ "$url" == "${PREFIX}SHA256SUMS.txt" ]] && SUMS_URL="$url" ;;
+    "$ZIP_NAME") [[ "$url" == "$PREFIX$ZIP_NAME" || "$url" == "$OLD_PREFIX$ZIP_NAME" ]] && ZIP_URL="$url" ;;
+    SHA256SUMS.txt) [[ "$url" == "${PREFIX}SHA256SUMS.txt" || "$url" == "${OLD_PREFIX}SHA256SUMS.txt" ]] && SUMS_URL="$url" ;;
   esac
 done
 [[ -n "$ZIP_URL" && -n "$SUMS_URL" ]] || fail "リリース $TAG に $ZIP_NAME と SHA256SUMS.txt が見つかりません（https://github.com/$REPO/releases から入れ直してください）"

@@ -2,7 +2,11 @@ import AppKit
 
 /// バージョン・リンク・「OMOCHI AI について」・アップデートの確認・初回の案内
 enum AppInfo {
-    static let repo = "Rhizobium-gits/jellyfish-ai"
+    static let repo = "Rhizobium-gits/OMOCHI-AI"
+    /// 前のリポジトリ名（2.0.0 まで。GitHub が新しい名前へ転送する）。前の名前で clone したフォルダや、
+    /// 前の名前の URL で返ってきたリリースのファイルも、このリポジトリのものとして受け付ける
+    static let formerRepos = ["Rhizobium-gits/jellyfish-ai"]
+    static var allRepos: [String] { [repo] + formerRepos }
     static let repoURL = URL(string: "https://github.com/\(repo)")!
     static let releasesURL = URL(string: "https://github.com/\(repo)/releases")!
     static let issuesURL = URL(string: "https://github.com/\(repo)/issues")!

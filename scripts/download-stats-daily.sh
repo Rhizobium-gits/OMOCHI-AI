@@ -36,7 +36,7 @@ case "${1:-}" in
   install)
     command -v gh >/dev/null || { echo "gh（GitHub CLI）が要ります" >&2; exit 1; }
     gh auth status >/dev/null 2>&1 || { echo "gh にログインしてください（gh auth login）" >&2; exit 1; }
-    if ! gh api "repos/${OMOCHI_REPO:-Rhizobium-gits/jellyfish-ai}/traffic/clones" --silent 2>/dev/null; then
+    if ! gh api "repos/${OMOCHI_REPO:-Rhizobium-gits/OMOCHI-AI}/traffic/clones" --silent 2>/dev/null; then
       echo "注意：この gh のアカウントでは clone 数を読めません（リポジトリの Administration の読み取りの権限が要ります）。.dmg・.zip だけ数え直します" >&2
     fi
     mkdir -p "$HOME/Library/LaunchAgents" "$(dirname "$LOG")"

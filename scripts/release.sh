@@ -82,7 +82,7 @@ macOS 14 以降・Apple シリコン / Intel 両対応（universal）。チェ�
 2. macOS blocks the first launch because the app is not notarized. Close the dialog and click **Open Anyway** in **System Settings › Privacy & Security**
 3. Sign in to the AI you use (Claude Code, Codex CLI or Gemini CLI). The “Accounts & AI” screen shown at first launch can also install a missing one, once you allow it, and start its sign-in
 
-Agents edit files and run commands without asking (Claude Code Auto mode) and use your Claude Code usage. Switch the display language from the menu bar omochi › 🌐 Language. See [README.en.md](https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.en.md).
+Agents edit files and run commands without asking (Claude Code Auto mode) and use your Claude Code usage. Switch the display language from the menu bar omochi › 🌐 Language. See [README.en.md](https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.en.md).
 
 ### 安装（简体中文）
 
@@ -90,7 +90,7 @@ Agents edit files and run commands without asking (Claude Code Auto mode) and us
 2. 由于没有经过 Apple 公证，首次打开会被 macOS 阻止。关闭对话框后，在 **系统设置 › 隐私与安全性** 中点击 **仍要打开**
 3. 登录要使用的 AI（Claude Code、Codex CLI 或 Gemini CLI 之一）。首次打开时的“账户与 AI”界面中，未安装的也可以在你允许后安装并直接登录
 
-智能体会在不经确认的情况下编辑文件、执行命令（Claude Code 的 Auto 模式），并消耗你的 Claude Code 用量。可以在菜单栏的年糕 › 🌐 语言 中切换显示语言。详见 [README.zh-CN.md](https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.zh-CN.md)。
+智能体会在不经确认的情况下编辑文件、执行命令（Claude Code 的 Auto 模式），并消耗你的 Claude Code 用量。可以在菜单栏的年糕 › 🌐 语言 中切换显示语言。详见 [README.zh-CN.md](https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.zh-CN.md)。
 NOTE
 
 ls -la "$OUT"

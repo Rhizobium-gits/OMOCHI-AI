@@ -32,7 +32,7 @@ enum AppUpdater {
         func asset(_ name: String) -> URL? {
             guard let a = assets.first(where: { $0["name"] as? String == name }),
                   let s = a["browser_download_url"] as? String,
-                  s == downloadPrefix + tag + "/" + name,
+                  AppInfo.allRepos.contains(where: { s.lowercased() == "https://github.com/\($0)/releases/download/\(tag)/\(name)".lowercased() }),
                   let u = URL(string: s), u.scheme == "https", u.host == "github.com" else { return nil }
             return u
         }
@@ -221,7 +221,9 @@ enum SourceCheckout {
         guard dir.hasPrefix("/"), !dir.contains("\n"),
               fm.fileExists(atPath: dir + "/.git", isDirectory: &isDir), isDir.boolValue,
               let config = try? String(contentsOfFile: dir + "/.git/config", encoding: .utf8),
-              config.contains("github.com/\(AppInfo.repo)") || config.contains("github.com:\(AppInfo.repo)") else { return nil }
+              AppInfo.allRepos.contains(where: { r in
+                  ["github.com/", "github.com:"].contains { config.lowercased().contains(($0 + r).lowercased()) }
+              }) else { return nil }
         func mine(_ p: String) -> Bool {
             guard let a = try? fm.attributesOfItem(atPath: p),
                   (a[.ownerAccountID] as? NSNumber)?.uint32Value == getuid(),

@@ -21,7 +21,7 @@ OMOCHI AI は Apple の開発者署名・公証を受けていない個人の開
   https://code.claude.com/docs/en/setup
 
 使い方・権限・データの保存場所は README を見てください。
-https://github.com/Rhizobium-gits/jellyfish-ai
+https://github.com/Rhizobium-gits/OMOCHI-AI
 
 
 Installing OMOCHI AI
@@ -32,7 +32,7 @@ dialog, open System Settings > Privacy & Security, and click "Open Anyway"
 next to the message about OMOCHI AI. Requires macOS 14+ and Claude Code
 (the `claude` CLI) installed and signed in.
 Switch the display language from the menu bar omochi > Language.
-Details: https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.en.md
+Details: https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.en.md
 
 
 安装 OMOCHI AI
@@ -41,4 +41,4 @@ Details: https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.en.md
 首次打开会被 macOS 阻止。请关闭对话框，打开 系统设置 > 隐私与安全性，
 在关于 OMOCHI AI 的提示旁点击“仍要打开”。需要 macOS 14 及以上，并已安装、
 登录 Claude Code（claude 命令）。可以在菜单栏的年糕 > 语言 中切换显示语言。
-详情：https://github.com/Rhizobium-gits/jellyfish-ai/blob/main/README.zh-CN.md
+详情：https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.zh-CN.md

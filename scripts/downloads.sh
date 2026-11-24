@@ -10,7 +10,7 @@
 # GitHub は同じ人の 2 回目も数え、開発中の確認で取った分も入る。clone・ソースの zip（Source code）は数えない
 # README のバッジ（.dmg・.zip・clone の合計）は scripts/download-stats.sh が数える
 set -euo pipefail
-REPO="${OMOCHI_REPO:-Rhizobium-gits/jellyfish-ai}"
+REPO="${OMOCHI_REPO:-Rhizobium-gits/OMOCHI-AI}"
 TRAFFIC=0
 JSON=0
 for a in "$@"; do

@@ -162,6 +162,16 @@ import Testing
         #expect(r?.notes == "notes")
     }
 
+    @Test func acceptsTheFormerRepositoryName() {
+        // リポジトリの名前を変えたあとも、前の名前（GitHub が転送する）の URL のファイルは受け付ける
+        let old = "https://github.com/Rhizobium-gits/jellyfish-ai/releases/download/v1.0.6/"
+        let r = AppUpdater.release(from: json(zipURL: old + "OmochiAI-1.0.6.zip", sumsURL: old + "SHA256SUMS.txt"))
+        #expect(r?.version == "1.0.6")
+        #expect(AppInfo.repo == "Rhizobium-gits/OMOCHI-AI")
+        // 大文字小文字の違い（GitHub の URL は区別しない）も同じリポジトリ
+        #expect(AppUpdater.release(from: json(zipURL: "https://github.com/rhizobium-gits/omochi-ai/releases/download/v1.0.6/OmochiAI-1.0.6.zip")) != nil)
+    }
+
     @Test func refusesOtherPlaces() {
         // 別のリポジトリ・別のホスト・別のタグのファイルは使わない
         #expect(AppUpdater.release(from: json(zipURL: "https://github.com/evil/jellyfish-ai/releases/download/v1.0.6/OmochiAI-1.0.6.zip")) == nil)
@@ -454,7 +464,7 @@ final class RecordingBackend: AgentBackend {
     @Test func ignoresTestOverridesOutsideTests() throws {
         let script = try String(contentsOf: Self.root.appendingPathComponent("scripts/update.sh"), encoding: .utf8)
         #expect(script.contains(#"if [[ "${OMOCHI_UPDATE_TEST:-}" == 1 ]]; then REPO="${OMOCHI_REPO:-$REPO}"; else unset OMOCHI_RELEASE_JSON; fi"#))
-        #expect(script.contains("REPO=Rhizobium-gits/jellyfish-ai\n"))
+        #expect(script.contains("REPO=Rhizobium-gits/OMOCHI-AI\n"))
     }
 
     @Test func reportsANewerRelease() throws {
@@ -530,6 +540,10 @@ final class RecordingBackend: AgentBackend {
         #expect(AppUpdater.terminalCommand(dataDir: data, bundle: app)?.contains("--source") == false)
         try "[remote \"origin\"]\n\turl = https://github.com/\(AppInfo.repo).git\n".write(to: gitConfig, atomically: true, encoding: .utf8)
         #expect(AppUpdater.terminalCommand(dataDir: data, bundle: app) == "cd '\(src.path)' && scripts/update.sh --source --yes")
+        // 前のリポジトリ名で clone したフォルダも同じ
+        try "[remote \"origin\"]\n\turl = git@github.com:Rhizobium-gits/jellyfish-ai.git\n".write(to: gitConfig, atomically: true, encoding: .utf8)
+        #expect(AppUpdater.terminalCommand(dataDir: data, bundle: app) == "cd '\(src.path)' && scripts/update.sh --source --yes")
+        try "[remote \"origin\"]\n\turl = https://github.com/\(AppInfo.repo).git\n".write(to: gitConfig, atomically: true, encoding: .utf8)
         // ほかの人も書き換えられるスクリプトなら使わない
         try FileManager.default.setAttributes([.posixPermissions: 0o777], ofItemAtPath: s.path)
         #expect(AppUpdater.terminalCommand(dataDir: data, bundle: app)?.contains("--source") == false)

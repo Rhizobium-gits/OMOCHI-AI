@@ -20,7 +20,7 @@
 # 自分の clone を数に入れないよう、リポジトリは clone しない（GitHub の API で読み書きする）
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO="${OMOCHI_REPO:-Rhizobium-gits/jellyfish-ai}"
+REPO="${OMOCHI_REPO:-Rhizobium-gits/OMOCHI-AI}"
 BRANCH="${OMOCHI_STATS_BRANCH:-stats}"
 DRY=0
 FORCE=0

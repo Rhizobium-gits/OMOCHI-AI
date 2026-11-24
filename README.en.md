@@ -3,11 +3,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=downloads&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="downloads"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/OMOCHI-AI?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2FOMOCHI-AI%2Fstats%2Fstats.json&query=%24.total&label=downloads&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="downloads"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-26262c?style=for-the-badge&labelColor=0d0d10&logo=apple&logoColor=white" alt="macOS 14+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-26262c?style=for-the-badge&labelColor=0d0d10" alt="License: MIT"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/jellyfish-ai/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/OMOCHI-AI/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-en.svg" width="820" alt="Chart of downloads per day (.dmg, .zip and git clone combined; updated automatically every day)"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/OMOCHI-AI/stats/downloads-en.svg" width="820" alt="Chart of downloads per day (.dmg, .zip and git clone combined; updated automatically every day)"></a>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg"><img src="docs/media/download.png" width="291" alt="Download (.dmg)"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg"><img src="docs/media/download.png" width="291" alt="Download (.dmg)"></a>
 </p>
 
 <p align="center">
@@ -116,7 +116,7 @@ Ask a Claude omochi to “bring out two teammates and split the work: a ChatGPT 
   - [Gemini CLI](https://github.com/google-gemini/gemini-cli) (a paid Gemini API key or similar; personal Google accounts stopped being served on 2026-06-18 — [see the note below](#ai-engines-and-accounts))
 
 1. **Download**
-   **[Download OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg)** (always the latest version; the same file is on [the latest release](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest) page. There's also a `.zip` with the same contents)
+   **[Download OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg)** (always the latest version; the same file is on [the latest release](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest) page. There's also a `.zip` with the same contents)
 2. **Move it to the Applications folder**
    Open the .dmg and drag **OMOCHI AI** onto the **Applications** folder next to it
 3. **Click “Open Anyway” the first time only**
@@ -474,7 +474,7 @@ From menu bar omochi › **🌐 言語 · Language · 语言**, you can choose *
 
 ### Upgrading from Jellyfish AI
 
-Coming from the previous name (Jellyfish AI, up to 1.3.2), the in-app “Update” can't upgrade you (the app's ID changed). Download [OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg) and install it as in [Download and install](#download-and-install).
+Coming from the previous name (Jellyfish AI, up to 1.3.2), the in-app “Update” can't upgrade you (the app's ID changed). Download [OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg) and install it as in [Download and install](#download-and-install).
 
 - The first time OMOCHI AI opens, it brings over Jellyfish AI's omochi, settings and chats (it copies `~/Library/Application Support/JellyfishAI/` to `OmochiAI/` and leaves the old folder alone). If Jellyfish AI is running, it asks before quitting it
 - If “Open at login” was on, it turns it on for OMOCHI AI too
@@ -516,7 +516,7 @@ From Terminal you can check for a new version and update right away. The script 
 If you installed from source, use “Use a Fixed Signature” in **🔐 Permissions**, or run these commands once in Terminal (in the folder where you put the source; if you haven't yet, do the `git clone` in [Build from source](#build-from-source) first).
 
 ```bash
-cd ~/jellyfish-ai
+cd ~/OMOCHI-AI
 scripts/signing.sh create
 scripts/install.sh
 ```
@@ -554,8 +554,8 @@ scripts/install.sh
 No Xcode needed; you can build with just the Swift in Command Line Tools (5.10 or later, tested with 6.3).
 
 ```bash
-git clone https://github.com/Rhizobium-gits/jellyfish-ai.git
-cd jellyfish-ai
+git clone https://github.com/Rhizobium-gits/OMOCHI-AI.git
+cd OMOCHI-AI
 scripts/install.sh          # build, install to the Applications folder, and launch
 ```
 

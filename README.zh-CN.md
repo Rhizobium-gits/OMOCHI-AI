@@ -3,11 +3,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/jellyfish-ai?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2Fjellyfish-ai%2Fstats%2Fstats.json&query=%24.total&label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="下载次数"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest"><img src="https://img.shields.io/github/v/release/Rhizobium-gits/OMOCHI-AI?style=for-the-badge&labelColor=0d0d10&color=26262c&label=release" alt="Release"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/releases"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FRhizobium-gits%2FOMOCHI-AI%2Fstats%2Fstats.json&query=%24.total&label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&style=for-the-badge&labelColor=0d0d10&color=26262c" alt="下载次数"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-26262c?style=for-the-badge&labelColor=0d0d10&logo=apple&logoColor=white" alt="macOS 14+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-26262c?style=for-the-badge&labelColor=0d0d10" alt="License: MIT"></a>
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/jellyfish-ai/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rhizobium-gits/OMOCHI-AI/ci.yml?branch=main&style=for-the-badge&labelColor=0d0d10&label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/jellyfish-ai/stats/downloads-zh.svg" width="820" alt="每日下载量图表（.dmg、.zip、git clone 合计，每天自动更新）"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/blob/stats/stats.json"><img src="https://raw.githubusercontent.com/Rhizobium-gits/OMOCHI-AI/stats/downloads-zh.svg" width="820" alt="每日下载量图表（.dmg、.zip、git clone 合计，每天自动更新）"></a>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg"><img src="docs/media/download.png" width="291" alt="下载（.dmg）"></a>
+  <a href="https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg"><img src="docs/media/download.png" width="291" alt="下载（.dmg）"></a>
 </p>
 
 <p align="center">
@@ -116,7 +116,7 @@
   - [Gemini CLI](https://github.com/google-gemini/gemini-cli)（付费的 Gemini API 密钥等。个人 Google 账户已于 2026-06-18 停止提供，[见下方说明](#使用的-ai-与账户)）
 
 1. **下载**
-   **[下载 OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg)**（始终是最新版本。也可以在 [Releases 的最新版本](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest) 页面获取同一文件，另有内容相同的 `.zip`）
+   **[下载 OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg)**（始终是最新版本。也可以在 [Releases 的最新版本](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest) 页面获取同一文件，另有内容相同的 `.zip`）
 2. **放进应用程序文件夹**
    打开 .dmg，把 **OMOCHI AI** 拖到旁边的 **Applications**（应用程序）
 3. **仅首次需要“仍要打开”**
@@ -474,7 +474,7 @@ Claude Code 中配置的 MCP 服务器（位于 `~/.claude.json` 或项目的 `.
 
 ### 从 Jellyfish AI 升级
 
-从之前的名称（Jellyfish AI，1.3.2 及以前）升级时，无法用应用内的“更新”升级（应用的 ID 变了）。请下载 [OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg)，按照 [下载与安装](#下载与安装) 的方法安装。
+从之前的名称（Jellyfish AI，1.3.2 及以前）升级时，无法用应用内的“更新”升级（应用的 ID 变了）。请下载 [OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg)，按照 [下载与安装](#下载与安装) 的方法安装。
 
 - 首次打开 OMOCHI AI 时，会迁移 Jellyfish AI 的年糕、设置和对话（把 `~/Library/Application Support/JellyfishAI/` 复制到 `OmochiAI/`，不删除旧文件夹）。如果 Jellyfish AI 正在运行，会先询问是否退出它
 - 如果打开了“登录时自动启动”，OMOCHI AI 也会打开
@@ -516,7 +516,7 @@ Claude Code 中配置的 MCP 服务器（位于 `~/.claude.json` 或项目的 `.
 如果是从源代码安装的，请使用 **🔐 权限** 中的“使用固定签名”，或在终端中运行一次下面的命令（在存放源代码的文件夹中。如果还没有，请先按照 [从源码构建](#从源码构建) 执行 `git clone`）。
 
 ```bash
-cd ~/jellyfish-ai
+cd ~/OMOCHI-AI
 scripts/signing.sh create
 scripts/install.sh
 ```
@@ -554,8 +554,8 @@ scripts/install.sh
 不需要 Xcode，只用 Command Line Tools 中的 Swift（5.10 或更高版本，已在 6.3 上验证）即可构建。
 
 ```bash
-git clone https://github.com/Rhizobium-gits/jellyfish-ai.git
-cd jellyfish-ai
+git clone https://github.com/Rhizobium-gits/OMOCHI-AI.git
+cd OMOCHI-AI
 scripts/install.sh          # 构建后放入应用程序文件夹并启动
 ```
 
