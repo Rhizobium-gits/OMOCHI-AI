@@ -45,7 +45,7 @@
 </p>
 
 > [!NOTE]
-> 这是个人开发的非官方应用，与 Anthropic、OpenAI、Google 无关。Claude、Claude Code 以及 Claude Code 的角色归 Anthropic 所有，ChatGPT 和 Codex 归 OpenAI 所有，Gemini 归 Google 所有。
+> 这是个人开发的非官方应用，与 Anthropic、OpenAI、Google 无关。Claude、Claude Code 归 Anthropic 所有，ChatGPT 和 Codex 归 OpenAI 所有，Gemini 归 Google 所有。
 
 ## 主要功能
 
@@ -119,7 +119,7 @@
 | **程序坞** | 把应用程序文件夹中的 JellyfishAI 拖到程序坞，以后只需点按 |
 | **登录时自动启动** | 打开菜单栏的水母 › **登录时自动启动** |
 
-- 启动后，菜单栏会出现像素风水母图标。Jellyfish AI 是常驻型应用，平时不会出现在程序坞中（只有打开聊天窗口期间才会出现在程序坞和 ⌘Tab 中）
+- 启动后，菜单栏会出现水母（像素风年糕）图标。Jellyfish AI 是常驻型应用，平时不会出现在程序坞中（只有打开聊天窗口期间才会出现在程序坞和 ⌘Tab 中）
 - 运行中再次打开图标，会显示之前隐藏的水母。如果一只都没有，则会新建一只水母
 - 退出请用菜单栏的水母 › **退出 Jellyfish AI**（⌘Q）。正在运行的智能体会被中断
 
@@ -136,6 +136,8 @@
   <img src="docs/media/states.gif" width="720" alt="待机、思考中、工作中、完成、错误、已取消这 6 种状态">
 </p>
 
+水母的外观是坐在地上的圆年糕像素画「Marumochi（圆年糕）」。待机时慢慢呼吸，思考中「噗——」地鼓起再「咻」地瘪下去，工作中「啵咿」地弹跳，完成时鼓起来露出 ^^，出错或取消时瘪下去。戳一下会跳起来，拎起来会拉长，长按会被压扁。第 1 只是灰色，从第 2 只开始换不同的颜色（可在菜单栏的水母 › 外观 中切换为写实水母）。
+
 ## 菜单栏
 
 点按菜单栏的水母，最上方会显示 **账户与用量**。
@@ -149,7 +151,7 @@
 
 | 项目 | 内容 |
 |---|---|
-| 外观、大小 | 像素风 / 写实风格的水母，大小 |
+| 外观、大小 | 像素（Mochi）/ 写实水母，大小 |
 | 屏幕识别 | 说“这个屏幕”时截取的屏幕（正在使用的应用所在的显示器 / 全部） |
 | 🔑 账户与 AI | 登录状态、要使用的 AI（默认）、登录、安装并登录、允许使用 API 密钥 |
 | 🔌 连接器 | 当前规则、一键设置、连接器设置窗口（按 AI 和模型设置） |
@@ -544,7 +546,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
   - 仅在启动时加上环境变量 `JELLYFISH_AUTOMATION=1`，并用 `token=…` 附上数据文件夹中 `automation.token` 的口令时可用（用于自动测试和演示录制。`scripts/demo/recorder.swift` 会自动附上）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - 用 `.build/debug/JellyfishAI --pixel-sheet out.png` 输出像素画的帧一览，用 `--settle-test` 验证完成时的静止，用 `--account-menu out.png` 绘制菜单中的账户和用量栏
 - 显示的文字在源码中用日语书写并用 `L("…")` 包裹，译文放在 `l10n/en.json`、`l10n/zh.json` 中。用 `scripts/l10n.py missing en` 查看缺失的译文，用 `scripts/l10n.py gen` 生成 Swift 的表，用 `scripts/l10n.py check` 检查缺失和 `%@` 的数量（CI 中也会检查）。用环境变量 `JELLYFISH_LANGUAGE=en` 可以固定语言启动
-- README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code（`crossai` 还会运行 Codex CLI），在黑色背景上录制。屏幕上出现的主目录路径（`/Users/<名字>`）会用 macOS 的文字识别找出并模糊处理（`scripts/demo/redact.sh`，只在本机处理）。需要 Pillow 和 ffmpeg）。`connectors` 只录制连接器窗口和确认气泡，不运行 AI，也不会拍到真实的日程或邮件。加上 `DEMO_KEEP_APP=1` 时，不停止日常使用的 Jellyfish AI，而是用另一个 ID 的副本录制
+- README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code（`crossai` 还会运行 Codex CLI），在黑色背景上录制。屏幕上出现的主目录路径（`/Users/<名字>`）会用 macOS 的文字识别找出并模糊处理（`scripts/demo/redact.sh`，只在本机处理）。需要 Pillow 和 ffmpeg）。`connectors` 只录制连接器窗口和确认气泡，不运行 AI，也不会拍到真实的日程或邮件。加上 `DEMO_KEEP_APP=1` 时，不停止日常使用的 Jellyfish AI，而是用另一个 ID 的副本录制。录制位置以 1920×1080 主显示器的右上角为基准，屏幕大小不同时会保持与右上角的距离进行平移
 
 ## 许可证
 

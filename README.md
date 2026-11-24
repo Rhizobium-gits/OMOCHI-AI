@@ -45,7 +45,7 @@
 </p>
 
 > [!NOTE]
-> 個人が作った非公式のアプリです。Anthropic・OpenAI・Google とは関係ありません。Claude・Claude Code および Claude Code のキャラクターは Anthropic の、ChatGPT・Codex は OpenAI の、Gemini は Google のものです。
+> 個人が作った非公式のアプリです。Anthropic・OpenAI・Google とは関係ありません。Claude・Claude Code は Anthropic の、ChatGPT・Codex は OpenAI の、Gemini は Google のものです。
 
 ## 主な機能
 
@@ -119,7 +119,7 @@ Claude のクラゲに「仲間を 2 人作って分担して。ChatGPT（Codex�
 | **Dock** | アプリケーションフォルダの JellyfishAI を Dock へドラッグしておくと、次からはクリックだけ |
 | **ログイン時に自動で** | メニューバーのクラゲ › **ログイン時に自動起動** をオン |
 
-- 起動すると、メニューバーにドット絵のクラゲのアイコンが出ます。常駐型のアプリなので、普段は Dock に出ません（チャットウィンドウを開いている間だけ Dock と ⌘Tab に出ます）
+- 起動すると、メニューバーにクラゲ（お餅のドット絵）のアイコンが出ます。常駐型のアプリなので、普段は Dock に出ません（チャットウィンドウを開いている間だけ Dock と ⌘Tab に出ます）
 - 動いている最中にもう一度アイコンを開くと、隠していたクラゲを出します。1 体もいなければ新しいクラゲを出します
 - 終了はメニューバーのクラゲ › **Jellyfish AI を終了**（⌘Q）。実行中のエージェントは中断されます
 
@@ -136,6 +136,8 @@ PC 操作や画面の添付を使うなら、メニューバーのクラゲ › 
   <img src="docs/media/states.gif" width="720" alt="待機・考え中・作業中・完了・エラー・キャンセルの 6 つの状態">
 </p>
 
+クラゲの見た目は、床にぽてっと座った丸餅のドット絵「まるもち」です。待機中はゆっくり呼吸し、考え中は「ぷくー」とふくらんで「しゅん」としぼみ、作業中は「ぽよん」と跳ね、完了するとふくらんで ^^、エラー・キャンセルではしぼみます。つつくと跳ね、つまむと伸び、長押しでつぶれます。1 体目は灰色で、2 体目からは色違いです（メニューバーのクラゲ › 見た目 で、リアルなクラゲにもできます）。
+
 ## メニューバー
 
 メニューバーのクラゲをクリックすると、いちばん上に **アカウントと使用量** が出ます。
@@ -149,7 +151,7 @@ PC 操作や画面の添付を使うなら、メニューバーのクラゲ › 
 
 | 項目 | 内容 |
 |---|---|
-| 見た目・大きさ | ドット絵 / 写実的なクラゲ、大きさ |
+| 見た目・大きさ | ドット絵（もち）/ リアルなクラゲ、大きさ |
 | 画面認識 | 「この画面」と言ったときに撮る画面（使っていたアプリのある画面 / すべて） |
 | 🔑 アカウントと AI | ログインの状態・使う AI（既定）・ログイン・入れてログイン・API キーでの利用の許可 |
 | 🔌 コネクタ | いまの決まり・ワンタッチ設定・コネクタの画面（AI・モデルごとに決める） |
@@ -544,7 +546,7 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
   - 環境変数 `JELLYFISH_AUTOMATION=1` を付けて起動し、データフォルダの `automation.token` の合言葉を `token=…` で付けたときだけ（自動テスト・デモ録画用。`scripts/demo/recorder.swift` が自動で付ける）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - `.build/debug/JellyfishAI --pixel-sheet out.png` でドット絵のコマ一覧、`--settle-test` で完了時の静止を検証、`--account-menu out.png` でメニューのアカウント・使用量の欄を描き出す
 - 表示の文字はソースに日本語で書いて `L("…")` で包み、訳は `l10n/en.json`・`l10n/zh.json` に置きます。`scripts/l10n.py missing en` で訳の抜け、`scripts/l10n.py gen` で Swift の表を作り、`scripts/l10n.py check` で抜けと `%@` の数を確かめます（CI でも確かめる）。環境変数 `JELLYFISH_LANGUAGE=en` で言語を固定して起動できます
-- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）。`connectors` はコネクタの画面と確認の吹き出しだけを撮り、AI は動かさず、本物の予定やメールも写しません。`DEMO_KEEP_APP=1` を付けると、普段の Jellyfish AI を止めずに別の ID の写しで撮ります
+- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）。`connectors` はコネクタの画面と確認の吹き出しだけを撮り、AI は動かさず、本物の予定やメールも写しません。`DEMO_KEEP_APP=1` を付けると、普段の Jellyfish AI を止めずに別の ID の写しで撮ります。録画の位置は 1920×1080 のメインディスプレイの右上が基準で、画面の大きさが違えば右上からの位置を保つようにずらして撮ります
 
 ## ライセンス
 

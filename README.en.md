@@ -45,7 +45,7 @@
 </p>
 
 > [!NOTE]
-> This is an unofficial app made by an individual. It is not affiliated with Anthropic, OpenAI or Google. Claude, Claude Code and the Claude Code character belong to Anthropic; ChatGPT and Codex belong to OpenAI; Gemini belongs to Google.
+> This is an unofficial app made by an individual. It is not affiliated with Anthropic, OpenAI or Google. Claude and Claude Code belong to Anthropic; ChatGPT and Codex belong to OpenAI; Gemini belongs to Google.
 
 ## Key features
 
@@ -119,7 +119,7 @@ You don't need Terminal. Open it like any other Mac app.
 | **Dock** | Drag JellyfishAI from the Applications folder to the Dock, and from then on it's a single click |
 | **Automatically at login** | Turn on menu bar jellyfish › **Open at login** |
 
-- Once launched, a pixel-art jellyfish icon appears in the menu bar. Jellyfish AI is a resident app, so it normally doesn't appear in the Dock (it shows up in the Dock and ⌘Tab only while a chat window is open)
+- Once launched, a jellyfish icon (a pixel-art rice cake) appears in the menu bar. Jellyfish AI is a resident app, so it normally doesn't appear in the Dock (it shows up in the Dock and ⌘Tab only while a chat window is open)
 - Opening the app icon again while it's running brings back any hidden jellyfish. If there are none, it brings out a new jellyfish
 - To quit, choose menu bar jellyfish › **Quit Jellyfish AI** (⌘Q). Running agents are interrupted
 
@@ -136,6 +136,8 @@ If you use PC control or screen attachments, “Grant All” in the menu bar jel
   <img src="docs/media/states.gif" width="720" alt="The six states: idle, thinking, working, done, error, and canceled">
 </p>
 
+Each jellyfish is drawn as "Marumochi", a pixel-art round rice cake (mochi) sitting on the floor. While idle it breathes slowly; while thinking it puffs up and then deflates; while working it bounces; when done it puffs up with a ^^ face, and on an error or cancel it deflates. Poke it and it hops, pick it up and it stretches, long-press and it squashes. The first one is gray and the rest get their own colors (switch to a realistic jellyfish under the menu bar jellyfish › Appearance).
+
 ## Menu bar
 
 Click the jellyfish in the menu bar, and **your accounts and usage** appear at the very top.
@@ -149,7 +151,7 @@ Below that are New jellyfish, Hide / Show all, past sessions and the list of age
 
 | Item | Description |
 |---|---|
-| Appearance, Size | Pixel-art / realistic jellyfish, and size |
+| Appearance, Size | Pixel (Mochi) / Realistic jellyfish, and size |
 | Screen awareness | Which display is captured when you say “this screen” (the display with the app you were using / all displays) |
 | 🔑 Accounts & AI | Sign-in status, AI to use (default), sign in, install & sign in, and allowing use with API keys |
 | 🔌 Connectors | Current rules, one-touch presets, and the Connectors window (set per AI and model) |
@@ -544,7 +546,7 @@ Each AI's CLI and its records belong to that CLI, so they remain even after you 
   - Only when launched with the environment variable `JELLYFISH_AUTOMATION=1` and the passphrase from `automation.token` in the data folder is added as `token=…` (for automated tests and demo recording; `scripts/demo/recorder.swift` adds it automatically): `renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
 - `.build/debug/JellyfishAI --pixel-sheet out.png` renders a sheet of the pixel-art frames, `--settle-test` verifies that it comes to rest when done, and `--account-menu out.png` renders the account and usage section of the menu
 - Display text is written in Japanese in the source and wrapped in `L("…")`, with translations in `l10n/en.json` and `l10n/zh.json`. `scripts/l10n.py missing en` lists missing translations, `scripts/l10n.py gen` generates the Swift tables, and `scripts/l10n.py check` checks for missing translations and the number of `%@` (also checked in CI). Launch with the environment variable `JELLYFISH_LANGUAGE=en` to fix the language
-- The README GIFs can be re-recorded with `scripts/demo/record.sh` (it doesn't touch your everyday data; it actually runs Claude Code — and Codex CLI for `crossai` — with empty demo data and records it on a black background. Your home path (`/Users/<name>`) showing on screen is found with macOS text recognition and blurred (`scripts/demo/redact.sh`, processed only on this Mac). Requires Pillow and ffmpeg). `connectors` records only the Connectors window and the confirmation bubble: it doesn't run an AI and never shows real events or mail. With `DEMO_KEEP_APP=1`, it records a copy with a different ID instead of stopping your everyday Jellyfish AI
+- The README GIFs can be re-recorded with `scripts/demo/record.sh` (it doesn't touch your everyday data; it actually runs Claude Code — and Codex CLI for `crossai` — with empty demo data and records it on a black background. Your home path (`/Users/<name>`) showing on screen is found with macOS text recognition and blurred (`scripts/demo/redact.sh`, processed only on this Mac). Requires Pillow and ffmpeg). `connectors` records only the Connectors window and the confirmation bubble: it doesn't run an AI and never shows real events or mail. With `DEMO_KEEP_APP=1`, it records a copy with a different ID instead of stopping your everyday Jellyfish AI. Positions are laid out for the top-right of a 1920×1080 main display; on a different screen size they are shifted to keep the same distance from the top-right corner
 
 ## License
 

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### 変更
+
+- README（日本語・English・简体中文）の GIF を、すべて 1.3.2 の「まるもち」とチャットの吹き出しで撮り直した（`demo-basic`・`demo-parallel`・`demo-team`・`demo-crossai`・`demo-link`・`demo-queue`・`demo-connectors`・`states`）。もう前のキャラクター（Claude Code のキャラクター）は写らないので、注意書きからその一文を外した。まるもちの状態ごとの動きの説明と、「見た目」のメニューの名前（ドット絵（もち）/ リアルなクラゲ）を README に書いた
+- デモの録画（`scripts/demo/record.sh`）：メインディスプレイが 1920×1080 でなくても撮れるようにした。右上からの位置を保つように、録画範囲・シードのクラゲ・コネクタの画面の位置をずらした写し（`.build/demo-takes`）で撮る
+
 ## [1.3.2] - 2026-11-24
 
 ### 変更
