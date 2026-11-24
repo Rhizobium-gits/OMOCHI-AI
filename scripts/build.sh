@@ -52,10 +52,13 @@ install -m 755 "$ROOT/scripts/update.sh" "$APP/Contents/Resources/update.sh"
 # チャットの会話の表示（表・数式・図）：HTML と、アプリの中で読み込むライブラリ（Resources/chat/vendor、ネットには取りに行かない）
 rm -rf "$APP/Contents/Resources/chat"
 ditto "$ROOT/Resources/chat" "$APP/Contents/Resources/chat"
+# リアルなおもちの絵（Blender で描いたもの。scripts/banner/mochi_assets.py → sprites.py）
+rm -rf "$APP/Contents/Resources/mochi"
+ditto "$ROOT/Resources/mochi" "$APP/Contents/Resources/mochi"
 # macOS の許可をまとめて扱うスクリプト（アプリの「🔐 権限」からも使う）
 install -m 755 "$ROOT/scripts/permissions.sh" "$APP/Contents/Resources/permissions.sh"
 
-# アイコン：Resources/AppIcon.png（正方形の絵）を macOS のアイコンの角丸の枠に収める。無ければおもちのドット絵を描く
+# アイコン：Resources/AppIcon.png（正方形の絵。Blender で描いたおもち）を macOS のアイコンの角丸の枠に収める。無ければおもちのドット絵を描く
 TMP="$(mktemp -d)"
 ICONSET="$TMP/AppIcon.iconset"
 mkdir -p "$ICONSET"

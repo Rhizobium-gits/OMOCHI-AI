@@ -236,7 +236,6 @@ final class TeamCoordinator {
             for (m, p) in s.mates {
                 guard let mc = controller(m) else { continue }
                 mc.panel.setFrameOrigin(group ? NSPoint(x: p.x + dx, y: p.y + dy) : p)
-                (mc.avatar as? RealisticAvatar)?.windowMoved()
             }
         }
         s.group = group
@@ -344,7 +343,6 @@ final class TeamCoordinator {
             let e = CGFloat(1 - pow(1 - k, 3))
             for (m, o) in starts {
                 m.panel.setFrameOrigin(NSPoint(x: o.x + d.dx * e, y: o.y + d.dy * e))
-                (m.avatar as? RealisticAvatar)?.windowMoved()
             }
             self?.refresh()
             if k >= 1 { self?.finishGlide() }

@@ -123,7 +123,6 @@ final class JellyController: NSObject {
     func moveTo(_ origin: NSPoint, persist: Bool) {
         panel.setFrameOrigin(origin)
         if persist { update { $0.origin = origin } }
-        (avatar as? RealisticAvatar)?.windowMoved()
         manager?.team?.refresh()
     }
 
@@ -222,7 +221,6 @@ final class JellyController: NSObject {
         }
         dragged = true
         panel.setFrameOrigin(NSPoint(x: dragStartOrigin.x + dx, y: dragStartOrigin.y + dy))
-        (avatar as? RealisticAvatar)?.windowMoved()
         manager?.jellyDragged(self, mods: NSEvent.modifierFlags)
     }
 

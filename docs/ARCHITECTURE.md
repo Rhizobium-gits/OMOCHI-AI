@@ -1,4 +1,4 @@
-# Jellyfish AI — 設計メモ
+# OMOCHI AI — 設計メモ
 
 デスクトップに常駐するおもち（床に座った丸餅のドット絵「まるもち」）が、それぞれ独立した AI エージェントとして動く macOS アプリ。
 
@@ -6,7 +6,7 @@
 
 | 候補 | 判断 | 理由 |
 |---|---|---|
-| **Swift + AppKit + Core Animation / Metal**（採用） | ◎ | 常駐アプリとして最軽量（実測 46MB・6体で CPU 0.5%）。非アクティブ化パネル、ScreenCaptureKit、Accessibility (AXUIElement)、Carbon ホットキー、SMAppService、Liquid Glass（NSGlassEffectView）を追加ライブラリなしで直接使える。Command Line Tools だけでビルドでき、環境を変えずに済む |
+| **Swift + AppKit + Core Animation**（採用） | ◎ | 常駐アプリとして最軽量（実測 46MB・6体で CPU 0.5%）。非アクティブ化パネル、ScreenCaptureKit、Accessibility (AXUIElement)、Carbon ホットキー、SMAppService、Liquid Glass（NSGlassEffectView）を追加ライブラリなしで直接使える。Command Line Tools だけでビルドでき、環境を変えずに済む |
 | Electron + React | △ | 実装は速いが常駐で 200MB 超。Accessibility/画面認識はネイティブアドオンが必要。フォーカスを奪わないパネルの挙動が弱い |
 | Tauri | △ | 軽いが Rust ツールチェーンの導入が必要（環境に重大な変更）。透明ウィンドウは private API 依存 |
 
@@ -15,13 +15,13 @@ Framer Motion / CSS Animation の役割は Core Animation が担う（アニメ�
 ## 2. 全体構成
 
 ```
-┌─────────────── JellyfishAI.app（UI プロセス, LSUIElement）────────────────┐
+┌─────────────── OMOCHI AI.app（UI プロセス, LSUIElement）────────────────┐
 │ AppDelegate ── Shortcuts(⌘L / ⌥⌘L, Carbon)  StatusBar(メニューバー)        │
 │      │                                                                    │
 │ JellyManager ── 配置・表示/非表示・永続化・クリック透過のポインタ追跡          │
 │      ├── JellyController ×N   透明 NSPanel（nonactivating）+ マウス操作       │
-│      │      └── Avatar        PixelAvatar（既定, ドット絵「まるもち」）       │
-│      │                        RealisticAvatar（Metal シェーダ）               │
+│      │      └── Avatar        MochiAvatar（Core Animation で伸び縮み・跳ね）   │
+│      │                        絵：ドット絵「まるもち」／リアルなおもち（Blender）│
 │      ├── AgentRuntime ×N      セッション・履歴・状態遷移・ログ                 │
 │      │      └── AgentBackend  ClaudeCodeBackend（他の AI もこの口で差し替え）  │
 │      └── AgentChatController ×N チャットウィンドウ（入力・会話・モデル切替）     │
@@ -50,21 +50,21 @@ Framer Motion / CSS Animation の役割は Core Animation が担う（アニメ�
 
 ## 2.4 外部 MCP は呼んだときだけ
 
-`AgentRuntime.submit` が毎ターン `mcpPolicy`（JellyManager）に指示文・作業フォルダ・「この会話ですでに読み込んだか」を渡して決める。読み込まないときは `--strict-mcp-config`（`--help` に有ることを確かめてから付ける）で Jellyfish の `--mcp-config` だけにし、`--append-system-prompt` に「読み込んでいない。必要なら名前を入れて頼み直してもらう」を足す。サーバー名は `~/.claude.json`（ユーザー設定・プロジェクト設定）と作業フォルダから上の `.mcp.json` のキーだけを読む（中身は読まない）。名前やカタカナ表記（ブレンダー・フィグマ等）が指示に出たら読み込み、その会話 ID を meta.json に覚えて続きのターンも読み込む。
+`AgentRuntime.submit` が毎ターン `mcpPolicy`（JellyManager）に指示文・作業フォルダ・「この会話ですでに読み込んだか」を渡して決める。読み込まないときは `--strict-mcp-config`（`--help` に有ることを確かめてから付ける）で OMOCHI AI の `--mcp-config` だけにし、`--append-system-prompt` に「読み込んでいない。必要なら名前を入れて頼み直してもらう」を足す。サーバー名は `~/.claude.json`（ユーザー設定・プロジェクト設定）と作業フォルダから上の `.mcp.json` のキーだけを読む（中身は読まない）。名前やカタカナ表記（ブレンダー・フィグマ等）が指示に出たら読み込み、その会話 ID を meta.json に覚えて続きのターンも読み込む。
 
 画面の添付は長辺 1568px まで（実画素より拡大しない）。PC 操作の `screen_capture` は 1 ポイント = 1 ピクセルのまま（現行モデルは長辺 2576px まで座標が画素と 1:1 なので、クリック位置の換算をしない）。
 
 ## 2.5 チーム（エージェント同士の分業）
 
 ```
-claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --append-system-prompt <チームの説明>
-   └─ stdio ─▶ JellyfishAI --mcp-bridge <bus.sock> <agentID>   （同じ実行ファイルの中継モード）
+claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__omochi --append-system-prompt <チームの説明>
+   └─ stdio ─▶ OmochiAI --mcp-bridge <bus.sock> <agentID>   （同じ実行ファイルの中継モード）
                    └─ unix socket（データフォルダ、0600）─▶ TeamBus ─▶ TeamCoordinator（アプリ内）
 ```
 
 - **MCP サーバーはアプリ側**：ブリッジは標準入出力とソケットを中継するだけで、JSON-RPC（initialize / tools/list / tools/call）は TeamCoordinator が処理する。どのエージェントからの呼び出しかはブリッジの hello で分かる
 - **ツール**：`list_team`、`assign_task`（すぐ task_id を返す。相手が作業中なら順番待ち）、`create_teammate`（呼んだおもちの隣に出し、線でつなぎ、作業フォルダ・モデル・強さを引き継ぐ）、`wait_for_tasks`（最大 1800 秒待つ。過ぎたらその時点の状況を返し、もう一度呼べば続きを待てる）。待ちが長いので子プロセスに `MCP_TOOL_TIMEOUT` を渡す
-- **依頼の実行**：依頼先の次のターンとして `--resume` で送る（目印 `[Jellyfish チーム依頼 from: 名前]` を先頭に付け、チャットでは「📨 名前 からの依頼」と表示）。ターンが終わったら結果（stream-json の result）を依頼元へ返す
+- **依頼の実行**：依頼先の次のターンとして `--resume` で送る（目印 `[OMOCHI AI チーム依頼 from: 名前]` を先頭に付け、チャットでは「📨 名前 からの依頼」と表示）。ターンが終わったら結果（stream-json の result）を依頼元へ返す
 - **つながり**：無向の辺（links.json）。つながりの塊が 1 チームで、チーム内なら隣でなくても頼める（光は線をたどる最短経路を流れる）。ドラッグ中、中心どうしが体 1.5 個ぶん以内の最も近いおもちを「つながる先」として、ドラッグ元の色の流れる点線・相手を囲む脈打つ輪・「離すと 〇〇 とつながる」の吹き出しで見せる（チームが 8 体を超えるなら赤）。離すと、線が体に隠れず ✂︎ も出せるよう、相手から体 1.6 個ぶんの空いた位置へ 0.22 秒で滑らせてからつなぐ。⇧ ドラッグはチーム全体を平行移動、⌥ を押したまま離すとそのおもちのつながりを全部切る（修飾キーはドラッグ中もポインタ追跡で拾うので、マウスを止めたまま押しても表示が切り替わる）。右クリック › つなぐ で離れたおもちともつなげる
 - **描画**：LinkOverlay（ディスプレイごとの透明な重ね窓、おもちより 1 段下のレベル、クリックは素通し）。線は CAShapeLayer の点線、依頼が流れている間だけ lineDashPhase を流す。光は CAKeyframeAnimation。静止中はアニメーションが無いので CPU を使わない。✂︎ は線の近くにポインタがあるときだけ出る小さなクリック可能パネル
 - **上限**：1 チーム 8 体、全体 20 体、作成の深さ 2（ユーザーのおもち = 0）。毎ターンの system prompt に今のチームと残り枠を書く
@@ -87,8 +87,8 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
   - `OrgPolicy`：型ごとに Beta(α, β)。出発点は依頼の種類からの見込み p（α = 1+2p, β = 1+2(1-p)）。過去のエピソードは似ている度合い s で w = 4s² + 0.12（同じ形で人数違いは 0.3 倍）を足す。Thompson サンプリングで選び、人数 × 0.015 を割り引く。似た依頼（s ≥ 0.35）が無ければ novel
   - `OrgReward`：完了 0.65・失敗 0.15・キャンセル 0.1、仲間の失敗・長時間で減点、👍 は 0.85 以上に、👎 は 0.25 以下に、再実行・キャンセル・「違う」で減点、「ありがとう」で加点
   - `OrgEvolution`：2 件以上の型の上位 2 つから、人数 ±1・レビュー係の付け外し・形の変更の子を 1 つずつ。4 件以上でいちばんの型より 0.3 低い型は引退（solo は残す）。リーダーが自分で選んだ一覧にない形は取り込む
-- **OrgLearner**：状態はメインスレッド。保存（`org/episodes.json` 0600・`population.json`・`report.md`）と進化は 3 秒待ってまとめて `jellyfish.org`（utility）キューで。終了時は `flush` で書き切る。エピソードは 600 件まで
-- **予約**（Agent/PromptQueue.swift・UI/PromptQueueView.swift）：`PromptQueues`（JellyManager が持つ。`queues.json`）がおもちごとの `PromptQueue`（予約の行 `QueuedPrompt` = 本人が打った文・送り先・前の結果を渡すか・予約したときの添付と画面の欄）を動かす。チャットで作業中（または予約が進んでいる途中）に Enter を押すと `enqueue` し、そのおもちが作業中ならその終わりを `watching` で待つ。`AgentRuntime.onTurnEnded` → `turnEnded` で、完了なら結果を `lastResult` に取って `pump` が先頭の行を送る（送り先が作業中なら次の turnEnded まで待つ。送る前に watching を付けるので、起動に失敗してその場で終わっても取りこぼさない）。止めた・エラー・送れない・送り先が消えた・アプリを終了したときは `pause`（▶ で再開）。前の結果は `PromptQueues.resultMarker` の欄として本人の文と添付の欄の間に入れ、Jellyfish の目印と同じ形は崩しておく（`defang`）。`typedText`・外部 MCP の判定・モデルの自動選択・タイトルはこの欄を除いた本人の文で決める。打っている途中の行は最後の入力から 4 秒待つ。テストは `Tests/JellyfishAITests/QueueTests.swift`（偽のおもち）と `jellyfish://queue`（自動化のときだけ）
+- **OrgLearner**：状態はメインスレッド。保存（`org/episodes.json` 0600・`population.json`・`report.md`）と進化は 3 秒待ってまとめて `omochi.org`（utility）キューで。終了時は `flush` で書き切る。エピソードは 600 件まで
+- **予約**（Agent/PromptQueue.swift・UI/PromptQueueView.swift）：`PromptQueues`（JellyManager が持つ。`queues.json`）がおもちごとの `PromptQueue`（予約の行 `QueuedPrompt` = 本人が打った文・送り先・前の結果を渡すか・予約したときの添付と画面の欄）を動かす。チャットで作業中（または予約が進んでいる途中）に Enter を押すと `enqueue` し、そのおもちが作業中ならその終わりを `watching` で待つ。`AgentRuntime.onTurnEnded` → `turnEnded` で、完了なら結果を `lastResult` に取って `pump` が先頭の行を送る（送り先が作業中なら次の turnEnded まで待つ。送る前に watching を付けるので、起動に失敗してその場で終わっても取りこぼさない）。止めた・エラー・送れない・送り先が消えた・アプリを終了したときは `pause`（▶ で再開）。前の結果は `PromptQueues.resultMarker` の欄として本人の文と添付の欄の間に入れ、OMOCHI AI の目印と同じ形は崩しておく（`defang`）。`typedText`・外部 MCP の判定・モデルの自動選択・タイトルはこの欄を除いた本人の文で決める。打っている途中の行は最後の入力から 4 秒待つ。テストは `Tests/OmochiAITests/QueueTests.swift`（偽のおもち）と `omochi://queue`（自動化のときだけ）
 - **片付け**：form_team が作った仲間は `JellyRecord.orgSpawned`。次の form_team で使わない、空いている仲間（とその下の仲間）を消す。リーダーが仲間を使わずにターンを終えたら、前の依頼の仲間を消す
 - **安全**：PC 操作のツールは仲間からの依頼のターンでは渡さない（`usesPCTools`）。仲間からの依頼の文では外部 MCP を読み込まない。学習は端末内だけで、どこにも送らない
 
@@ -127,7 +127,7 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 
 - `ChatMedia.refs(in:)` が文から画像・PDF のパス（実在・50MB まで）と http / https の URL を拾う（URL の中のパスはファイルとして拾わない。1 メッセージ 6 件まで）。添付は `attachMarker` の下の行から
 - `ChatMediaCache`：ファイルは `QLThumbnailGenerator`（パスと更新時刻で覚える）、Web は `LPMetadataProvider`（10 秒）。できたら `onUpdate` → `JellyManager.scheduleTranscriptReload`（0.25 秒でまとめる）
-- Web を自動で読むのはユーザーのメッセージの URL だけ。エージェントの返答の URL は `jellyfish-preview:<URL>` の「表紙を見る」を出し、`textView(_:clickedOnLink:at:)` で押されたら `allow(link:)`（http / https だけ）で読みに行く。設定 `linkPreviews` で Web のプレビューを止める
+- Web を自動で読むのはユーザーのメッセージの URL だけ。エージェントの返答の URL は `omochi-preview:<URL>` の「表紙を見る」を出し、`textView(_:clickedOnLink:at:)` で押されたら `allow(link:)`（http / https だけ）で読みに行く。設定 `linkPreviews` で Web のプレビューを止める
 - 音声入力：🎙・編集 ›「音声入力を開始」は、入力欄を first responder にして `startDictation:` を送るだけ（macOS の音声入力）
 
 ## 2.7 表示の言語（Localization/）
@@ -136,11 +136,11 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 - 訳の元は `l10n/en.json`・`l10n/zh.json`。`scripts/l10n.py` がソースから L() のキーを実行時の文字列そのもので取り出し（複数行の字下げ・エスケープ・コメントの中は除く）、抜け・%@ の数の違い・L() の中の `\( )` を調べ（CI）、Swift の表を作る
 - 言語を変えたら、メニュー（開くたびに作る）・メインメニュー（通知で作り直す）・開いているチャット（作り直す）に反映。エージェントへの案内（チーム・PC 操作・自律組織・ツールの説明）も L() を通すので、その言語で渡る
 - 履歴の読み取りに使う目印（`requestMarker`・`ScreenContext.marker`・`attachMarker`）と、判定に使う語の一覧（画面を指す言葉・依頼の種類・反応・色の別名）は訳さない。判定の語は 3 言語を並べる
-- `JELLYFISH_LANGUAGE=ja|en|zh` で設定より優先して決める（`scripts/test.sh` は ja に固定。CI の macOS は英語のため）
+- `OMOCHI_LANGUAGE=ja|en|zh` で設定より優先して決める（`scripts/test.sh` は ja に固定。CI の macOS は英語のため）
 
 ## 3. 保存場所
 
-`~/Library/Application Support/JellyfishAI/`
+`~/Library/Application Support/OmochiAI/`
 
 | ファイル | 内容 |
 |---|---|
@@ -153,7 +153,7 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 | `agents/<id>/events.jsonl` | Claude Code の生イベント |
 | `app.log` | アプリのログ |
 
-環境変数 `JELLYFISH_DATA_DIR` を付けて起動すると、この保存先を差し替える（README の GIF を撮る `scripts/demo/record.sh` が、普段のおもちや会話に触れずに空のデータで録画するために使う）。
+環境変数 `OMOCHI_DATA_DIR` を付けて起動すると、この保存先を差し替える（README の GIF を撮る `scripts/demo/record.sh` が、普段のおもちや会話に触れずに空のデータで録画するために使う）。
 
 ## 4. ロードマップと現状
 
@@ -162,9 +162,9 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 | 1 基本 UI | 常駐、Claude キャラ、浮遊、⌘L 生成、色分け、ドラッグ、非表示/再表示、自動起動、長押しで削除 | ✅ 動作確認済み |
 | 2 AI 連携 | ⌘L で即入力、タップでチャットウィンドウ（閉じる/しまう/フルスクリーン/自由リサイズ）、Claude Code 接続（Auto Mode）、独立エージェントの並列実行、`--resume` で前の成果物に続けて指示、モデル・強さ（--model / --effort）をおもちごとに切替、会話は Claude Code のセッション記録から表示、過去のセッション（VS Code・ターミナル製も含む）をメニューから呼び出し、ターミナルで同じセッションを開く | ✅ 実行→完了・エラー・再実行・続けて指示を確認 |
 | 3 状態の可視化 | Idle/Thinking/Working/Completed/Error/Cancelled のアニメーション、完了で静止 | ✅ 実イベントで遷移を確認 |
-| 4 画面認識 | 指示が画面を指していれば送信時に ScreenCaptureKit で撮影（Jellyfish のウィンドウは除外）、前面アプリ名・ウィンドウ名を添付、📎 添付を優先、対象ディスプレイ選択（使っていたアプリの画面 / 全ディスプレイ）、自動判定/毎回/しない | 🟡 実装済み・画面収録の権限付与後の実機確認待ち。AX（アクセシビリティ）で選択テキスト等を取るのは未 |
+| 4 画面認識 | 指示が画面を指していれば送信時に ScreenCaptureKit で撮影（OMOCHI AI のウィンドウは除外）、前面アプリ名・ウィンドウ名を添付、📎 添付を優先、対象ディスプレイ選択（使っていたアプリの画面 / 全ディスプレイ）、自動判定/毎回/しない | 🟡 実装済み・画面収録の権限付与後の実機確認待ち。AX（アクセシビリティ）で選択テキスト等を取るのは未 |
 | 5 チーム | 名前、隣に置くとつながる線、依頼と結果の受け渡しを線上で可視化、✂︎ で切る、エージェントが仲間を作って分担（MCP） | ✅ 実機で 4 体の分業（作成 → 並列 → レビュー → 統合）を確認 |
-| 6 拡張 | セッションのアーカイブ、メニューバーのアニメーション、ファイルのドロップ、PC 操作（アクセシビリティ）、システム音声の文字起こし・議事録、3D ドット絵、リアルなクラゲの動き、デスクトップごとの配置、管理画面（CPU/GPU）、ChatGPT 連携（API キー）、固定の署名 | 未着手 |
+| 6 拡張 | セッションのアーカイブ、メニューバーのアニメーション、ファイルのドロップ、PC 操作（アクセシビリティ）、システム音声の文字起こし・議事録、3D ドット絵、リアルなおもちの動き、デスクトップごとの配置、管理画面（CPU/GPU）、ChatGPT 連携（API キー）、固定の署名 | 未着手 |
 
 ## 画面認識の流れ
 
@@ -182,16 +182,16 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__jellyfish --
 ## 6. 配布と外部からの入口
 
 - **ビルド**：`scripts/build.sh`（この Mac の CPU）/ `--universal`（arm64 と x86_64 を別々に `swift build --arch` して `lipo`）。`VERSION` を CFBundleShortVersionString、コミット数を CFBundleVersion に入れ、アドホック署名する
-- **配布物**：`scripts/release.sh` が テスト → universal ビルド → 署名と CPU の確認 → .dmg（Applications へのリンクと「はじめにお読みください」）・.zip・SHA256SUMS.txt を作る。`--publish` で CHANGELOG の該当節をノートにして `gh release create`。.dmg は版によらず `JellyfishAI.dmg`（README の直リンク `releases/latest/download/JellyfishAI.dmg` とダウンロード数のバッジのため）、.zip は `JellyfishAI-<版>.zip`（`AppUpdater` が版で選ぶ）。`scripts/downloads.sh` がリリースごとの download_count（`--traffic` で views・clones）
+- **配布物**：`scripts/release.sh` が テスト → universal ビルド → 署名と CPU の確認 → .dmg（Applications へのリンクと「はじめにお読みください」）・.zip・SHA256SUMS.txt を作る。`--publish` で CHANGELOG の該当節をノートにして `gh release create`。.dmg は版によらず `OmochiAI.dmg`（README の直リンク `releases/latest/download/OmochiAI.dmg` とダウンロード数のバッジのため）、.zip は `OmochiAI-<版>.zip`（`AppUpdater` が版で選ぶ）。`scripts/downloads.sh` がリリースごとの download_count（`--traffic` で views・clones）
 - **CI**：`.github/workflows/ci.yml`（macos-26。SpeechAnalyzer など macOS 26 の SDK が要る）でテストと universal ビルド
-- **テスト**：`Tests/JellyfishAITests`（Swift Testing）。画面や claude を使わない判定ロジック（URL の受け付け、バージョン比較、外部 MCP の判定、設定の読み込み、画面添付の判定、プロセスの親子判定、セッションの増分読み込み）。Command Line Tools だけの環境では `scripts/test.sh` が Testing.framework の場所を渡す
-- **`jellyfish://`**：`URLRoutes.allowed` が受け付ける操作を決める。普段は表示系（`new`・`open`・`toggle`・`show`・`hide`・`arrange`・`style`・`scale`）だけ。指示の送信・PC 操作の許可・作業フォルダ・削除などは `JELLYFISH_AUTOMATION=1` で起動したときだけ（デモ録画は `scripts/demo/record.sh` が付ける。`connectors`・`connectortest` はコネクタの GIF 用で、画面を前面化せずに出してボタンを押すだけ・何も書き込まない）
+- **テスト**：`Tests/OmochiAITests`（Swift Testing）。画面や claude を使わない判定ロジック（URL の受け付け、バージョン比較、外部 MCP の判定、設定の読み込み、画面添付の判定、プロセスの親子判定、セッションの増分読み込み）。Command Line Tools だけの環境では `scripts/test.sh` が Testing.framework の場所を渡す
+- **`omochi://`**：`URLRoutes.allowed` が受け付ける操作を決める。普段は表示系（`new`・`open`・`toggle`・`show`・`hide`・`arrange`・`style`・`scale`）だけ。指示の送信・PC 操作の許可・作業フォルダ・削除などは `OMOCHI_AUTOMATION=1` で起動したときだけ（デモ録画は `scripts/demo/record.sh` が付ける。`connectors`・`connectortest` はコネクタの GIF 用で、画面を前面化せずに出してボタンを押すだけ・何も書き込まない）
 - **チームのソケット**：`bus.sock`（0600）。接続ごとに `LOCAL_PEERPID` で相手のプロセスを取り、hello で名乗ったエージェントの claude（`AgentRuntime.processID`）の子孫であることを `ProcessTree.isDescendant` で確かめてから受け付ける
 - **通信**：アプリ自身はメニューの「アップデートを確認…」のときと、「アップデートの自動確認」で間隔を選んだときのその間隔ごとだけ `api.github.com/repos/…/releases/latest` を読む（既定は確認しない）。利用状況の送信はしない。ほかは「アップデートする」のときのリリースのファイルと、チャットの Web のプレビューだけ
 - **アップデートの自動確認**（App/UpdateSchedule.swift）：`AppSettings.updateCheck`（never / daily / weekly / monthly）と `lastUpdateCheck`（読めたときの UNIX 秒）から `UpdateCheckInterval.isDue` で番かを決め、起動 1 分後と 1 時間ごとに見る。番なら `UpdateChecker.fetchLatest` で版だけを読み、新しければ `JellyManager.showUpdateBubble` が見えているおもちの上に `WatchBubble`（キーにならないパネル）を出す。「見る」は手での確認と同じ画面（`UpdateChecker.check`）を開き、入れ替えはそこで「アップデートする」を押したときだけ。「この版は知らせない」は `skippedUpdateVersion` に入れる
-- **コネクタ**（Agent/Connectors.swift・Agent/MacConnectors.swift・App/ConnectorsWindow.swift）：`ConnectorSettings`（設定の `connectors`。コネクタごとに `ConnectorRule` = 範囲 off/read/readWrite と、使える AI → 使えるモデル）・`ConnectorPreset`（ワンタッチ設定）・`ConnectorPolicy`（おもちの AI・このターンのモデル `AgentRuntime.connectorModel`・PC 操作の有無から、渡すツールと断る理由を決める）。`TeamCoordinator` が jellyfish MCP の tools/list に足し、tools/call で決まりを確かめ直してから `MacConnectors` へ（カレンダー・リマインダーは EventKit、メールは `/usr/bin/osascript -l JavaScript` に JSON の引数 1 つ）。書き込みは `JellyManager.confirmConnector` の吹き出しで本人が押したときだけ
-- **macOS の許可**（App/Permissions.swift）：`AppPermission`（アクセシビリティ = AXIsProcessTrusted、画面収録 = CGPreflightScreenCaptureAccess、フルディスクアクセス = TCC.db を開けるか、オートメーション = アプリごと）と tccutil のサービス名・システム設定の場所。`PermissionsWindowController` が状態・範囲を出し、まとめて許可（効いていないものだけ `permissions.sh grant <サービス>` → 終わると `jellyfish://permissions?done=grant` → `waitingForGrant` のときだけ AX の確認・画面収録の確認・フルディスクアクセスの場所）・取り消し（`disableAllPrivileges` → `permissions.sh revoke`）・固定の署名（`source-checkout` があるとき）。entitlement は `Resources/JellyfishAI.entitlements`（Apple Events だけ）
+- **コネクタ**（Agent/Connectors.swift・Agent/MacConnectors.swift・App/ConnectorsWindow.swift）：`ConnectorSettings`（設定の `connectors`。コネクタごとに `ConnectorRule` = 範囲 off/read/readWrite と、使える AI → 使えるモデル）・`ConnectorPreset`（ワンタッチ設定）・`ConnectorPolicy`（おもちの AI・このターンのモデル `AgentRuntime.connectorModel`・PC 操作の有無から、渡すツールと断る理由を決める）。`TeamCoordinator` が omochi MCP の tools/list に足し、tools/call で決まりを確かめ直してから `MacConnectors` へ（カレンダー・リマインダーは EventKit、メールは `/usr/bin/osascript -l JavaScript` に JSON の引数 1 つ）。書き込みは `JellyManager.confirmConnector` の吹き出しで本人が押したときだけ
+- **macOS の許可**（App/Permissions.swift）：`AppPermission`（アクセシビリティ = AXIsProcessTrusted、画面収録 = CGPreflightScreenCaptureAccess、フルディスクアクセス = TCC.db を開けるか、オートメーション = アプリごと）と tccutil のサービス名・システム設定の場所。`PermissionsWindowController` が状態・範囲を出し、まとめて許可（効いていないものだけ `permissions.sh grant <サービス>` → 終わると `omochi://permissions?done=grant` → `waitingForGrant` のときだけ AX の確認・画面収録の確認・フルディスクアクセスの場所）・取り消し（`disableAllPrivileges` → `permissions.sh revoke`）・固定の署名（`source-checkout` があるとき）。entitlement は `Resources/OmochiAI.entitlements`（Apple Events だけ）
 - **コマンドでアップデート**：`scripts/update.sh`（build.sh が `Contents/Resources/update.sh` に入れる。アプリの中から動かすと写しから動き直す）。JSON は `plutil -extract`、版の比較は数で、URL は `releases/download/<tag>/` と完全一致、`ditto -x -k` → バンドル ID・版・`codesign --verify --strict`・証明書の署名なら `codesign --verify -R=<いまの DR>`、`ps -o comm=` でその場所のプロセスだけを SIGTERM、`mv` で退かして置き、失敗したら戻す。`--source` は `git pull --ff-only` → install.sh。アプリの `AppUpdater.terminalCommand` が `source-checkout`（install.sh が書く）を見てコマンドを決め、`runInTerminal` が `update.command` で開く
-- **アップデート**（App/Updater.swift）：`AppUpdater.release(from:)` が `github.com/<repo>/releases/download/<tag>/` の `JellyfishAI-<版>.zip` と `SHA256SUMS.txt` だけを選ぶ → `UpdateSession` が取ってくる（リダイレクトは github.com・*.githubusercontent.com の https だけ）→ SHA-256 → `ditto -x -k` → `bundleProblem`（バンドル ID・版）→ `signingStep`（`SecStaticCodeCheckValidity` strict。いまの版が証明書の署名ならその designated requirement も。満たさなくても、いまの版が自己署名の証明書 1 枚＝固定の署名なら、`security find-identity` に鍵があれば `.resign` で `codesign --force --sign <SHA-1> --options runtime --preserve-metadata=entitlements` し `satisfiesCurrent` を確かめ、鍵が無ければ `.releaseSignature`。Developer ID など鎖のある証明書は `.refuse`）→ 作業中のおもちがいないことを確かめ、いまの版を `update/previous.app` に退かして新しい版を置き（失敗したら戻す）、`sh` の小さなスクリプトがアプリの終了を待って新しい版を開き `update/` を消す
+- **アップデート**（App/Updater.swift）：`AppUpdater.release(from:)` が `github.com/<repo>/releases/download/<tag>/` の `OmochiAI-<版>.zip` と `SHA256SUMS.txt` だけを選ぶ → `UpdateSession` が取ってくる（リダイレクトは github.com・*.githubusercontent.com の https だけ）→ SHA-256 → `ditto -x -k` → `bundleProblem`（バンドル ID・版）→ `signingStep`（`SecStaticCodeCheckValidity` strict。いまの版が証明書の署名ならその designated requirement も。満たさなくても、いまの版が自己署名の証明書 1 枚＝固定の署名なら、`security find-identity` に鍵があれば `.resign` で `codesign --force --sign <SHA-1> --options runtime --preserve-metadata=entitlements` し `satisfiesCurrent` を確かめ、鍵が無ければ `.releaseSignature`。Developer ID など鎖のある証明書は `.refuse`）→ 作業中のおもちがいないことを確かめ、いまの版を `update/previous.app` に退かして新しい版を置き（失敗したら戻す）、`sh` の小さなスクリプトがアプリの終了を待って新しい版を開き `update/` を消す
 - **片付け**：起動時に 7 日より古い画面の画像を消す（`DataJanitor`）。`app.log` は 2MB、`events.jsonl` は 4MB で 1 世代に入れ替える（`LogRotation`）。おもちを消すとそのおもちの生イベントと画像を消す
 

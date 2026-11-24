@@ -108,7 +108,6 @@ extension L10n {
         "Jellyfish AI が動いています": "Jellyfish AI is running",
         "Jellyfish AI が終わりませんでした": "Jellyfish AI didn't quit",
         "Jellyfish AI は OMOCHI AI に名前が変わりました。おもち・設定・会話を引き継ぐため、Jellyfish AI を終了します（作業中のエージェントは中断されます）。": "Jellyfish AI is now called OMOCHI AI. To bring over your omochi, settings and chats, Jellyfish AI will be quit (agents that are working are interrupted).",
-        "Metal が利用できません": "Metal is not available",
         "M月d日(E) H:mm": "MMM d (E) H:mm",
         "OK": "OK",
         "OMOCHI AI から：今日 %ld 回 · 7 日で %ld 回": "From OMOCHI AI: %ld today · %ld in 7 days",

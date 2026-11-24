@@ -5,15 +5,14 @@ import ImageIO
 import UniformTypeIdentifiers
 
 /// ウィンドウを出さずにおもちを PNG に描き出す開発用ツール。
-///   --sheet out.png [--bg dark|light]        色 × 状態 の一覧
-///   --strip out.png [--state s] [--color i] [--count n] [--interval sec] [--drag]
+///   --sheet out.png [--bg dark|light]        リアルなおもちの 色 × 形・表情 の一覧
+///   --pixel-sheet out.png [--bg dark|light]  ドット絵のおもちの 色 × 形・表情 の一覧
 ///   --icon out.png [--icon-source art.png]   アプリアイコン (1024px)。art を角丸の枠に収める（無ければおもちのドット絵を描く）
-///   --settle-test                            完了/キャンセルで本当に静止するかを検証
 ///   --account-menu out.png                   メニューのアカウントと使用量の欄（実際に claude から読む。明暗 2 つ並べる）
 ///   --connectors-window out.png [--preset p] [--bg dark|light]   🔌 コネクタの画面（ワンタッチ設定 p の内容で。画面には出さずに描く）
 enum SnapshotTool {
     static func handles(_ args: [String]) -> Bool {
-        args.contains("--sheet") || args.contains("--strip") || args.contains("--icon") || args.contains("--settle-test") || args.contains("--status-frames")
+        args.contains("--sheet") || args.contains("--icon") || args.contains("--status-frames")
             || args.contains("--pixel-sheet") || args.contains("--account-menu") || args.contains("--connectors-window") || args.contains("--chat-sample") || args.contains("--watch-bench")
     }
 
@@ -22,19 +21,9 @@ enum SnapshotTool {
             guard let i = args.firstIndex(of: k), i + 1 < args.count else { return nil }
             return args[i + 1]
         }
-        if let out = value("--sheet") { return sheet(out, dark: value("--bg") != "light") }
+        if let out = value("--sheet") { return pixelSheet(out, dark: value("--bg") != "light", art: .real) }
         if let out = value("--connectors-window") { return connectorsWindow(out, preset: value("--preset"), dark: value("--bg") != "light") }
-        if let out = value("--pixel-sheet") { return pixelSheet(out, dark: value("--bg") != "light") }
-        if let out = value("--strip") {
-            return strip(out,
-                         state: AgentState(rawValue: value("--state") ?? "idle") ?? .idle,
-                         color: Int(value("--color") ?? "0") ?? 0,
-                         count: Int(value("--count") ?? "8") ?? 8,
-                         interval: Double(value("--interval") ?? "0.2") ?? 0.2,
-                         drag: args.contains("--drag"),
-                         dark: value("--bg") != "light",
-                         scale: Double(value("--scale") ?? "2") ?? 2)
-        }
+        if let out = value("--pixel-sheet") { return pixelSheet(out, dark: value("--bg") != "light", art: .pixel) }
         if let out = value("--icon") { return icon(out, source: value("--icon-source")) }
         if let out = value("--status-frames") { return statusFrames(out) }
         if let out = value("--account-menu") { return accountMenu(out) }
@@ -50,7 +39,6 @@ enum SnapshotTool {
             while sem.wait(timeout: .now()) == .timedOut { RunLoop.main.run(until: Date().addingTimeInterval(0.1)) }
             return 0
         }
-        if args.contains("--settle-test") { return settleTest() }
         return 1
     }
 
@@ -152,24 +140,6 @@ enum SnapshotTool {
 
     // MARK: -
 
-    static let pxPerPt = 2.0
-    static let R = 34.0
-
-    static func render(_ m: JellyMotion, scale: Double = pxPerPt) -> CGImage? {
-        let w = Int(m.size.width * scale), h = Int(m.size.height * scale)
-        return JellyGPU.shared.renderImage(width: w, height: h,
-                                           uniforms: m.uniforms(pixelsPerPoint: scale, drawableSize: CGSize(width: w, height: h)))
-    }
-
-    static func simulate(_ m: JellyMotion, seconds: Double, origin: (Double) -> CGPoint = { _ in .zero }) {
-        var t = 0.0
-        let dt = 1.0 / 60.0
-        while t < seconds {
-            m.step(dt: dt, windowOrigin: origin(t))
-            t += dt
-        }
-    }
-
     static func makeContext(_ w: Int, _ h: Int) -> CGContext {
         CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
                   space: CGColorSpace(name: CGColorSpace.sRGB)!,
@@ -190,67 +160,6 @@ enum SnapshotTool {
         guard let dst = CGImageDestinationCreateWithURL(url, UTType.png.identifier as CFString, 1, nil) else { return 1 }
         CGImageDestinationAddImage(dst, img, nil)
         return CGImageDestinationFinalize(dst) ? 0 : 1
-    }
-
-    // MARK: - sheet
-
-    static func sheet(_ out: String, dark: Bool) -> Int32 {
-        let states = AgentState.allCases
-        let colors = 6
-        let size = JellyMotion.windowSize(R: R)
-        let tw = Int(size.width * pxPerPt), th = Int(size.height * pxPerPt)
-        let W = tw * states.count, H = th * colors
-        let ctx = makeContext(W, H)
-        fillBackground(ctx, CGRect(x: 0, y: 0, width: W, height: H), dark: dark)
-        for ci in 0..<colors {
-            for (si, s) in states.enumerated() {
-                let m = JellyMotion(R: R, color: Palette.color(ci), state: s, seed: Double(ci * 7 + si) * 0.37 + 0.5)
-                m.setState(s, immediate: true)
-                // 終了状態は「動いていた状態から止まる」様子を再現するため、作業中から遷移させる
-                if s.isTerminal {
-                    m.setState(.working, immediate: true)
-                    simulate(m, seconds: 2.0)
-                    m.setState(s)
-                    simulate(m, seconds: 10.0)
-                } else {
-                    simulate(m, seconds: 3.0 + Double(ci) * 0.37)
-                }
-                guard let img = render(m) else { continue }
-                let y = H - (ci + 1) * th
-                ctx.draw(img, in: CGRect(x: si * tw, y: y, width: tw, height: th))
-            }
-        }
-        return write(ctx.makeImage()!, out)
-    }
-
-    // MARK: - strip（時間方向の連続コマ）
-
-    static func strip(_ out: String, state: AgentState, color: Int, count: Int, interval: Double, drag: Bool, dark: Bool, scale: Double) -> Int32 {
-        let m = JellyMotion(R: R, color: Palette.color(color), state: state, seed: 0.9)
-        m.setState(state, immediate: true)
-        let size = m.size
-        let tw = Int(size.width * scale), th = Int(size.height * scale)
-        let ctx = makeContext(tw * count, th)
-        fillBackground(ctx, CGRect(x: 0, y: 0, width: tw * count, height: th), dark: dark)
-        // ドラッグ試験：0.6 秒かけて右へ 120pt 動かし、その後止める
-        let origin: (Double) -> CGPoint = { t in
-            guard drag else { return .zero }
-            let p = min(max((t - 2.0) / 0.6, 0), 1)
-            return CGPoint(x: 120 * p * p * (3 - 2 * p), y: 0)
-        }
-        var t = 0.0
-        simulate(m, seconds: 2.0, origin: origin)
-        t = 2.0
-        for i in 0..<count {
-            guard let img = render(m, scale: scale) else { continue }
-            ctx.draw(img, in: CGRect(x: i * tw, y: 0, width: tw, height: th))
-            let end = t + interval
-            while t < end {
-                m.step(dt: 1.0 / 60.0, windowOrigin: origin(t))
-                t += 1.0 / 60.0
-            }
-        }
-        return write(ctx.makeImage()!, out)
     }
 
     // MARK: - pixel sheet（ドット絵のコマ一覧）
@@ -275,25 +184,39 @@ enum SnapshotTool {
         return a
     }
 
-    static func pixelSheet(_ out: String, dark: Bool) -> Int32 {
+    static func pixelSheet(_ out: String, dark: Bool, art: MochiAvatar.Art) -> Int32 {
+        if art == .real, !RealMochiArt.available {
+            FileHandle.standardError.write("Resources/mochi の絵が見つかりません\n".data(using: .utf8)!)
+            return 1
+        }
         let poses = pixelPoses()
         let colorsN = 6
-        let scale = 2.0
-        let P = CGFloat(PixelAvatar.cell(scale: 1.0) * scale)       // 1 マスの px
+        // リアルな絵は大きめに（細部が見えるように）
+        let scale = art == .real ? 4.0 : 2.0
+        let P = CGFloat(MochiAvatar.cell(scale: 1.0) * scale)       // 1 マスの px
         let tileW = Int(CGFloat(MochiSprite.cols) * P), tileH = Int(CGFloat(MochiSprite.rows + 1) * P)
         let W = tileW * poses.count, H = tileH * colorsN
         let ctx = makeContext(W, H)
         fillBackground(ctx, CGRect(x: 0, y: 0, width: W, height: H), dark: dark)
-        ctx.interpolationQuality = .none
+        ctx.interpolationQuality = art == .real ? .high : .none
         for ci in 0..<colorsN {
             let jc = Palette.color(ci)
             let colors = SpriteColors.from(jc)
             for (i, (_, pose)) in poses.enumerated() {
-                let img = MochiSprite.image(pose, colors: colors, key: jc.key)
                 let rect = CGRect(x: CGFloat(i * tileW), y: CGFloat(H - (ci + 1) * tileH) + P * 0.5,
                                   width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
-                // お餅は光らせない（足元の影は絵に入っている）
-                ctx.draw(img, in: rect)
+                if art == .real {
+                    // 床の影（アプリと同じぼかした楕円）→ 体 → 頭上の記号
+                    let w = RealMochiArt.bodyWidth(pose) * (pose.lift > 0 ? 0.7 : 0.94) * P
+                    if let sh = RealMochiArt.shadowImage {
+                        ctx.draw(sh, in: CGRect(x: rect.midX - w / 2, y: rect.minY + P * 0.55, width: w, height: P * 0.9))
+                    }
+                    if let body = RealMochiArt.body(pose, colors: colors, key: jc.key, px: P) { ctx.draw(body, in: rect) }
+                    if let m = RealMochiArt.marks(pose, colors: colors, key: jc.key, px: P) { ctx.draw(m, in: rect) }
+                } else {
+                    // お餅は光らせない（足元の影は絵に入っている）
+                    ctx.draw(MochiSprite.image(pose, colors: colors, key: jc.key), in: rect)
+                }
             }
         }
         return write(ctx.makeImage()!, out)
@@ -395,52 +318,6 @@ enum SnapshotTool {
         ctx.fill(CGRect(x: 0, y: 0, width: img.width, height: img.height))
         ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
         return write(ctx.makeImage()!, out)
-    }
-
-    // MARK: - settle test
-
-    static func settleTest() -> Int32 {
-        var ok = true
-        for s in [AgentState.completed, .cancelled] {
-            let m = JellyMotion(R: R, color: Palette.color(1), state: .working, seed: 0.4)
-            m.setState(.working, immediate: true)
-            simulate(m, seconds: 3)
-            m.setState(s)
-            var t = 0.0
-            while !m.settled && t < 30 {
-                m.step(dt: 1.0 / 60.0, windowOrigin: .zero)
-                t += 1.0 / 60.0
-            }
-            print(String(format: "%@: %@ after %.2fs", s.rawValue, m.settled ? "settled" : "NOT settled", t))
-            ok = ok && m.settled
-            // 静止後に描画結果が変化しないことを確認（2 フレームの差分）
-            if m.settled, let a = render(m) {
-                m.step(dt: 1.0 / 60.0, windowOrigin: .zero)
-                if let b = render(m) {
-                    let diff = maxPixelDiff(a, b)
-                    print("  frame diff after settle: \(diff)")
-                    ok = ok && diff <= 2
-                }
-            }
-        }
-        for s in [AgentState.idle, .thinking, .working, .error] {
-            let m = JellyMotion(R: R, color: Palette.color(0), state: s, seed: 0.4)
-            m.setState(s, immediate: true)
-            simulate(m, seconds: 5)
-            print("\(s.rawValue): settled=\(m.settled) (expected false)")
-            ok = ok && !m.settled
-        }
-        print(ok ? "PASS" : "FAIL")
-        return ok ? 0 : 1
-    }
-
-    static func maxPixelDiff(_ a: CGImage, _ b: CGImage) -> Int {
-        guard let da = a.dataProvider?.data, let db = b.dataProvider?.data else { return 999 }
-        let pa = CFDataGetBytePtr(da)!, pb = CFDataGetBytePtr(db)!
-        let n = min(CFDataGetLength(da), CFDataGetLength(db))
-        var m = 0
-        for i in 0..<n { m = max(m, abs(Int(pa[i]) - Int(pb[i]))) }
-        return m
     }
 
     /// メニューバーのアイコンのコマを並べた画像（確認用）

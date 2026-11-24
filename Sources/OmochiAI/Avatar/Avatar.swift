@@ -41,6 +41,7 @@ extension Avatar {
 
 enum AvatarStyle: String, Codable, CaseIterable {
     case pixel
+    /// リアルなおもち（1.3 までは Metal で描いたリアルなクラゲだった。設定に残る値はそのまま）
     case realistic
 
     var label: String {
@@ -62,27 +63,15 @@ struct AvatarLayout {
 }
 
 enum AvatarFactory {
+    /// どちらの見た目も同じ大きさ・並べ方（リアルなおもちはドット絵と同じキャンバスに描く）
     static func layout(_ style: AvatarStyle, scale: Double) -> AvatarLayout {
-        switch style {
-        case .pixel:
-            let s = PixelAvatar.windowSize(scale: scale)
-            let P = CGFloat(PixelAvatar.cell(scale: scale))
-            return AvatarLayout(size: s, stepY: s.height * 0.92, stepX: s.width * 0.95,
-                                stagger: -s.width * 0.38, edgeOverhang: P * 0.4)
-        case .realistic:
-            let R = 34.0 * scale
-            let s = JellyMotion.windowSize(R: R)
-            return AvatarLayout(size: s, stepY: s.height * 0.60, stepX: s.width * 0.72,
-                                stagger: -s.width * 0.30, edgeOverhang: CGFloat(R * 0.55))
-        }
+        let s = MochiAvatar.windowSize(scale: scale)
+        let P = CGFloat(MochiAvatar.cell(scale: scale))
+        return AvatarLayout(size: s, stepY: s.height * 0.92, stepX: s.width * 0.95,
+                            stagger: -s.width * 0.38, edgeOverhang: P * 0.4)
     }
 
     static func make(_ style: AvatarStyle, record: JellyRecord, scale: Double, maxFPS: Int, calmFPS: Int) -> Avatar {
-        switch style {
-        case .pixel:
-            return PixelAvatar(record: record, scale: scale)
-        case .realistic:
-            return RealisticAvatar(record: record, R: 34.0 * scale, maxFPS: maxFPS, calmFPS: calmFPS)
-        }
+        MochiAvatar(record: record, scale: scale, art: style == .realistic ? .real : .pixel)
     }
 }

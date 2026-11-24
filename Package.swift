@@ -10,8 +10,6 @@ let package = Package(
             path: "Sources/OmochiAI",
             linkerSettings: [
                 .linkedFramework("AppKit"),
-                .linkedFramework("Metal"),
-                .linkedFramework("MetalKit"),
                 .linkedFramework("Carbon"),
                 .linkedFramework("ServiceManagement"),
                 .linkedFramework("ScreenCaptureKit"),

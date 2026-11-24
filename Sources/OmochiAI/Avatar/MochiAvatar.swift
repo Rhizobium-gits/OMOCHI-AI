@@ -6,19 +6,23 @@ final class PassthroughView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
-/// ドット絵のお餅「まるもち」（MochiSprite）。
+/// おもち：ドット絵のお餅「まるもち」（MochiSprite）か、Blender で描いたリアルなお餅（RealMochiArt）。
+/// どちらも同じ 15×12 マスのキャンバスに描くので、置き場所・動き・当たり判定は共通。
 ///
 /// お餅なので宙には浮かず、床に座ったまま（足元の影は床に残る）。
 /// 負荷を抑えつつ滑らかに動かす設計：
 /// - 呼吸・ふくらむ・しぼむ・跳ねるといった連続的な動きは Core Animation の伸び縮み（足元を基準）と上下の移動に任せる
 ///   （WindowServer 側で画面の速さで補間されるので、アプリのメインスレッドは毎フレーム起きない）
-/// - アプリが描き替えるのはドット絵のコマ（まばたき・目線・頭上の記号・状態ごとの形）だけで、最大 8fps
+/// - アプリが描き替えるのはコマ（まばたき・目線・頭上の記号・状態ごとの形）だけで、最大 8fps
 /// - 形が変わる瞬間（完了でふくらむ・エラーでしぼむ）は、伸び縮みを 1 回はさんで段差を目立たせない
 /// - 完了・キャンセルでは少しして止まり、タイマーもアニメーションも無くす
 ///
 /// レイヤー：root ─ shadowLayer（床の影） / floatLayer（跳ねる：上下）─ breathLayer（呼吸：伸び縮み）
-///                 ─ hopLayer（つつく・長押し・着地・出現・横ゆれ）─ spriteLayer（ドット絵）
-final class PixelAvatar: Avatar {
+///                 ─ hopLayer（つつく・長押し・着地・出現・横ゆれ）─ spriteLayer（絵）
+final class MochiAvatar: Avatar {
+    /// 絵の種類：ドット絵か、リアルなお餅か
+    enum Art { case pixel, real }
+
     static func cell(scale: Double) -> Double { (6.0 * scale).rounded() }
     static let topMarginCells: CGFloat = 2.0
     static let bottomMarginCells: CGFloat = 0.5
@@ -32,6 +36,9 @@ final class PixelAvatar: Avatar {
     let view: NSView
     let size: CGSize
     private let P: CGFloat
+    let art: Art
+    /// リアルな絵を描くときの 1 マスのピクセル数（画面の倍率込み）
+    private let px: CGFloat
     private let colors: SpriteColors
     private let cacheKey: String
 
@@ -65,9 +72,12 @@ final class PixelAvatar: Avatar {
     private var landEnd = 0.0
     private let seed: Double
 
-    init(record: JellyRecord, scale: Double) {
-        P = CGFloat(PixelAvatar.cell(scale: scale))
-        size = PixelAvatar.windowSize(scale: scale)
+    init(record: JellyRecord, scale: Double, art: Art = .pixel) {
+        P = CGFloat(MochiAvatar.cell(scale: scale))
+        // 絵がそろっていなければドット絵にする
+        self.art = art == .real && RealMochiArt.available ? .real : .pixel
+        px = P * (NSScreen.screens.map(\.backingScaleFactor).max() ?? 2)
+        size = MochiAvatar.windowSize(scale: scale)
         colors = SpriteColors.from(record.color)
         cacheKey = record.color.key
         state = record.state
@@ -81,27 +91,34 @@ final class PixelAvatar: Avatar {
         root.frame = CGRect(origin: .zero, size: size)
         floatLayer.frame = root.bounds
         // 伸び縮み・拡大縮小は足元（床の線）を基準に
-        let footY = PixelAvatar.bottomMarginCells * P + P * 1.0
+        let footY = MochiAvatar.bottomMarginCells * P + P * 1.0
         for l in [breathLayer, hopLayer] {
             l.bounds = root.bounds
             l.anchorPoint = CGPoint(x: 0.5, y: footY / size.height)
             l.position = CGPoint(x: size.width / 2, y: footY)
         }
 
-        spriteLayer.frame = CGRect(x: 0, y: PixelAvatar.bottomMarginCells * P,
+        spriteLayer.frame = CGRect(x: 0, y: MochiAvatar.bottomMarginCells * P,
                                    width: CGFloat(MochiSprite.cols) * P, height: CGFloat(MochiSprite.rows) * P)
-        spriteLayer.magnificationFilter = .nearest
-        spriteLayer.minificationFilter = .nearest
+        // ドット絵は補間しない。リアルな絵はなめらかに
+        let filter: CALayerContentsFilter = self.art == .real ? .linear : .nearest
+        spriteLayer.magnificationFilter = filter
+        spriteLayer.minificationFilter = filter
         spriteLayer.contentsGravity = .resize
         spriteLayer.actions = ["contents": NSNull(), "opacity": NSNull()]
         markLayer.frame = spriteLayer.frame
-        markLayer.magnificationFilter = .nearest
-        markLayer.minificationFilter = .nearest
+        markLayer.magnificationFilter = filter
+        markLayer.minificationFilter = filter
         markLayer.contentsGravity = .resize
         markLayer.actions = ["contents": NSNull(), "opacity": NSNull()]
 
-        // 床の影（体が跳ねても床に残り、高く上がると小さくなる）
-        shadowLayer.backgroundColor = CGColor(gray: 0, alpha: SpriteColors.shadowAlpha)
+        // 床の影（体が跳ねても床に残り、高く上がると小さくなる）。リアルな絵はぼかした楕円
+        if self.art == .real {
+            shadowLayer.contents = RealMochiArt.shadowImage
+            shadowLayer.contentsGravity = .resize
+        } else {
+            shadowLayer.backgroundColor = CGColor(gray: 0, alpha: SpriteColors.shadowAlpha)
+        }
         shadowLayer.actions = ["bounds": NSNull(), "position": NSNull(), "transform": NSNull(), "opacity": NSNull()]
 
         root.addSublayer(shadowLayer)
@@ -403,17 +420,30 @@ final class PixelAvatar: Avatar {
         shownPose = pose
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        spriteLayer.contents = MochiSprite.image(pose, colors: colors, key: cacheKey, shadow: false, part: .body)
-        markLayer.contents = pose.mark == .none ? nil : MochiSprite.image(pose, colors: colors, key: cacheKey, shadow: false, part: .marks)
+        if art == .real, let body = RealMochiArt.body(pose, colors: colors, key: cacheKey, px: px) {
+            spriteLayer.contents = body
+            markLayer.contents = RealMochiArt.marks(pose, colors: colors, key: cacheKey, px: px)
+        } else {
+            spriteLayer.contents = MochiSprite.image(pose, colors: colors, key: cacheKey, shadow: false, part: .body)
+            markLayer.contents = pose.mark == .none ? nil : MochiSprite.image(pose, colors: colors, key: cacheKey, shadow: false, part: .marks)
+        }
         if shapeChanged { layoutShadow() }
         CATransaction.commit()
     }
 
     /// 床の影：いまの形のいちばん下より少し短く、床の行の上半分
     private func layoutShadow() {
+        if art == .real {
+            // 体の幅より少し狭い、床の線にかかるぼかした楕円（跳ねたコマでは小さく）
+            let w = RealMochiArt.bodyWidth(pose) * (pose.lift > 0 ? 0.7 : 0.94) * P
+            let frame = CGRect(x: size.width / 2 - w / 2, y: MochiAvatar.bottomMarginCells * P + P * 0.55, width: w, height: P * 0.9)
+            shadowLayer.bounds = CGRect(origin: .zero, size: frame.size)
+            shadowLayer.position = CGPoint(x: frame.midX, y: frame.midY)
+            return
+        }
         let sw = CGFloat(MochiSprite.shadowHalfWidth(pose))
         let half = P / 2
-        let frame = CGRect(x: (7 - sw) * P, y: PixelAvatar.bottomMarginCells * P + half, width: (2 * sw + 1) * P, height: half)
+        let frame = CGRect(x: (7 - sw) * P, y: MochiAvatar.bottomMarginCells * P + half, width: (2 * sw + 1) * P, height: half)
         shadowLayer.bounds = CGRect(origin: .zero, size: frame.size)
         shadowLayer.position = CGPoint(x: frame.midX, y: frame.midY)
     }
@@ -421,13 +451,13 @@ final class PixelAvatar: Avatar {
     // MARK: - 操作
 
     /// 体の中心：お餅は低いので、キャンバスの下から 4 行目あたり
-    var anchor: CGPoint { CGPoint(x: size.width / 2, y: (PixelAvatar.bottomMarginCells + 4) * P) }
+    var anchor: CGPoint { CGPoint(x: size.width / 2, y: (MochiAvatar.bottomMarginCells + 4) * P) }
     /// 足のすぐ下
-    var labelY: CGFloat { PixelAvatar.bottomMarginCells * P + 0.6 * P }
+    var labelY: CGFloat { MochiAvatar.bottomMarginCells * P + 0.6 * P }
 
     func hitTest(_ p: CGPoint) -> Bool {
         let dy = currentY(floatLayer) + currentY(hopLayer)
-        let base = PixelAvatar.bottomMarginCells * P
+        let base = MochiAvatar.bottomMarginCells * P
         let rows = CGFloat(MochiSprite.rows)
         // スプライト本体（キャンバスの列 2..12、行 3..10）を少し広めに
         let rect = CGRect(x: 1.5 * P, y: base + (rows - 11) * P - 0.5 * P + dy,
@@ -442,7 +472,7 @@ final class PixelAvatar: Avatar {
         }
         // 目でカーソルを追う
         let cx = size.width / 2
-        let cy = PixelAvatar.bottomMarginCells * P + 4 * P
+        let cy = MochiAvatar.bottomMarginCells * P + 4 * P
         let dx = local.x < cx - P * 1.5 ? -1 : (local.x > cx + P * 1.5 ? 1 : 0)
         let dy = local.y > cy + P ? -1 : (local.y < cy - P * 1.5 ? 1 : 0)
         if hoverLook?.dx != dx || hoverLook?.dy != dy {

@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg"><img src="docs/media/download.png" width="291" alt="ダウンロード（.dmg）"></a>
+  <a href="https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg"><img src="docs/media/download.png" width="291" alt="ダウンロード（.dmg）"></a>
 </p>
 
 <p align="center">
@@ -47,7 +47,7 @@
 > [!NOTE]
 > 個人が作った非公式のアプリです。Anthropic・OpenAI・Google とは関係ありません。Claude・Claude Code は Anthropic の、ChatGPT・Codex は OpenAI の、Gemini は Google のものです。
 
-**クラゲからおもちへ**：Jellyfish AI は、デスクトップをただようクラゲのエージェントとして始まりました。そこから、近づけるとつながり・離すと切れるチーム、AI をまたいだ分業、予約とつなぎ…と機能を足して当初より大きく進化したので、エージェントの姿をクラゲから **おもち** に変え（1.3 から）、名前も **OMOCHI AI** にしました（アプリのファイル名 `JellyfishAI.app` やメニューの表示は、いまはまだ Jellyfish AI のままです）。
+**クラゲからおもちへ**：OMOCHI AI は、Jellyfish AI という名前で、デスクトップをただようクラゲのエージェントとして始まりました。そこから、近づけるとつながり・離すと切れるチーム、AI をまたいだ分業、予約とつなぎ…と機能を足して当初より大きく進化したので、エージェントの姿をクラゲから **おもち** に変え（1.3 から）、アプリの名前も **OMOCHI AI** にしました。Jellyfish AI から上げるときは [Jellyfish AI から上げる](#jellyfish-ai-から上げる) を見てください。
 
 ## 主な機能
 
@@ -94,20 +94,20 @@ Claude のおもちに「仲間を 2 人作って分担して。ChatGPT（Codex�
   - [Gemini CLI](https://github.com/google-gemini/gemini-cli)（有料の Gemini API キーなど。個人の Google アカウントは 2026-06-18 で提供が終わりました。[下の注意](#使う-ai-とアカウント)）
 
 1. **ダウンロード**
-   **[JellyfishAI.dmg をダウンロード](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/JellyfishAI.dmg)**（いつも最新版。[Releases の最新版](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest) のページからも同じものを取れます。`.zip` もあり、中身は同じ）
+   **[OmochiAI.dmg をダウンロード](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg)**（いつも最新版。[Releases の最新版](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest) のページからも同じものを取れます。`.zip` もあり、中身は同じ）
 2. **アプリケーションフォルダに入れる**
-   .dmg を開き、**JellyfishAI** を隣の **Applications** へドラッグします
+   .dmg を開き、**OMOCHI AI** を隣の **Applications** へドラッグします
 3. **初回だけ「このまま開く」**
-   アプリケーションフォルダの JellyfishAI を開くと、初回だけ macOS が「開けません」と止めます（Apple の公証を受けていない個人の開発物のため）。ダイアログを閉じ、**システム設定 › プライバシーとセキュリティ** の下の方にある「このまま開く」を押してください。2 回目からは普通に開けます
+   アプリケーションフォルダの OMOCHI AI を開くと、初回だけ macOS が「開けません」と止めます（Apple の公証を受けていない個人の開発物のため）。ダイアログを閉じ、**システム設定 › プライバシーとセキュリティ** の下の方にある「このまま開く」を押してください。2 回目からは普通に開けます
 4. **AI にログイン**
    初めて開くと「アカウントと AI」の画面が出ます。使う AI の「ログイン…」を押すと公式のログインがターミナルで始まるので、ブラウザでログインするだけです。入っていない AI は「入れてログイン…」で、実行するコマンドを見せて許可を求めてから入れます
 
-ダウンロードしたファイルが壊れていないかは、同じリリースの `SHA256SUMS.txt` と `shasum -a 256 JellyfishAI.dmg` の結果を見比べて確かめられます。
+ダウンロードしたファイルが壊れていないかは、同じリリースの `SHA256SUMS.txt` と `shasum -a 256 OmochiAI.dmg` の結果を見比べて確かめられます。
 
 > [!IMPORTANT]
 > エージェントは **確認なしで** ファイルの作成・編集・削除やコマンドの実行を行います（Claude Code の Auto モード、Codex のサンドボックス、Gemini の auto_edit。危ない操作はそれぞれの AI の安全の仕組みが止めます）。作業フォルダは既定でホームです。詳しくは [権限と安全](#権限と安全) と [SECURITY.md](SECURITY.md)。
 >
-> エージェントはあなたの AI のアカウント（Claude の Pro / Max、ChatGPT、Google のアカウント）で動き、その使用量を消費します。**Jellyfish は API キーを扱わず、勝手に課金しません**。Claude Code は 1 回の呼び出しの土台だけで数万トークンを使うので、たくさんのおもちを並列に動かすと使用量の上限に早く届きます。どれだけ使ったかはメニューバーのおもちで確かめられます。
+> エージェントはあなたの AI のアカウント（Claude の Pro / Max、ChatGPT、Google のアカウント）で動き、その使用量を消費します。**OMOCHI AI は API キーを扱わず、勝手に課金しません**。Claude Code は 1 回の呼び出しの土台だけで数万トークンを使うので、たくさんのおもちを並列に動かすと使用量の上限に早く届きます。どれだけ使ったかはメニューバーのおもちで確かめられます。
 
 ## 起動のしかた
 
@@ -115,15 +115,15 @@ Claude のおもちに「仲間を 2 人作って分担して。ChatGPT（Codex�
 
 | どこから | やり方 |
 |---|---|
-| **Spotlight** | ⌘Space で「Jellyfish」と打って Enter |
-| **Launchpad / アプリ** | Jellyfish AI のアイコンをクリック |
-| **Finder** | 「アプリケーション」フォルダの JellyfishAI をダブルクリック |
-| **Dock** | アプリケーションフォルダの JellyfishAI を Dock へドラッグしておくと、次からはクリックだけ |
+| **Spotlight** | ⌘Space で「OMOCHI AI」と打って Enter |
+| **Launchpad / アプリ** | OMOCHI AI のアイコンをクリック |
+| **Finder** | 「アプリケーション」フォルダの OMOCHI AI をダブルクリック |
+| **Dock** | アプリケーションフォルダの OMOCHI AI を Dock へドラッグしておくと、次からはクリックだけ |
 | **ログイン時に自動で** | メニューバーのおもち › **ログイン時に自動起動** をオン |
 
 - 起動すると、メニューバーにおもちのドット絵のアイコンが出ます。常駐型のアプリなので、普段は Dock に出ません（チャットウィンドウを開いている間だけ Dock と ⌘Tab に出ます）
 - 動いている最中にもう一度アイコンを開くと、隠していたおもちを出します。1 体もいなければ新しいおもちを出します
-- 終了はメニューバーのおもち › **Jellyfish AI を終了**（⌘Q）。実行中のエージェントは中断されます
+- 終了はメニューバーのおもち › **OMOCHI AI を終了**（⌘Q）。実行中のエージェントは中断されます
 
 ## はじめかた
 
@@ -138,7 +138,7 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
   <img src="docs/media/states.gif" width="720" alt="待機・考え中・作業中・完了・エラー・キャンセルの 6 つの状態">
 </p>
 
-おもちは、床にぽてっと座った丸餅のドット絵「まるもち」です。待機中はゆっくり呼吸し、考え中は「ぷくー」とふくらんで「しゅん」としぼみ、作業中は「ぽよん」と跳ね、完了するとふくらんで ^^、エラー・キャンセルではしぼみます。つつくと跳ね、つまむと伸び、長押しでつぶれます。1 体目は灰色で、2 体目からは色違いです（メニューバーのおもち › 見た目 で、リアルなクラゲにもできます）。
+おもちは、床にぽてっと座った丸餅のドット絵「まるもち」です。待機中はゆっくり呼吸し、考え中は「ぷくー」とふくらんで「しゅん」としぼみ、作業中は「ぽよん」と跳ね、完了するとふくらんで ^^、エラー・キャンセルではしぼみます。つつくと跳ね、つまむと伸び、長押しでつぶれます。1 体目は灰色で、2 体目からは色違いです。メニューバーのおもち › 見た目 で **リアルなおもち** にもできます（Blender で描いた本物そっくりの丸餅に目が付いたもの。動きはドット絵と同じで、灰色のおもちは白いお餅、色違いは淡い色のお餅、エラーは赤みがかったお餅になります）。
 
 ## メニューバー
 
@@ -146,14 +146,14 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
 
 - **Claude**：ログインしているアカウントのメールとプラン（例：Claude Max 20x）、今週の使用量のバー（**全モデル** と **Fable**、それぞれのリセット日時。75% でオレンジ、90% で赤）。メニューを開いたときに、前に読んでから 1 分以上たっていれば `claude auth status` と `claude -p /usage` で読み直します（`/usage` は組み込みコマンドなので、モデルは呼ばずトークンも使いません）
 - **ChatGPT（Codex）**：ログインしていれば、プラン（例：ChatGPT Plus）と **5 時間・今週の枠** のバー。Codex CLI が自分の記録に書いた、最後に使ったときの値を読むだけです
-- **Gemini**：ログインしていれば、Jellyfish から動かした回数（今日・7 日）
-- **📊 使用量（AI ごと・直近 7 日）**：AI ごと・モデルごと・アカウントごとの呼び出しの回数とトークン（Jellyfish が動かした分を、CLI が報告した数で。この Mac の中だけで数えます）
+- **Gemini**：ログインしていれば、OMOCHI AI から動かした回数（今日・7 日）
+- **📊 使用量（AI ごと・直近 7 日）**：AI ごと・モデルごと・アカウントごとの呼び出しの回数とトークン（OMOCHI AI が動かした分を、CLI が報告した数で。この Mac の中だけで数えます）
 
 その下に、新しいおもち・全員を隠す / 表示・過去のセッション・エージェントの一覧と、次の設定があります。
 
 | 項目 | 内容 |
 |---|---|
-| 見た目・大きさ | ドット絵（おもち）/ リアルなクラゲ、大きさ |
+| 見た目・大きさ | ドット絵（おもち）/ リアルなおもち、大きさ |
 | 画面認識 | 「この画面」と言ったときに撮る画面（使っていたアプリのある画面 / すべて） |
 | 🔑 アカウントと AI | ログインの状態・使う AI（既定）・ログイン・入れてログイン・API キーでの利用の許可 |
 | 🔌 コネクタ | いまの決まり・ワンタッチ設定・コネクタの画面（AI・モデルごとに決める） |
@@ -166,7 +166,7 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
 | チャットに Web ページのプレビューを出す | Web の表紙の画像とタイトル（オフでも画像・PDF は表示） |
 | ログイン時に自動起動・🌐 言語 | |
 | アップデートの自動確認 | 毎日・毎週・毎月・確認しない（既定） |
-| Jellyfish AI について・アップデートを確認… | |
+| OMOCHI AI について・アップデートを確認… | |
 
 ## チャット
 
@@ -196,7 +196,7 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
 - **画像・PDF・Web ページを見る**：添付した画像・PDF や、会話に出てきた画像・PDF のファイルは Quick Look のサムネイルで、Web ページの URL は表紙の画像とタイトル（Mac の LinkPresentation）で、文の下に出ます。押すとプレビュー・ブラウザで開きます
   - 自動で読みに行くのは **自分が打った指示の URL だけ** です。エージェントの返答や仲間からの依頼に出てきたページは「表紙を見る」を押したときだけ読みに行きます（読み込んだページなどに仕込まれた指示で、秘密を入れた URL を書かされても、勝手に送らないように）
 - **話して入力**：**🎙** か メニューの 編集 › **音声入力を開始** で、Mac の音声入力が入力欄で始まります。AI で聞き取るのではなく macOS の機能です（システム設定 › キーボード › 音声入力。そこで決めたショートカットでも始められます）
-- **画面を見て作業**：「この画面」「表示されているエラー」「スクショ」のように画面をはっきり指すと、送信時の画面を撮って渡します（Jellyfish 自身のウィンドウは写さない。普通の指示では撮らない）。画像は長辺 1568px までに縮めるので、1 枚あたり約 1,800 トークン
+- **画面を見て作業**：「この画面」「表示されているエラー」「スクショ」のように画面をはっきり指すと、送信時の画面を撮って渡します（OMOCHI AI 自身のウィンドウは写さない。普通の指示では撮らない）。画像は長辺 1568px までに縮めるので、1 枚あたり約 1,800 トークン
 - **ファイルを渡す**：おもちやチャットウィンドウにファイルをドロップすると添付になります（📎 ボタンでも可）
 - **ファイルやページを開く**：「デスクトップの〇〇の資料を開いて」と頼むと、探して Mac の既定のアプリ（プレビュー・Finder・ブラウザなど）で開きます。「何て書いてある？」ならチャットで答えます
 - **名前を付ける**：右クリック「名前を変える…」かチャットの「名前」。エージェント同士はこの名前で呼び合います。名前のないおもちは「Agent 番号」で、番号は空いている一番小さいものを使い回します
@@ -227,7 +227,7 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
 | ChatGPT | Codex CLI | ChatGPT（Plus / Pro など） | サンドボックス（作業フォルダの中だけ書ける・ネットワークなし） | PC 操作・外部ツール（MCP）・モデルの「自動」以外 |
 | Gemini | Gemini CLI | 有料の Gemini API キー・Gemini Code Assist Standard / Enterprise（個人の Google アカウントは 2026-06-18 で終了） | auto_edit（作業フォルダの中の編集だけ自動で承認・コマンドは実行しない） | PC 操作・外部ツール（MCP）・モデルの「自動」以外 |
 
-- **ログイン**：初めて起動したときの「アカウントと AI」の画面か、メニューバーのおもち › **🔑 アカウントと AI** から。それぞれの CLI の公式のログイン（`claude auth login --claudeai`・`codex login`・Gemini CLI のログイン）をターミナルで開き、ブラウザで本人が行います。**Jellyfish はパスワード・トークン・API キーを受け取らず、保存もしません**。別のアカウントでのログインし直しも同じ画面から
+- **ログイン**：初めて起動したときの「アカウントと AI」の画面か、メニューバーのおもち › **🔑 アカウントと AI** から。それぞれの CLI の公式のログイン（`claude auth login --claudeai`・`codex login`・Gemini CLI のログイン）をターミナルで開き、ブラウザで本人が行います。**OMOCHI AI はパスワード・トークン・API キーを受け取らず、保存もしません**。別のアカウントでのログインし直しも同じ画面から
 - **入っていない AI** は「入れてログイン…」で、実行するコマンドを見せて許可を求めます。許可すると、ターミナルで公式のパッケージを入れ、続けてログインを始めます（管理者のパスワード・sudo は使いません）
   - Claude：Anthropic の公式インストーラ（`curl -fsSL https://claude.ai/install.sh | bash`、`~/.local/bin` に入る）
   - ChatGPT（Codex）：`npm install -g @openai/codex`。npm が無いか、npm のグローバルの入れ先に書けないときは `brew install --cask codex`
@@ -235,8 +235,8 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
   - npm も Homebrew も無いときは公式の案内を開きます（ChatGPT のデスクトップアプリを入れれば、その中の Codex CLI も使えます）
 - **おもちごとに AI を選べます**：チャットの上の段の「AI」。変えると新しい会話になります。選んでいないおもちはメニューの「使う AI（既定）」に従い、既定を変えたときも前の AI の会話を新しい AI で続けようとはしません
 - **どの AI でも使えるもの**：話す・作業する・続ける・チーム（仲間を作る・頼む）・自律組織・画面とファイルの添付・🎧 聞き取り・🎙 音声入力。ChatGPT には画像を `--image` で添え、Gemini には添付（画面の画像・文字起こし）の置き場所をワークスペースに足して渡します
-- Gemini はフォルダの信頼を確かめます。信頼していないフォルダでは動かないので、チャットの「Gemini をこのフォルダで開く」から開き、信頼してよいフォルダのときだけ信頼してください（Jellyfish はこの確認を飛ばしません）
-- **Gemini CLI は 2026-06-18 で、個人の Google アカウント（無料・Google AI Pro・Ultra）への提供を終えました**（[Google の発表](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)）。いま Gemini を使えるのは、有料の Gemini API キー（メニューバーのおもち › 🔑 アカウントと AI ›「API キー（従量課金）での利用を許可」をオン。使った分だけ料金がかかります）か、Gemini Code Assist Standard / Enterprise の組織のアカウントでログインした Gemini CLI です。後継の Antigravity CLI（`agy`）は、個人向けプランのまま他のアプリから動かすことを Google が認めていないので、Jellyfish は対応していません
+- Gemini はフォルダの信頼を確かめます。信頼していないフォルダでは動かないので、チャットの「Gemini をこのフォルダで開く」から開き、信頼してよいフォルダのときだけ信頼してください（OMOCHI AI はこの確認を飛ばしません）
+- **Gemini CLI は 2026-06-18 で、個人の Google アカウント（無料・Google AI Pro・Ultra）への提供を終えました**（[Google の発表](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)）。いま Gemini を使えるのは、有料の Gemini API キー（メニューバーのおもち › 🔑 アカウントと AI ›「API キー（従量課金）での利用を許可」をオン。使った分だけ料金がかかります）か、Gemini Code Assist Standard / Enterprise の組織のアカウントでログインした Gemini CLI です。後継の Antigravity CLI（`agy`）は、個人向けプランのまま他のアプリから動かすことを Google が認めていないので、OMOCHI AI は対応していません
 
 ### モデルと考える強さ
 
@@ -247,11 +247,11 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
 
 ### 勝手に課金しない
 
-- Jellyfish は **API キー（従量課金）での利用をしません**。これは Claude も同じです
+- OMOCHI AI は **API キー（従量課金）での利用をしません**。これは Claude も同じです
   - シェルの設定に `ANTHROPIC_API_KEY`・`OPENAI_API_KEY`・`CODEX_API_KEY`・`GEMINI_API_KEY`・`GOOGLE_API_KEY` などがあっても、エージェントの CLI には渡しません
   - CLI が API キーやクラウド（Anthropic Console・Bedrock・Vertex AI など）でログインしているときは、そのおもちを動かさず、サブスクリプションのアカウントでログインし直すよう案内します
 - どうしても API キーで使いたいときだけ、メニューバーのおもち › 🔑 アカウントと AI ›「API キー（従量課金）での利用を許可」をオンにします（確認が出ます。使った分だけ各 API の料金がかかります）
-- サブスクリプションの使用量の上限を超えたときの追加の購入などは、それぞれのアカウントの設定のままです（Jellyfish は変えません）
+- サブスクリプションの使用量の上限を超えたときの追加の購入などは、それぞれのアカウントの設定のままです（OMOCHI AI は変えません）
 
 ## チーム（分業）
 
@@ -262,7 +262,7 @@ PC 操作や画面の添付を使うなら、メニューバーのおもち › 
 1. おもちをドラッグして別のおもちに **近づける** と、相手が点線の輪で光り「離すと 〇〇 とつながる」と出ます。離すとつながり、つながった塊が 1 つのチームです
    - 離れたおもちとは 右クリック › つなぐ でもつなげます。⇧ を押しながらドラッグするとチームごと動かせます
    - チャットウィンドウの上に「👥 〇〇 とチーム」と出て、誰に分担させられるかがわかります
-2. どれかに「仲間を作って分担して」「レビュー係に添削してもらって」のように頼みます。エージェントは Jellyfish のツールで
+2. どれかに「仲間を作って分担して」「レビュー係に添削してもらって」のように頼みます。エージェントは OMOCHI AI のツールで
    - `create_teammate`：新しい仲間を自分の隣に出して作業を任せる（AI・モデル・考える強さも選べる）
    - `assign_task`：チームの仲間に作業を頼む（相手が作業中なら順番待ち）
    - `wait_for_tasks`：頼んだ作業の結果を受け取る
@@ -324,7 +324,7 @@ flowchart LR
 
 **どう動くか**
 
-1. 依頼を受けると、Jellyfish が依頼の特徴（語・依頼の種類・長さ。日本語・英語・中国語）から、これまでの成績をもとにおすすめの型を選び、リーダー（依頼したおもち）に伝えます
+1. 依頼を受けると、OMOCHI AI が依頼の特徴（語・依頼の種類・長さ。日本語・英語・中国語）から、これまでの成績をもとにおすすめの型を選び、リーダー（依頼したおもち）に伝えます
 2. リーダーは `form_team` で仲間の名前・役割・作業（と AI・モデル・強さ）を決めて組みます。`after` で順番を付けると、前の担当の結果が自動で次の担当の依頼に付きます。おすすめより合う型があれば、リーダーが変えられます
 3. 仲間は隣に出て線でつながり、並行・順番に作業します。チャットの状態欄に 🧬 と組んでいる型が出ます
 4. 次の依頼で使わなかった仲間は片付けます（同じ名前の仲間は続けて使います。ユーザーが自分で用意した仲間の AI・モデル・強さは変えません）。メニューの「今の組織を解散」でも片付けられます
@@ -335,14 +335,14 @@ flowchart LR
 - 型ごとの見込みを Beta 分布で持ち、**似た依頼ほど強く** 効かせて選びます（Thompson サンプリング）。よく効く型を使いつつ、ときどき別の型も試して学びます
 - **未知の依頼**（似た依頼がまだない）は、依頼の種類からの見込みと全体の傾向で選び、その結果から学びます
 - 成績のよい型を少し変えた型（人数・レビュー係の有無・形）が生まれ、明らかに悪い型は引退します（「一人で」は残します）。世代・型の数・依頼の種類ごとのいちばんの型はメニューに、詳しくは「学習のレポートを開く」に出ます
-- 記録は `~/Library/Application Support/JellyfishAI/org/` にだけ保存し、どこにも送りません。「学習をリセット…」で消せます。「成果と反応から学ぶ」をオフにすると記録しません
+- 記録は `~/Library/Application Support/OmochiAI/org/` にだけ保存し、どこにも送りません。「学習をリセット…」で消せます。「成果と反応から学ぶ」をオフにすると記録しません
 
 > [!NOTE]
 > 仲間の分だけ使用量が増えます。小さな依頼では一人で進めるよう案内し、人数が多い型ほど少し割り引いて選びます。PC 操作のツールは仲間には渡りません（ユーザーが直接頼んだエージェントだけ）。
 
 ## PC 操作
 
-チャットの **🖱 PC 操作** をオンにしたエージェントだけが、Jellyfish のツールでこの Mac を操作できます（既定はオフ・Claude のおもちだけ）。
+チャットの **🖱 PC 操作** をオンにしたエージェントだけが、OMOCHI AI のツールでこの Mac を操作できます（既定はオフ・Claude のおもちだけ）。
 
 - `screen_capture`（1 ピクセル = 1 ポイントで撮るので、画像の座標がそのままクリック座標になる）、`list_windows`、`ui_elements`（アクセシビリティでボタンや入力欄の位置を読む）、`open_app`、`mouse_click`、`mouse_drag`、`scroll`、`type_text`、`press_keys`
 - 同時に操作できるのは 1 体だけ。操作中（画面を読むだけのときも）は画面の縁がそのエージェントの色で光り、**Esc で止まる**（メニューバーの「PC 操作」からも止められる）
@@ -359,8 +359,8 @@ flowchart LR
 - 「error:」「failed」「Traceback」「エラー」「失敗しました」「見つかりません」「错误」のような表示に気づくと、おもちが **「エラーっぽいのが出たよ、見る？」** と吹き出しで聞きます（入力先は奪いません）
 - **「見る」を押したときだけ**、そのウィンドウの 1 枚を添えておもちに聞きます（どの AI のおもちでも）。✕ を押すか 90 秒たつと、送らずに消します
 - 同じ表示では何度も聞きません。聞いたあと、そのアプリでは 10 分（✕ なら 30 分）聞かず、「このアプリでは聞かない」で外せます（メニューバーの **👀 見守り** で戻せます）
-- パスワードの管理（1Password・Bitwarden・パスワード・キーチェーンアクセスなど）、ロック画面、Jellyfish 自身は見ません。離席中（5 分入力がない）は見ません
-- **負担**：4 秒ごとに小さく撮って変わったかだけを見て、**変わったあと落ち着いたときだけ** 文字を読みます（最短 8 秒おき。出力が流れ続けている間や、動画のように変わり続ける画面は読みません）。手元の計測（Apple シリコン、前面の画面がよく変わる状態）で 1 コアの約 2%（毎回読むと約 30%）。メニューバーの **👀 見守り** に、実際に測った直近 1 分の CPU が出ます。`JellyfishAI --watch-bench 60` でも測れます
+- パスワードの管理（1Password・Bitwarden・パスワード・キーチェーンアクセスなど）、ロック画面、OMOCHI AI 自身は見ません。離席中（5 分入力がない）は見ません
+- **負担**：4 秒ごとに小さく撮って変わったかだけを見て、**変わったあと落ち着いたときだけ** 文字を読みます（最短 8 秒おき。出力が流れ続けている間や、動画のように変わり続ける画面は読みません）。手元の計測（Apple シリコン、前面の画面がよく変わる状態）で 1 コアの約 2%（毎回読むと約 30%）。メニューバーの **👀 見守り** に、実際に測った直近 1 分の CPU が出ます。`OmochiAI --watch-bench 60` でも測れます
 - 画面収録の許可が要ります（[macOS の許可をまとめて設定・取り消す](#macos-の許可をまとめて設定取り消す)）
 
 ## コネクタ（カレンダー・リマインダー・メール）
@@ -369,10 +369,10 @@ flowchart LR
   <img src="docs/media/demo-connectors.gif" width="820" alt="コネクタの画面で、ワンタッチ設定（見るだけ・おすすめ・Claude の上位モデルだけ）を押して決まりが切り替わり、AI ごとに選び、最後におもちの横に予定の追加の確認の吹き出しが出る様子">
 </p>
 
-メニューバーのおもち › **🔌 コネクタ** で、この Mac の **カレンダー・リマインダー・メール** をエージェントのツールにできます（既定はすべてオフ）。Google カレンダー・Gmail なども、システム設定 › インターネットアカウント に追加すれば Mac のアプリに出るので、そのまま使えます。Jellyfish は Google などのパスワード・トークン・API キーを扱いません。
+メニューバーのおもち › **🔌 コネクタ** で、この Mac の **カレンダー・リマインダー・メール** をエージェントのツールにできます（既定はすべてオフ）。Google カレンダー・Gmail なども、システム設定 › インターネットアカウント に追加すれば Mac のアプリに出るので、そのまま使えます。OMOCHI AI は Google などのパスワード・トークン・API キーを扱いません。
 
-- **できること**：📅 予定を見る・追加する、✅ リマインダーを見る・追加する・完了にする、✉️ メールを探す・読む・下書きを開く（`calendar_events`・`calendar_create_event`・`reminders_list`・`reminders_create`・`reminders_complete`・`mail_search`・`mail_read`・`mail_draft`）。Claude・ChatGPT（Codex）・Gemini のどのおもちにも、Jellyfish の MCP のツールとして渡します
-- **コネクタごとに決める**：使わせる範囲（オフ / 見るだけ / 見る・書く）、使える AI（Claude・ChatGPT・Gemini）、その AI で使えるモデル（例：Claude は Fable・Opus だけ、Codex は決まったモデルだけ）。決まりに合わないおもちにはツールを見せず、呼ばれても Jellyfish が断ります（そのターンのモデルは CLI が知らせたもので確かめます）
+- **できること**：📅 予定を見る・追加する、✅ リマインダーを見る・追加する・完了にする、✉️ メールを探す・読む・下書きを開く（`calendar_events`・`calendar_create_event`・`reminders_list`・`reminders_create`・`reminders_complete`・`mail_search`・`mail_read`・`mail_draft`）。Claude・ChatGPT（Codex）・Gemini のどのおもちにも、OMOCHI AI の MCP のツールとして渡します
+- **コネクタごとに決める**：使わせる範囲（オフ / 見るだけ / 見る・書く）、使える AI（Claude・ChatGPT・Gemini）、その AI で使えるモデル（例：Claude は Fable・Opus だけ、Codex は決まったモデルだけ）。決まりに合わないおもちにはツールを見せず、呼ばれても OMOCHI AI が断ります（そのターンのモデルは CLI が知らせたもので確かめます）
 - **ワンタッチ設定**：ボタン 1 つで、すべてのコネクタをまとめて切り替えます（メニューにも画面にもあります）
 
   | | |
@@ -386,12 +386,12 @@ flowchart LR
 - **書き込みは本人の確認つき**：予定・リマインダーの追加と完了は、おもちの横に「📅 予定を追加していい？」と中身が出て、押したときだけ実行します（入力先は奪いません。5 分押さなければ実行しません）。**メールは送りません**：`mail_draft` はメールアプリに下書きの画面を開くだけで、確かめて送るのは本人です
 - **メールの中身はデータ**：メールの本文・件名・差出人、予定やリマインダーのメモは「外から来たデータ」として渡し、中の指示に従わないようエージェントに伝えます。PC 操作を使っているおもちにはメールを渡しません
 - おもちの右クリック（メニューバーのエージェントのメニュー）に、そのおもちがいま使えるコネクタが出ます
-- 中身はそのおもちの AI（Anthropic・OpenAI・Google）に送られます。Jellyfish のログ（`app.log`）には、使ったツールの名前だけが残ります
+- 中身はそのおもちの AI（Anthropic・OpenAI・Google）に送られます。OMOCHI AI のログ（`app.log`）には、使ったツールの名前だけが残ります
 - **macOS の許可**：カレンダー・リマインダーは、初めて使うとき（または 🔌 コネクタの「許可する…」）に macOS が確認します。メールは、オートメーションでメールアプリの操作を許可します。メールアプリが起動していなければ、前に出さずに起動します
 
 ## macOS の許可をまとめて設定・取り消す
 
-メニューバーのおもち › **🔐 権限（Full Access）** に、Jellyfish AI に付いている macOS の許可と、付けると何ができるようになるか（Full Access の範囲）が並びます。
+メニューバーのおもち › **🔐 権限（Full Access）** に、OMOCHI AI に付いている macOS の許可と、付けると何ができるようになるか（Full Access の範囲）が並びます。
 
 | 許可 | 付けるとできること |
 |---|---|
@@ -400,16 +400,16 @@ flowchart LR
 | フルディスクアクセス | エージェントがデスクトップ・書類・ダウンロードなどを、そのたびに聞かれずに読み書きする |
 | オートメーション | エージェントが AppleScript などでほかのアプリ（Finder・ブラウザなど）を操作する（アプリごとに macOS が確認） |
 
-- **まとめて許可する**：いま効いていない許可だけを `tccutil reset` で消してから（Jellyfish AI の分だけ）、Jellyfish AI が許可を求め、システム設定の画面を開きます。オンにするのは本人です（macOS はアプリが許可を勝手に付けることを許さないので、Jellyfish もしません）
-- **開き直す**：画面収録は、システム設定でオンにしたあと Jellyfish AI を開き直すまで効きません（macOS の決まり）。オンにしたらこのボタンで開き直してください
-- **まとめて取り消す**：すべてのおもちの PC 操作をオフにし、🎧 の聞き取りを止めてから、Jellyfish AI の許可をすべて取り消します（`tccutil reset All ai.jellyfish.desktop`。ほかのアプリの許可には触りません）
-- **固定の署名にする**（ソースから入れたとき）：Jellyfish 専用の署名用の証明書を作って署名し直し、次からの更新でも許可が続くようにします（[更新のたびに許可を求められないようにする](#更新のたびに許可を求められないようにする)）
+- **まとめて許可する**：いま効いていない許可だけを `tccutil reset` で消してから（OMOCHI AI の分だけ）、OMOCHI AI が許可を求め、システム設定の画面を開きます。オンにするのは本人です（macOS はアプリが許可を勝手に付けることを許さないので、OMOCHI AI もしません）
+- **開き直す**：画面収録は、システム設定でオンにしたあと OMOCHI AI を開き直すまで効きません（macOS の決まり）。オンにしたらこのボタンで開き直してください
+- **まとめて取り消す**：すべてのおもちの PC 操作をオフにし、🎧 の聞き取りを止めてから、OMOCHI AI の許可をすべて取り消します（`tccutil reset All ai.omochi.desktop`。ほかのアプリの許可には触りません）
+- **固定の署名にする**（ソースから入れたとき）：OMOCHI AI 専用の署名用の証明書を作って署名し直し、次からの更新でも許可が続くようにします（[更新のたびに許可を求められないようにする](#更新のたびに許可を求められないようにする)）
 - どれも、実行するコマンドを押す前の確認の画面に出し、ターミナルでそのとおりに実行します。同じことをコマンドでもできます：
 
 ```bash
-/Applications/JellyfishAI.app/Contents/Resources/permissions.sh grant    # 効いていない古い許可を消して、許可を求め直す
-/Applications/JellyfishAI.app/Contents/Resources/permissions.sh revoke   # Jellyfish AI の許可をすべて取り消す
-/Applications/JellyfishAI.app/Contents/Resources/permissions.sh status   # 署名の種類と、アプリの「🔐 権限」の画面
+"/Applications/OMOCHI AI.app/Contents/Resources/permissions.sh" grant    # 効いていない古い許可を消して、許可を求め直す
+"/Applications/OMOCHI AI.app/Contents/Resources/permissions.sh" revoke   # OMOCHI AI の許可をすべて取り消す
+"/Applications/OMOCHI AI.app/Contents/Resources/permissions.sh" status   # 署名の種類と、アプリの「🔐 権限」の画面
 ```
 
 > [!NOTE]
@@ -417,7 +417,7 @@ flowchart LR
 
 ## 聞き取り（文字起こし・翻訳・議事録）
 
-チャットの **🎧** を押すと、Mac から流れている音（オンライン会議・動画など。Jellyfish 自身の音は除く）をその場で文字にします。文字起こしは macOS 26 の SpeechAnalyzer で端末内で処理し（初回だけ OS が言語モデルをダウンロード）、時刻つきでテキストファイルに残ります。
+チャットの **🎧** を押すと、Mac から流れている音（オンライン会議・動画など。OMOCHI AI 自身の音は除く）をその場で文字にします。文字起こしは macOS 26 の SpeechAnalyzer で端末内で処理し（初回だけ OS が言語モデルをダウンロード）、時刻つきでテキストファイルに残ります。
 
 - 止めると文字起こしがチャットに添付されるので、「議事録にまとめて」「英語に翻訳して」「Word で報告書にして」と続けて頼めます（どの AI のおもちでも）
 - エージェントは `read_transcript` で聞き取り中の文字起こしも読めるので、リアルタイムの翻訳・要約もできます（チームの仲間の文字起こしも読める）
@@ -426,7 +426,7 @@ flowchart LR
 
 ## 外部ツール（MCP）は呼んだときだけ
 
-Claude Code に設定してある MCP サーバー（`~/.claude.json` やプロジェクトの `.mcp.json` にあるもの。Figma・Blender など）と claude.ai のコネクタは、毎回読み込むとそれだけで土台のトークンが増えます。そこで Jellyfish は普段、公式オプション `--strict-mcp-config` を付けて自分のツール（チーム・PC 操作）だけで動かします。
+Claude Code に設定してある MCP サーバー（`~/.claude.json` やプロジェクトの `.mcp.json` にあるもの。Figma・Blender など）と claude.ai のコネクタは、毎回読み込むとそれだけで土台のトークンが増えます。そこで OMOCHI AI は普段、公式オプション `--strict-mcp-config` を付けて自分のツール（チーム・PC 操作）だけで動かします。
 
 - 指示に「Blender」「ブレンダー」「Figma」「フィグマ」のようにサーバー名が入っていると、そのターンから読み込む。同じ会話の続き（「もう少し大きくして」など）は読み込んだまま
 - 仲間からの依頼の文に名前があるだけでは読み込まない。依頼元がユーザーの指示で読み込んで動いているときだけ、仲間の側でも読み込む
@@ -445,11 +445,23 @@ Claude Code に設定してある MCP サーバー（`~/.claude.json` やプロ�
 
 ## アップデート
 
+### Jellyfish AI から上げる
+
+前の名前（Jellyfish AI、1.3.2 まで）から上げるときは、アプリの中の「アップデートする」では上げられません（アプリの ID が変わったため）。[OmochiAI.dmg](https://github.com/Rhizobium-gits/jellyfish-ai/releases/latest/download/OmochiAI.dmg) をダウンロードして、[インストール](#ダウンロードとインストール) と同じように入れてください。
+
+- 初めて OMOCHI AI を開くと、Jellyfish AI のおもち・設定・会話を引き継ぎます（`~/Library/Application Support/JellyfishAI/` を `OmochiAI/` に写します。前のフォルダは消しません）。Jellyfish AI が動いていれば、終了してから引き継ぐかを聞きます
+- 「ログイン時に自動起動」がオンなら、OMOCHI AI でもオンにします
+- macOS の許可（アクセシビリティ・画面収録など）はアプリごとなので、引き継げません。メニューバーのおもち › **🔐 権限** の「まとめて許可する」で付け直してください
+- 引き継いだあと、前の Jellyfish AI のアプリをゴミ箱に入れるかを聞きます（残すと、ログイン時に前のアプリも開きます）
+- `jellyfish://` の URL は `omochi://` に、環境変数 `JELLYFISH_…` は `OMOCHI_…` に変わりました
+
+### 新しい版にする
+
 - メニューバーのおもち › **アップデートを確認…** で、新しい版があるか GitHub に確かめます
 - **自動で確認する**：メニューバーのおもち › **アップデートの自動確認** で **毎日・毎週・毎月・確認しない** から選べます（既定は確認しない＝選ばなければ自動では通信しません）。選ぶと、その間隔ごとに GitHub の公開 API で最新リリースの版だけを読みます（Mac が眠っていた分は、起きてから 1 時間以内に）
   - 新しい版があると、見えているおもちが吹き出しで **「新しい版 … が出たよ」** と知らせます（入力先は奪いません）。「見る」で変わったところを確かめ、「アップデートする」を押したときだけ入れ替えます。「この版は知らせない」でその版だけ外せ、✕ なら次の確認でまた知らせます
   - 新しい版を見つけている間は、メニューの「アップデートを確認…」が「⬆︎ 新しい版 … があります…」になります。前に確かめた日時もこのメニューに出ます
-- 新しい版があれば **「アップデートする」** を押すと、GitHub のリリースから新しい版（.zip）をダウンロードし、`SHA256SUMS.txt` のチェックサム・中身（Jellyfish AI のその版か）・コード署名を確かめてから入れ替え、開き直します（設定・おもち・会話は残ります）。押さなければ何もしません
+- 新しい版があれば **「アップデートする」** を押すと、GitHub のリリースから新しい版（.zip）をダウンロードし、`SHA256SUMS.txt` のチェックサム・中身（OMOCHI AI のその版か）・コード署名を確かめてから入れ替え、開き直します（設定・おもち・会話は残ります）。押さなければ何もしません
   - **固定の署名**（[更新のたびに許可を求められないようにする](#更新のたびに許可を求められないようにする)）で入れているときは、新しい版をこの Mac の固定の署名で署名し直してから入れ替えるので、macOS の許可がそのまま続きます。途中で macOS が「codesign がキーを使おうとしています」と確かめるので「許可」を押してください。その鍵がキーチェーンに無いときは、配布版の仮の署名のまま入れ替えます
   - 作業中のおもちがいるときは入れ替えません。アプリを書き換えられない場所（.dmg の中など）から開いているときや、macOS が入れ替えを止めたとき（システム設定 › プライバシーとセキュリティ › アプリ管理）は、ダウンロードページを案内します
 - 同じ画面の **「ターミナルでアップデート」** は、実行するコマンド（画面に出ます）をターミナルで動かして上げます。ソースから `scripts/install.sh` で入れていれば、`git pull` → ビルド → 入れ替えになります（自分の署名のまま）
@@ -462,13 +474,13 @@ Claude Code に設定してある MCP サーバー（`~/.claude.json` やプロ�
 
 ```bash
 # 新しい版があるかだけ見る（終了コード 0 = 最新、10 = 新しい版がある）
-/Applications/JellyfishAI.app/Contents/Resources/update.sh --check
+"/Applications/OMOCHI AI.app/Contents/Resources/update.sh" --check
 
 # 新しい版があれば、ダウンロードして確かめてから入れ替え、開き直す（入れ替える前に聞きます。--yes で聞かない）
-/Applications/JellyfishAI.app/Contents/Resources/update.sh
+"/Applications/OMOCHI AI.app/Contents/Resources/update.sh"
 ```
 
-- 確かめることはアプリの「アップデートする」と同じです：このリポジトリのそのリリースの `JellyfishAI-<版>.zip` と `SHA256SUMS.txt` だけを取り、チェックサム・中身・コード署名を確かめます（いまの版が固定の署名なら、その鍵で署名し直してから入れ替えます。ほかの証明書で署名された版からは、同じ証明書の版にしか入れ替えません）。作業中のおもちがいるときは入れ替えません。sudo は使いません
+- 確かめることはアプリの「アップデートする」と同じです：このリポジトリのそのリリースの `OmochiAI-<版>.zip` と `SHA256SUMS.txt` だけを取り、チェックサム・中身・コード署名を確かめます（いまの版が固定の署名なら、その鍵で署名し直してから入れ替えます。ほかの証明書で署名された版からは、同じ証明書の版にしか入れ替えません）。作業中のおもちがいるときは入れ替えません。sudo は使いません
 - ソースのフォルダからなら `scripts/update.sh`。**ソースから入れている場合は `scripts/update.sh --source`**（コミットしていない変更が無いことを確かめ、`git pull --ff-only` → `scripts/install.sh`）
 - `--app <場所>` で入れ替える .app、`--no-open` で入れ替えたあと開かない
 
@@ -485,7 +497,7 @@ scripts/install.sh
 > [!IMPORTANT]
 > 署名の確認ダイアログでは、**「許可（Allow）」** を選んでください。「常に許可（Always Allow）」を選ぶと、ほかのプログラムも確認なしでこの証明書を使えるようになります。
 
-- `scripts/signing.sh create` が Jellyfish 専用の署名用の証明書（自己署名）をログインキーチェーンに作り、`scripts/install.sh` がそれで署名して入れます。macOS は「同じ証明書で署名した Jellyfish AI」を同じアプリとみなすので、フォルダ・画面収録・アクセシビリティの許可が、次からの更新でもそのまま続きます
+- `scripts/signing.sh create` が OMOCHI AI 専用の署名用の証明書（自己署名）をログインキーチェーンに作り、`scripts/install.sh` がそれで署名して入れます。macOS は「同じ証明書で署名した OMOCHI AI」を同じアプリとみなすので、フォルダ・画面収録・アクセシビリティの許可が、次からの更新でもそのまま続きます
 - 証明書に切り替えた最初の 1 回だけ、許可をもう一度求められます（「まとめて許可する」で）
 - 次からの更新は `scripts/update.sh --source` で入れてください（.dmg・.zip の版はアドホック署名なので、入れ替えると許可を聞き直されます）
 - 確かめるのは `scripts/signing.sh status`、やめるのは `scripts/signing.sh delete`
@@ -495,11 +507,11 @@ scripts/install.sh
 - **勝手に課金しない**：API キーを扱わず、API キー（従量課金）でログインしている AI は使わず、API キーの環境変数も渡しません（[勝手に課金しない](#勝手に課金しない)）
 - **確認なしで動かすときの決まり**は AI ごとに公式のもの：Claude は Auto Mode（`--permission-mode auto`。認証情報の持ち出し・意図しない外部送信・取り返しのつかない操作などは Claude Code の安全判定が止める）、Codex はサンドボックス（作業フォルダの中だけ書ける・ネットワークなし）、Gemini は auto_edit（編集だけ自動で承認・コマンドは実行しない）。`bypassPermissions`・`--yolo` など安全の仕組みが外れるオプションは使わず、付けるオプションは各 CLI の `--help` で存在を確かめてから使います。今の決まりと CLI の場所・版はメニューバーの「実行ポリシー」で確認できます
 - **PC 操作** は、そのエージェントのチャットで直接頼んだときだけ使います（仲間からの依頼では使わない）
-- **コネクタ**（カレンダー・リマインダー・メール）は、🔌 コネクタで決めた AI・モデル・範囲のおもちにだけ渡し、呼ばれるたびに Jellyfish が確かめます。書き込みは本人が押したときだけで、メールは送りません
+- **コネクタ**（カレンダー・リマインダー・メール）は、🔌 コネクタで決めた AI・モデル・範囲のおもちにだけ渡し、呼ばれるたびに OMOCHI AI が確かめます。書き込みは本人が押したときだけで、メールは送りません
 - **AI をまたいで権限を広げない**：仲間からの依頼で動いているエージェントは、自分と違う AI の仲間を作ったり頼んだりしません
 - **macOS の許可**：OS のセキュリティ機能を無効にせず、許可を勝手に付けません。付いている許可と、その範囲は「🔐 権限」で確かめられ、まとめて取り消せます。Hardened Runtime を有効にして署名し（他のプログラムがアプリに入り込んで許可を使えないように）、例外は Apple Events の確認を出すための entitlement と、カレンダー・リマインダー（コネクタ）の許可の確認を出すための entitlement だけです
-- **Jellyfish AI 自身の通信** は、「アップデートを確認…」と、アップデートの自動確認を選んだときのその間隔ごとの GitHub の公開 API（最新リリースの版を読むだけ）、「アップデートする」のときのリリースのファイル、チャットの Web のプレビュー（自分が打った URL と、「表紙を見る」を押したページだけ。メニューで止められる）だけです。利用状況の送信はしません。指示や添付は、それぞれの AI の CLI を通じてその会社に送られます
-- `jellyfish://` URL での外からの操作は、表示の切り替えなど無害なものだけを受け付けます（指示の送信・PC 操作の許可などは受け付けない。続けざまの呼び出しは間引き、キーボードの入力先も奪わない）
+- **OMOCHI AI 自身の通信** は、「アップデートを確認…」と、アップデートの自動確認を選んだときのその間隔ごとの GitHub の公開 API（最新リリースの版を読むだけ）、「アップデートする」のときのリリースのファイル、チャットの Web のプレビュー（自分が打った URL と、「表紙を見る」を押したページだけ。メニューで止められる）だけです。利用状況の送信はしません。指示や添付は、それぞれの AI の CLI を通じてその会社に送られます
+- `omochi://` URL での外からの操作は、表示の切り替えなど無害なものだけを受け付けます（指示の送信・PC 操作の許可などは受け付けない。続けざまの呼び出しは間引き、キーボードの入力先も奪わない）
 - 自律組織の学習と使用量は端末内だけで計算し、本人だけが読める権限で保存します
 - 詳しくは [SECURITY.md](SECURITY.md)（残るリスクも書いています）。脆弱性は Security タブから非公開で報告してください
 
@@ -520,36 +532,36 @@ cd jellyfish-ai
 scripts/install.sh          # ビルドしてアプリケーションフォルダに入れ、起動する
 ```
 
-- `scripts/install.sh` で入れておくと、あとは普通のアプリと同じくターミナルなしで開けます。動いている Jellyfish AI は終えてから入れ替えます（作業中のエージェントがいるときは何もしません）
+- `scripts/install.sh` で入れておくと、あとは普通のアプリと同じくターミナルなしで開けます。動いている OMOCHI AI は終えてから入れ替えます（作業中のエージェントがいるときは何もしません）
 - 先に `scripts/signing.sh create` で署名用の証明書を作っておくと、入れ替えても macOS の許可が続きます（[更新のたびに許可を求められないようにする](#更新のたびに許可を求められないようにする)）
-- 更新は `scripts/update.sh --source`。ビルドだけなら `scripts/build.sh`（→ `dist/JellyfishAI.app`、この Mac の CPU 用）、テストは `scripts/test.sh`（swift test）
+- 更新は `scripts/update.sh --source`。ビルドだけなら `scripts/build.sh`（→ `dist/OMOCHI AI.app`、この Mac の CPU 用）、テストは `scripts/test.sh`（swift test）
 - アプリのアイコンは `Resources/AppIcon.png`（1024px の正方形）を macOS のアイコンの角丸の枠に収めて作ります
-- 配布物は `scripts/release.sh` で `dist/release/` に作ります（universal の `JellyfishAI.dmg`・`JellyfishAI-<版>.zip`・`SHA256SUMS.txt`）。`VERSION` と `CHANGELOG.md` を更新してコミット・push し、`scripts/release.sh --publish` で GitHub Releases に公開します
-- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のグラフ（1 日ごとのダウンロード）は `scripts/download-chart.py` が作ります。git clone は GitHub が日ごとに数えた人数そのまま、.dmg・.zip は推定です（GitHub は累計しか出さないので、`stats.json` の日ごとの記録 `daily`（その時刻の累計）の間に増えた分と、記録を始める前の版ごとの数 `releases`（その版が最新だった間）を、時間に比例して日に分けます）。右上は累計（バッジと同じ数）です。グラフは同じ `stats` ブランチに `downloads-ja.svg`・`downloads-en.svg`・`downloads-zh.svg` として置きます。バッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラーの clone も入ります。このリポジトリの CI はソースを git でなくアーカイブで取るので入りません）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。手元の Mac で毎日数え直すなら `scripts/download-stats-daily.sh install`（launchd で毎日 10:00 とログインしたとき。gh にログインしているアカウントで clone 数も読む。Mac が起きている日だけ。やめるのは `uninstall`、様子は `status`）。.dmg はどの版も同じ名前なので、`releases/latest/download/JellyfishAI.dmg` がいつも最新版を指します
+- 配布物は `scripts/release.sh` で `dist/release/` に作ります（universal の `OmochiAI.dmg`・`OmochiAI-<版>.zip`・`SHA256SUMS.txt`）。`VERSION` と `CHANGELOG.md` を更新してコミット・push し、`scripts/release.sh --publish` で GitHub Releases に公開します
+- **ダウンロード数**：`scripts/downloads.sh` で、リリースごとの数を GitHub から読みます（`.dmg` = ダウンロードして入れた回数、`.zip` = アプリの「アップデートする」と手での .zip。`--traffic` で直近 14 日の閲覧数・clone 数、`--json` で JSON）。README の上のグラフ（1 日ごとのダウンロード）は `scripts/download-chart.py` が作ります。git clone は GitHub が日ごとに数えた人数そのまま、.dmg・.zip は推定です（GitHub は累計しか出さないので、`stats.json` の日ごとの記録 `daily`（その時刻の累計）の間に増えた分と、記録を始める前の版ごとの数 `releases`（その版が最新だった間）を、時間に比例して日に分けます）。右上は累計（バッジと同じ数）です。グラフは同じ `stats` ブランチに `downloads-ja.svg`・`downloads-en.svg`・`downloads-zh.svg` として置きます。バッジは、`.dmg`・`.zip` のダウンロード数と git clone の数（GitHub が数えた、日ごとの clone した人数の合計。ボット・ミラーの clone も入ります。このリポジトリの CI はソースを git でなくアーカイブで取るので入りません）の合計です。`scripts/download-stats.sh` が数え直して `stats` ブランチの `stats.json` に書き（内訳もここに）、GitHub Actions（`.github/workflows/stats.yml`）が毎日動かします。GitHub は clone 数を直近 14 日しか残さないので、日ごとに貯めます。Actions で clone 数を読むには、シークレット `TRAFFIC_TOKEN`（このリポジトリだけ・Administration の読み取りだけの fine-grained のトークン）が要ります。無いときはリリースのダウンロード数だけ数え直し、clone は `scripts/release.sh --publish` か `scripts/download-stats.sh` を手元で動かしたときに足します。手元の Mac で毎日数え直すなら `scripts/download-stats-daily.sh install`（launchd で毎日 10:00 とログインしたとき。gh にログインしているアカウントで clone 数も読む。Mac が起きている日だけ。やめるのは `uninstall`、様子は `status`）。.dmg はどの版も同じ名前なので、`releases/latest/download/OmochiAI.dmg` がいつも最新版を指します
 
 ## データの保存場所
 
-`~/Library/Application Support/JellyfishAI/`（設定・おもち・エージェントごとの履歴と生イベント・文字起こし・受け渡し用のフォルダ・自律組織の学習・使用量・ログ。フォルダは本人だけが開ける権限）。メニューバーの「設定フォルダを開く」で開けます。エージェントに渡した画面の画像は 7 日で消え、おもちを消すとそのおもちの生イベントと画像も消えます。会話そのものは、それぞれの AI の CLI の記録（Claude は `~/.claude/projects/`、Codex は `~/.codex/`、Gemini は `~/.gemini/`）に残ります。環境変数 `JELLYFISH_DATA_DIR` を付けて起動すると別の場所を使います（デモ録画・テスト用）。
+`~/Library/Application Support/OmochiAI/`（設定・おもち・エージェントごとの履歴と生イベント・文字起こし・受け渡し用のフォルダ・自律組織の学習・使用量・ログ。フォルダは本人だけが開ける権限）。メニューバーの「設定フォルダを開く」で開けます。エージェントに渡した画面の画像は 7 日で消え、おもちを消すとそのおもちの生イベントと画像も消えます。会話そのものは、それぞれの AI の CLI の記録（Claude は `~/.claude/projects/`、Codex は `~/.codex/`、Gemini は `~/.gemini/`）に残ります。環境変数 `OMOCHI_DATA_DIR` を付けて起動すると別の場所を使います（デモ録画・テスト用）。
 
 ### アンインストール
 
 1. メニューバーのおもち › **🔐 権限** の「まとめて取り消す」で、macOS の許可を外す
-2. 「ログイン時に自動起動」をオフにしてから「Jellyfish AI を終了」
-3. アプリケーションフォルダの JellyfishAI をゴミ箱へ
-4. データも消すなら `~/Library/Application Support/JellyfishAI/` を削除（ウインドウの位置などは `defaults delete ai.jellyfish.desktop`）。署名用の証明書を作っていれば `scripts/signing.sh delete`
+2. 「ログイン時に自動起動」をオフにしてから「OMOCHI AI を終了」
+3. アプリケーションフォルダの OMOCHI AI をゴミ箱へ
+4. データも消すなら `~/Library/Application Support/OmochiAI/` を削除（ウインドウの位置などは `defaults delete ai.omochi.desktop`）。署名用の証明書を作っていれば `scripts/signing.sh delete`
 
-各 AI の CLI とその記録はそれぞれのものなので、Jellyfish を消しても残ります。
+各 AI の CLI とその記録はそれぞれのものなので、OMOCHI AI を消しても残ります。
 
 ## 開発
 
 - 設計メモ：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)、変更履歴：[CHANGELOG.md](CHANGELOG.md)
-- `jellyfish://` URL スキームで外から操作できます
+- `omochi://` URL スキームで外から操作できます
   - いつでも（ショートカット.app・Raycast など）：`new`, `open?agent=2`, `toggle`, `show`, `hide`, `arrange`, `style?v=pixel|realistic`, `scale?v=1.25`, `permissions`
-  - 環境変数 `JELLYFISH_AUTOMATION=1` を付けて起動し、データフォルダの `automation.token` の合言葉を `token=…` で付けたときだけ（自動テスト・デモ録画用。`scripts/demo/recorder.swift` が自動で付ける）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
-- `.build/debug/JellyfishAI --pixel-sheet out.png` でドット絵のコマ一覧、`--settle-test` で完了時の静止を検証、`--account-menu out.png` でメニューのアカウント・使用量の欄を描き出す
-- 表示の文字はソースに日本語で書いて `L("…")` で包み、訳は `l10n/en.json`・`l10n/zh.json` に置きます。`scripts/l10n.py missing en` で訳の抜け、`scripts/l10n.py gen` で Swift の表を作り、`scripts/l10n.py check` で抜けと `%@` の数を確かめます（CI でも確かめる）。環境変数 `JELLYFISH_LANGUAGE=en` で言語を固定して起動できます
-- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）。`connectors` はコネクタの画面と確認の吹き出しだけを撮り、AI は動かさず、本物の予定やメールも写しません。`DEMO_KEEP_APP=1` を付けると、普段の Jellyfish AI を止めずに別の ID の写しで撮ります。録画の位置は 1920×1080 のメインディスプレイの右上が基準で、画面の大きさが違えば右上からの位置を保つようにずらして撮ります
-- README の上のバナー（`docs/media/banner.gif`）は `scripts/banner/` で作り直せます。`/Applications/Blender.app/Contents/MacOS/Blender -b -P scripts/banner/mochi_scene.py -- <出力先>` でおもちを 80 コマ描画し（Cycles）、`python3 scripts/banner/compose.py <出力先> docs/media/banner.gif` で背景・星・湯気・文字を重ねて GIF にします（Pillow・numpy・ffmpeg と SF Pro のフォントが要ります）
+  - 環境変数 `OMOCHI_AUTOMATION=1` を付けて起動し、データフォルダの `automation.token` の合言葉を `token=…` で付けたときだけ（自動テスト・デモ録画用。`scripts/demo/recorder.swift` が自動で付ける）：`renumber`, `prompt?agent=2&text=…`, `type?agent=2&text=…`, `new?cwd=…`, `folder?agent=2&path=…`, `pc?agent=2&on=1`, `rename?agent=2&name=…`, `link?a=2&b=3`, `unlink?a=2&b=3`, `move?agent=2&dx=…`, `press?agent=2`, `accounts`, `state?agent=2&s=working`, `remove?agent=2`, `login?on=1`, `debug`
+- `.build/debug/OmochiAI --pixel-sheet out.png` でドット絵のコマ一覧、`--sheet out.png` でリアルなおもちのコマ一覧、`--account-menu out.png` でメニューのアカウント・使用量の欄を描き出す
+- 表示の文字はソースに日本語で書いて `L("…")` で包み、訳は `l10n/en.json`・`l10n/zh.json` に置きます。`scripts/l10n.py missing en` で訳の抜け、`scripts/l10n.py gen` で Swift の表を作り、`scripts/l10n.py check` で抜けと `%@` の数を確かめます（CI でも確かめる）。環境変数 `OMOCHI_LANGUAGE=en` で言語を固定して起動できます
+- README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）。`connectors` はコネクタの画面と確認の吹き出しだけを撮り、AI は動かさず、本物の予定やメールも写しません。`DEMO_KEEP_APP=1` を付けると、普段の OMOCHI AI を止めずに別の ID の写しで撮ります。録画の位置は 1920×1080 のメインディスプレイの右上が基準で、画面の大きさが違えば右上からの位置を保つようにずらして撮ります
+- README の上のバナー（`docs/media/banner.gif`）は `scripts/banner/` で作り直せます。`/Applications/Blender.app/Contents/MacOS/Blender -b -P scripts/banner/mochi_scene.py -- <出力先>` でおもちを 80 コマ描画し（Cycles）、`python3 scripts/banner/compose.py <出力先> docs/media/banner.gif` で背景・星・湯気・文字を重ねて GIF にします（Pillow・numpy・ffmpeg と SF Pro のフォントが要ります）。アプリのアイコンとリアルなおもちの絵は、同じお餅のモデルで `Blender -b -P scripts/banner/mochi_assets.py -- <出力先>` → `python3 scripts/banner/sprites.py <出力先>` で作り直せます（`Resources/AppIcon.png`・`Resources/mochi/`）
 
 ## ライセンス
 
