@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.gif" width="100%" alt="A translucent glass jellyfish pulsing and drifting on black, with the Jellyfish AI wordmark">
+  <img src="docs/media/banner.gif" width="100%" alt="A round omochi (rice cake) on black that warms up, puffs up with wisps of steam and deflates again, with the OMOCHI AI wordmark">
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <b>A macOS app where AI agents live on your desktop, each one running as an independent AI agent（Claude Code・Codex・Gemini）.</b><br>
+  <b>A macOS app that brings all your AI agents together on your desktop — manage them in one place, and link them up to work as one team.</b><br>
   <sub>Press ⌘L, type, and watch it think, work and finish.</sub>
 </p>
 
@@ -47,7 +47,7 @@
 > [!NOTE]
 > This is an unofficial app made by an individual. It is not affiliated with Anthropic, OpenAI or Google. Claude and Claude Code belong to Anthropic; ChatGPT and Codex belong to OpenAI; Gemini belongs to Google.
 
-**From jellyfish to omochi**: Jellyfish AI started out as jellyfish agents drifting on your desktop. Since then it has grown far beyond the original idea — teams that link when you bring agents together and unlink when you pull them apart, work split across AIs, queued and chained prompts — so the agents are now **omochi** instead of jellyfish (since 1.3). The app is still called Jellyfish AI.
+**From jellyfish to omochi**: Jellyfish AI started out as jellyfish agents drifting on your desktop. Since then it has grown far beyond the original idea — teams that link when you bring agents together and unlink when you pull them apart, work split across AIs, queued and chained prompts — so the agents are now **omochi** instead of jellyfish (since 1.3), and the app is now called **OMOCHI AI** (the app file `JellyfishAI.app` and the menus still say Jellyfish AI for now).
 
 ## Key features
 
@@ -549,6 +549,7 @@ Each AI's CLI and its records belong to that CLI, so they remain even after you 
 - `.build/debug/JellyfishAI --pixel-sheet out.png` renders a sheet of the pixel-art frames, `--settle-test` verifies that it comes to rest when done, and `--account-menu out.png` renders the account and usage section of the menu
 - Display text is written in Japanese in the source and wrapped in `L("…")`, with translations in `l10n/en.json` and `l10n/zh.json`. `scripts/l10n.py missing en` lists missing translations, `scripts/l10n.py gen` generates the Swift tables, and `scripts/l10n.py check` checks for missing translations and the number of `%@` (also checked in CI). Launch with the environment variable `JELLYFISH_LANGUAGE=en` to fix the language
 - The README GIFs can be re-recorded with `scripts/demo/record.sh` (it doesn't touch your everyday data; it actually runs Claude Code — and Codex CLI for `crossai` — with empty demo data and records it on a black background. Your home path (`/Users/<name>`) showing on screen is found with macOS text recognition and blurred (`scripts/demo/redact.sh`, processed only on this Mac). Requires Pillow and ffmpeg). `connectors` records only the Connectors window and the confirmation bubble: it doesn't run an AI and never shows real events or mail. With `DEMO_KEEP_APP=1`, it records a copy with a different ID instead of stopping your everyday Jellyfish AI. Positions are laid out for the top-right of a 1920×1080 main display; on a different screen size they are shifted to keep the same distance from the top-right corner
+- The banner at the top of the README (`docs/media/banner.gif`) can be rebuilt with `scripts/banner/`: `/Applications/Blender.app/Contents/MacOS/Blender -b -P scripts/banner/mochi_scene.py -- <out-dir>` renders the 80 mochi frames (Cycles), then `python3 scripts/banner/compose.py <out-dir> docs/media/banner.gif` adds the background, stars, steam and text and writes the GIF (needs Pillow, numpy, ffmpeg and the SF Pro fonts)
 
 ## License
 

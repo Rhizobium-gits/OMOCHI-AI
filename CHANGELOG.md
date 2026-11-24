@@ -6,6 +6,7 @@
 
 ### 変更
 
+- 名前を **OMOCHI AI** に。README（日本語・English・简体中文）の上のバナー（`docs/media/banner.gif`）を、黒い背景で丸いおもちが温まってぷくっと膨らみ、湯気を立ててからしぼむリアルな 3D の GIF（Blender で描画、4 秒でくり返す）に作り直した。バナーと README 冒頭の説明は、使える AI の名前を並べる代わりに「AI エージェントを一元管理し、エージェント同士をつないでチームで動かせる」という特徴にした。バナーは `scripts/banner/`（`mochi_scene.py` を Blender で描画 → `compose.py` で背景・湯気・文字を重ねる）で作り直せる。アプリのファイル名（`JellyfishAI.app`）とメニューの表示は、いまは Jellyfish AI のまま
 - エージェントの呼び名を、アプリの画面・メニュー・案内・エージェントへの説明のすべてで「クラゲ」から「おもち」に（English は omochi、简体中文は 年糕）。見た目の名前も「ドット絵（おもち）」/ Pixel (Omochi) / 像素（年糕）に。`install.sh`・`update.sh` のメッセージ、README の GIF の字幕、SECURITY.md・docs/ARCHITECTURE.md も同じ。アプリの名前（Jellyfish AI）、見た目の「リアルなクラゲ」、MCP サーバーの名前 `jellyfish`、`jellyfish://` はそのまま
 - README（日本語・English・简体中文）：エージェントの呼び名を「クラゲ」から「おもち」（English は omochi、简体中文は 年糕）に。つながる・離れるチームや AI をまたいだ分業などで当初から大きく進化したので、エージェントの姿を変えたことを冒頭に書いた。アプリの名前（Jellyfish AI）と、見た目の「リアルなクラゲ」はそのまま
 - README（日本語・English・简体中文）の GIF を、すべて 1.3.2 の「まるもち」とチャットの吹き出しで撮り直した（`demo-basic`・`demo-parallel`・`demo-team`・`demo-crossai`・`demo-link`・`demo-queue`・`demo-connectors`・`states`）。もう前のキャラクター（Claude Code のキャラクター）は写らないので、注意書きからその一文を外した。まるもちの状態ごとの動きの説明と、「見た目」のメニューの名前（ドット絵（もち）/ リアルなクラゲ）を README に書いた

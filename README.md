@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.gif" width="100%" alt="黒い背景で拍動しながら漂う透明なガラスのクラゲと Jellyfish AI のロゴ">
+  <img src="docs/media/banner.gif" width="100%" alt="黒い背景で丸いおもちが温まってぷくっと膨らみ、湯気を立ててからしぼむ様子と OMOCHI AI のロゴ">
 </p>
 
 <p align="center">
@@ -19,8 +19,8 @@
 </p>
 
 <p align="center">
-  <b>デスクトップ上にAIエージェントが常駐し、1 体ずつが独立した AI エージェント（Claude Code・Codex・Gemini）として動く macOS アプリです。</b><br>
-  <sub><i>A macOS desktop companion: each little pixel character on your screen is an independent AI agent — Claude Code, Codex and Gemini.<br>Press ⌘L, type, and watch it think, work and finish.</i></sub>
+  <b>いろいろな AI エージェントをデスクトップで一元管理し、エージェント同士をつないでチームとして動かせる macOS アプリです。</b><br>
+  <sub><i>All your AI agents in one place on your Mac — and linked together to work as one team.<br>Press ⌘L, type, and watch it think, work and finish.</i></sub>
 </p>
 
 <p align="center">
@@ -47,7 +47,7 @@
 > [!NOTE]
 > 個人が作った非公式のアプリです。Anthropic・OpenAI・Google とは関係ありません。Claude・Claude Code は Anthropic の、ChatGPT・Codex は OpenAI の、Gemini は Google のものです。
 
-**クラゲからおもちへ**：Jellyfish AI は、デスクトップをただようクラゲのエージェントとして始まりました。そこから、近づけるとつながり・離すと切れるチーム、AI をまたいだ分業、予約とつなぎ…と機能を足して当初より大きく進化したので、エージェントの姿をクラゲから **おもち** に変えました（1.3 から）。アプリの名前は Jellyfish AI のままです。
+**クラゲからおもちへ**：Jellyfish AI は、デスクトップをただようクラゲのエージェントとして始まりました。そこから、近づけるとつながり・離すと切れるチーム、AI をまたいだ分業、予約とつなぎ…と機能を足して当初より大きく進化したので、エージェントの姿をクラゲから **おもち** に変え（1.3 から）、名前も **OMOCHI AI** にしました（アプリのファイル名 `JellyfishAI.app` やメニューの表示は、いまはまだ Jellyfish AI のままです）。
 
 ## 主な機能
 
@@ -549,6 +549,7 @@ scripts/install.sh          # ビルドしてアプリケーションフォル�
 - `.build/debug/JellyfishAI --pixel-sheet out.png` でドット絵のコマ一覧、`--settle-test` で完了時の静止を検証、`--account-menu out.png` でメニューのアカウント・使用量の欄を描き出す
 - 表示の文字はソースに日本語で書いて `L("…")` で包み、訳は `l10n/en.json`・`l10n/zh.json` に置きます。`scripts/l10n.py missing en` で訳の抜け、`scripts/l10n.py gen` で Swift の表を作り、`scripts/l10n.py check` で抜けと `%@` の数を確かめます（CI でも確かめる）。環境変数 `JELLYFISH_LANGUAGE=en` で言語を固定して起動できます
 - README の GIF は `scripts/demo/record.sh` で撮り直せます（普段のデータには触れず、空のデモ用データで実際に Claude Code（`crossai` は Codex CLI も）を動かし、黒い背景で録画。画面に写ったホームのパス（`/Users/<名前>`）は macOS の文字認識で探してぼかします（`scripts/demo/redact.sh`。この Mac の中だけで処理）。Pillow と ffmpeg が必要）。`connectors` はコネクタの画面と確認の吹き出しだけを撮り、AI は動かさず、本物の予定やメールも写しません。`DEMO_KEEP_APP=1` を付けると、普段の Jellyfish AI を止めずに別の ID の写しで撮ります。録画の位置は 1920×1080 のメインディスプレイの右上が基準で、画面の大きさが違えば右上からの位置を保つようにずらして撮ります
+- README の上のバナー（`docs/media/banner.gif`）は `scripts/banner/` で作り直せます。`/Applications/Blender.app/Contents/MacOS/Blender -b -P scripts/banner/mochi_scene.py -- <出力先>` でおもちを 80 コマ描画し（Cycles）、`python3 scripts/banner/compose.py <出力先> docs/media/banner.gif` で背景・星・湯気・文字を重ねて GIF にします（Pillow・numpy・ffmpeg と SF Pro のフォントが要ります）
 
 ## ライセンス
 

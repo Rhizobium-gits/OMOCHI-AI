@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.gif" width="100%" alt="在黑色背景上一张一合、缓缓漂动的透明玻璃水母与 Jellyfish AI 标志">
+  <img src="docs/media/banner.gif" width="100%" alt="黑色背景上，一块圆年糕受热后鼓起、冒出热气又瘪下去，旁边是 OMOCHI AI 标志">
 </p>
 
 <p align="center">
@@ -19,8 +19,8 @@
 </p>
 
 <p align="center">
-  <b>这是一款 macOS 应用：AI 智能体常驻在桌面上，每一个都作为独立的 AI 智能体（Claude Code・Codex・Gemini）运行。</b><br>
-  <sub><i>macOS 桌面伙伴：屏幕上的每个小像素角色都是一个独立的 AI 智能体——Claude Code、Codex 或 Gemini。<br>按下 ⌘L，输入，然后看着它思考、工作、完成。</i></sub>
+  <b>这是一款 macOS 应用：在桌面上集中管理各种 AI 智能体，还能把智能体彼此连接起来，作为一个团队协作。</b><br>
+  <sub><i>All your AI agents in one place on your Mac — and linked together to work as one team.<br>按下 ⌘L，输入，然后看着它思考、工作、完成。</i></sub>
 </p>
 
 <p align="center">
@@ -47,7 +47,7 @@
 > [!NOTE]
 > 这是个人开发的非官方应用，与 Anthropic、OpenAI、Google 无关。Claude、Claude Code 归 Anthropic 所有，ChatGPT 和 Codex 归 OpenAI 所有，Gemini 归 Google 所有。
 
-**从水母到年糕**：Jellyfish AI 最初是在桌面上漂浮的水母智能体。之后陆续加入了靠近就连接、拉开就断开的团队，跨 AI 分工，预约与串联……比最初大幅进化，因此把智能体的形象从水母换成了 **年糕**（从 1.3 开始）。应用名称仍然是 Jellyfish AI。
+**从水母到年糕**：Jellyfish AI 最初是在桌面上漂浮的水母智能体。之后陆续加入了靠近就连接、拉开就断开的团队，跨 AI 分工，预约与串联……比最初大幅进化，因此把智能体的形象从水母换成了 **年糕**（从 1.3 开始），名称也改为 **OMOCHI AI**（应用文件 `JellyfishAI.app` 和菜单中的显示目前仍是 Jellyfish AI）。
 
 ## 主要功能
 
@@ -549,6 +549,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
 - 用 `.build/debug/JellyfishAI --pixel-sheet out.png` 输出像素画的帧一览，用 `--settle-test` 验证完成时的静止，用 `--account-menu out.png` 绘制菜单中的账户和用量栏
 - 显示的文字在源码中用日语书写并用 `L("…")` 包裹，译文放在 `l10n/en.json`、`l10n/zh.json` 中。用 `scripts/l10n.py missing en` 查看缺失的译文，用 `scripts/l10n.py gen` 生成 Swift 的表，用 `scripts/l10n.py check` 检查缺失和 `%@` 的数量（CI 中也会检查）。用环境变量 `JELLYFISH_LANGUAGE=en` 可以固定语言启动
 - README 的 GIF 可以用 `scripts/demo/record.sh` 重新录制（不会触碰日常数据，而是用空的演示数据实际运行 Claude Code（`crossai` 还会运行 Codex CLI），在黑色背景上录制。屏幕上出现的主目录路径（`/Users/<名字>`）会用 macOS 的文字识别找出并模糊处理（`scripts/demo/redact.sh`，只在本机处理）。需要 Pillow 和 ffmpeg）。`connectors` 只录制连接器窗口和确认气泡，不运行 AI，也不会拍到真实的日程或邮件。加上 `DEMO_KEEP_APP=1` 时，不停止日常使用的 Jellyfish AI，而是用另一个 ID 的副本录制。录制位置以 1920×1080 主显示器的右上角为基准，屏幕大小不同时会保持与右上角的距离进行平移
+- README 顶部的横幅（`docs/media/banner.gif`）可以用 `scripts/banner/` 重新制作：`/Applications/Blender.app/Contents/MacOS/Blender -b -P scripts/banner/mochi_scene.py -- <输出目录>` 渲染 80 帧年糕（Cycles），再用 `python3 scripts/banner/compose.py <输出目录> docs/media/banner.gif` 叠加背景、星星、热气和文字并生成 GIF（需要 Pillow、numpy、ffmpeg 和 SF Pro 字体）
 
 ## 许可证
 
