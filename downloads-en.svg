@@ -5,7 +5,7 @@
 <text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">Downloads per day</text>
 <text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg + .zip + git clone · updated daily</text>
 <text x="788" y="32" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">Total</text>
-<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">484</text>
+<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">485</text>
 <path d="M49.0,238.0V222.9Q49.0,219.9 52.0,219.9H66.0Q69.0,219.9 69.0,222.9V238.0Z" fill="#f2f2f2"/>
 <text x="59.0" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
 <text x="59.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
@@ -42,8 +42,8 @@
 <path d="M643.0,238.0V232.8Q643.0,229.8 646.0,229.8H660.0Q663.0,229.8 663.0,232.8V238.0Z" fill="#f2f2f2"/>
 <text x="653.0" y="222.8" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">10</text>
 <text x="653.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/22</text>
-<path d="M697.0,238.0V236.1Q697.0,233.1 700.0,233.1H714.0Q717.0,233.1 717.0,236.1V238.0Z" fill="#f2f2f2"/>
-<text x="707.0" y="226.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">6</text>
+<path d="M697.0,238.0V235.2Q697.0,232.2 700.0,232.2H714.0Q717.0,232.2 717.0,235.2V238.0Z" fill="#f2f2f2"/>
+<text x="707.0" y="225.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">7</text>
 <text x="707.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/23</text>
 <path d="M751.0,238.0V238.0Q751.0,237.2 751.8,237.2H770.2Q771.0,237.2 771.0,238.0V238.0Z" fill="#f2f2f2"/>
 <text x="761.0" y="230.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">1</text>
