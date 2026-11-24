@@ -1115,5 +1115,12 @@
  "🫘 あんこにする（大福に：%@ がいつも参照する資料）": "🫘 Use as anko (make a daifuku: material %@ always refers to)",
  "🫘 あんこを添えました": "🫘 Anko added",
  "🫘 あんこ（%ld）": "🫘 Anko (%ld)",
- "🫘 あんこ（大福にする）": "🫘 Anko (make it a daifuku)"
+ "🫘 あんこ（大福にする）": "🫘 Anko (make it a daifuku)",
+ "📓 開発用の記録（%ld 日目 / %ld 日）": "📓 Dev usage journal (day %ld of %ld)",
+ "📓 開発用の記録（止まっています）": "📓 Dev usage journal (stopped)",
+ "この Mac の開発用ビルドだけ。どこにも送らず、指示の本文は残しません": "Only in this Mac's development build. Nothing is sent anywhere, and prompt text is not kept",
+ "記録のフォルダを開く": "Open the Journal Folder",
+ "再開する": "Resume",
+ "一時停止する": "Pause",
+ "あと 7 日続ける": "Continue for 7 More Days"
 }

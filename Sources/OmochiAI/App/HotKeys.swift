@@ -94,7 +94,10 @@ final class Shortcuts {
 
     private func registerNewJelly() {
         let s = manager.settings
-        let action: () -> Void = { [weak self] in self?.manager.spawn() }
+        let action: () -> Void = { [weak self] in
+            DevJournal.log("spawn-source", ["via": "hotkey"])
+            self?.manager.spawn()
+        }
         conflictNote = nil
         if HotKeyCenter.shared.register(id: ID.newJelly.rawValue, s.newJellyHotKey, action: action) == noErr {
             activeNewJelly = s.newJellyHotKey

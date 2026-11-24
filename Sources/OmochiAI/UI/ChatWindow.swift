@@ -485,7 +485,11 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
 
     /// activate: false なら、前面に出すだけでキーボードの入力先は奪わない（外のアプリ・Web ページからの omochi://。
     /// 打っている途中の文字がチャットに入って、Enter で送られてしまわないように）
+    /// 開いた時刻（開いていた時間の記録用）
+    private var lastShown = Date()
+
     func show(near jelly: JellyController, focusInput: Bool = true, activate: Bool = true) {
+        lastShown = Date()
         self.jelly = jelly
         let front = NSWorkspace.shared.frontmostApplication
         if front?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = front; contextApp = front }
@@ -883,6 +887,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     private func recallPrompt(older: Bool) -> Bool {
         let text = older ? history.older(current: input.string, load: { promptHistory() }) : history.newer()
         guard let text else { return false }
+        DevJournal.log("history", ["older": older])
         input.string = text
         input.setSelectedRange(NSRange(location: (text as NSString).length, length: 0))
         input.scrollRangeToVisible(input.selectedRange())
@@ -934,6 +939,9 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         let mode = manager?.settings.screenMode ?? .auto
         let wantScreen = attach.isEmpty && (mode == .always || (mode == .auto && ScreenIntent.refersToScreen(text)))
 
+        DevJournal.log("chat-submit", ["agent": jelly?.record.number ?? 0, "queued": runtime.isRunning || (manager?.queues.isActive(id) ?? false),
+                                       "screen": wantScreen, "attach": attach.count, "skewer": dangoButton.state == .on && !dangoButton.isHidden,
+                                       "chars": text.count, "firstTurn": runtime.turns.isEmpty])
         // 作業中（または予約が進んでいる途中）なら、送らずに予約に足す。画面は今のものを撮っておく
         if runtime.isRunning || (manager?.queues.isActive(id) ?? false) {
             guard wantScreen else {
@@ -1037,6 +1045,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     @objc private func attachFiles() {
+        DevJournal.log("chat-button", ["button": "attach", "agent": jelly?.record.number ?? 0])
         let op = NSOpenPanel()
         op.canChooseFiles = true
         op.canChooseDirectories = false
@@ -1052,6 +1061,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     @objc private func clearAttachments() { setAttachments([]) }
 
     @objc private func screenModeChanged() {
+        DevJournal.log("chat-button", ["button": "screen-popup", "agent": jelly?.record.number ?? 0])
         let m = ScreenMode.allCases[max(0, screenPopup.indexOfSelectedItem)]
         manager?.updateSettings { $0.screenMode = m }
         window.makeFirstResponder(input)
@@ -1094,6 +1104,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     @objc private func modelChanged() {
+        DevJournal.log("chat-button", ["button": "model-popup", "agent": jelly?.record.number ?? 0])
         let i = max(0, modelPopup.indexOfSelectedItem)
         runtime.model = i < shownModels.count ? shownModels[i].value : nil
         // 強さはモデルによって選べるものが違うので、合わなければ既定に戻す
@@ -1107,6 +1118,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     @objc private func effortChanged() {
+        DevJournal.log("chat-button", ["button": "effort-popup", "agent": jelly?.record.number ?? 0])
         let i = max(0, effortPopup.indexOfSelectedItem)
         runtime.effort = i < shownEfforts.count ? shownEfforts[i].value : nil
         window.makeFirstResponder(input)
@@ -1119,12 +1131,14 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     @objc private func cancelTask() {
+        DevJournal.log("chat-button", ["button": "stop", "agent": jelly?.record.number ?? 0])
         guard runtime.isRunning else { NSSound.beep(); return }
         AppLog.write("chat \(jelly?.record.number ?? -1): stop")
         runtime.cancel()
     }
 
     @objc private func sendTapped() {
+        DevJournal.log("chat-button", ["button": "send-button", "agent": jelly?.record.number ?? 0])
         window.makeFirstResponder(input)
         submit()
     }
@@ -1178,6 +1192,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     @objc private func warmUp() { if let j = jelly { manager?.warmUp(j) } }
     @objc private func scrapeChar() { if let j = jelly { manager?.scrapeChar(j) } }
     @objc private func dangoToggled() {
+        DevJournal.log("chat-button", ["button": "dango-toggle", "on": dangoButton.state == .on])
         dangoButton.title = dangoButton.state == .on ? L("🍡 串に流す: オン") : L("🍡 串に流す")
         window.makeFirstResponder(input)
     }
@@ -1221,6 +1236,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     @objc private func addAnko() { if let j = jelly { manager?.chooseAnko(for: j) } }
 
     @objc private func toggleListen() {
+        DevJournal.log("chat-button", ["button": "listen", "agent": jelly?.record.number ?? 0])
         if let j = jelly { manager?.toggleListening(j) }
         refresh()
     }
@@ -1231,6 +1247,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     @objc private func togglePC() {
+        DevJournal.log("chat-button", ["button": "pc", "agent": jelly?.record.number ?? 0])
         let on = !runtime.pcControl
         runtime.pcControl = on
         AppLog.write("chat \(jelly?.record.number ?? -1): pc \(on ? "on" : "off") accessibility=\(DesktopControl.hasAccessibility) screen=\(DesktopControl.hasScreenRecording) running=\(runtime.isRunning)")
@@ -1246,9 +1263,13 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
         }
         refresh()
     }
-    @objc private func retryTask() { runtime.retry() }
+    @objc private func retryTask() {
+        DevJournal.log("chat-button", ["button": "retry", "agent": jelly?.record.number ?? 0])
+        runtime.retry()
+    }
 
     @objc private func toggleWatch() {
+        DevJournal.log("chat-button", ["button": "watch", "agent": jelly?.record.number ?? 0])
         if let j = jelly { manager?.setWatching(j, !runtime.watchScreen) }
         refresh()
     }
@@ -1269,6 +1290,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
 
     /// Mac の音声入力を、この入力欄で始める（AI ではなく macOS の機能。話した言葉がそのまま入力欄に入る）
     @objc private func startDictation() {
+        DevJournal.log("chat-button", ["button": "dictation", "agent": jelly?.record.number ?? 0])
         guard input.isEditable else { NSSound.beep(); return }
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
@@ -1280,12 +1302,14 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     @objc private func orgThumbsDown() { orgReact(.thumbsDown) }
 
     private func orgReact(_ r: OrgReaction) {
+        DevJournal.log("org-react", ["reaction": r.rawValue])
         guard let id = jelly?.record.id else { return }
         manager?.team?.react(id, r)
         refresh()
     }
 
     @objc private func chooseFolder() {
+        DevJournal.log("chat-button", ["button": "folder", "agent": jelly?.record.number ?? 0])
         let op = NSOpenPanel()
         op.canChooseDirectories = true
         op.canChooseFiles = false
@@ -1302,6 +1326,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
 
     /// 同じセッションをターミナルで開く（.command ファイル経由。オートメーション権限は不要）
     @objc private func engineChanged() {
+        DevJournal.log("chat-button", ["button": "engine-popup", "agent": jelly?.record.number ?? 0])
         let i = enginePopup.indexOfSelectedItem
         let e: AgentEngine? = i <= 0 ? nil : AgentEngine.allCases[i - 1]
         guard e != runtime.engine else { return }
@@ -1314,6 +1339,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     @objc private func openInTerminal() {
+        DevJournal.log("chat-button", ["button": "terminal", "agent": jelly?.record.number ?? 0])
         if runtime.effectiveEngine == .gemini {
             manager?.openLogin(.gemini, folder: runtime.cwd)
             return
@@ -1392,6 +1418,7 @@ final class AgentChatController: NSObject, NSWindowDelegate, NSTextViewDelegate 
     }
 
     func windowWillClose(_ notification: Notification) {
+        DevJournal.log("chat-close", ["agent": jelly?.record.number ?? 0, "secs": Int(Date().timeIntervalSince(lastShown))])
         AppLog.write("chat \(jelly?.record.number ?? -1): window closed")
         DispatchQueue.main.async { [weak self] in self?.manager?.chatWindowVisibilityChanged() }
     }

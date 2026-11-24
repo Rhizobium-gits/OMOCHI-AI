@@ -319,6 +319,20 @@ final class AgentRuntime {
         case .claude: break
         }
         runningForked = forkFrom != nil
+        var j = DevJournal.promptSummary(text)
+        j["agent"] = String(agentID.uuidString.prefix(8))
+        j["engine"] = backend.engine.rawValue
+        j["model"] = opts.model ?? backend.defaultModel ?? "default"
+        j["auto"] = autoChoice != nil
+        j["effort"] = opts.effort ?? "default"
+        j["resume"] = resume
+        j["forked"] = forkFrom != nil
+        j["anko"] = anko.count
+        j["team"] = opts.mcpConfig != nil || opts.mcpBridge != nil
+        j["pc"] = pcControl
+        j["external"] = !opts.strictMCPConfig && claude
+        j["context"] = contextTokens ?? 0
+        DevJournal.log("submit", j)
         do {
             handle = try backend.run(prompt: text, sessionID: sessionID, resume: resume, cwd: cwd, logDir: dir,
                                      options: opts,
@@ -333,6 +347,7 @@ final class AgentRuntime {
 
     func cancel() {
         guard let h = handle else { return }
+        DevJournal.log("cancel", ["agent": String(agentID.uuidString.prefix(8)), "secs": Int(Date().timeIntervalSince(turns.last?.startedAt ?? Date()))])
         cancelRequested = true
         activity = L("キャンセルしています…")
         onUpdate?()
@@ -435,6 +450,14 @@ final class AgentRuntime {
         activity = nil
         lastError = error
         saveTurns()
+        if let t = turns.last {
+            DevJournal.log("turn", ["agent": String(agentID.uuidString.prefix(8)), "state": s.rawValue,
+                                    "engine": (runningEngine ?? effectiveEngine).rawValue, "model": activeModel ?? model ?? "default",
+                                    "secs": Int((t.endedAt ?? Date()).timeIntervalSince(t.startedAt)), "cost": t.costUSD ?? 0,
+                                    "tools": t.tools.count, "toolKinds": Array(Set(t.tools.map { $0.hasPrefix("mcp__") ? String($0.split(separator: "_").prefix(4).joined(separator: "_")) : $0 })).sorted(),
+                                    "context": contextTokens ?? 0, "window": contextWindow ?? 0,
+                                    "error": DevJournal.errorKind(s == .error ? error ?? t.error : nil), "resultChars": t.result?.count ?? 0])
+        }
         onState?(s)
         onUpdate?()
         if let t = turns.last { onTurnEnded?(t) }
@@ -477,6 +500,7 @@ final class AgentRuntime {
     /// AI を変える（nil = 既定に従う）。会話は AI ごとに別なので、新しい会話になる。モデルの指定も外す
     func changeEngine(_ e: AgentEngine?) {
         guard !isRunning, e != engine else { return }
+        DevJournal.log("engine", ["agent": String(agentID.uuidString.prefix(8)), "to": e?.rawValue ?? "default"])
         let before = effectiveEngine
         engine = e
         // PC 操作は Claude だけ
@@ -499,6 +523,8 @@ final class AgentRuntime {
 
     /// 動かさない理由をターンとして残す
     private func refuse(_ text: String, _ why: String) {
+        DevJournal.log("refused", ["agent": String(agentID.uuidString.prefix(8)), "why": DevJournal.errorKind(why),
+                                   "engine": effectiveEngine.rawValue])
         lastError = why
         turns.append(AgentTurn(prompt: text, startedAt: Date(), endedAt: Date(), state: .error, error: why))
         saveTurns()

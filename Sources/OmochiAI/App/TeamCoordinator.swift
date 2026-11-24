@@ -139,6 +139,7 @@ final class TeamCoordinator {
             return false
         }
         links.insert(JellyLink(a, b))
+        DevJournal.log("link", ["team": Set(team(of: a)).count])
         save()
         refresh()
         if animated, let p1 = anchor(a), let p2 = anchor(b) { overlay.linkCreated(JellyLink(a, b), from: p1, to: p2) }
@@ -148,6 +149,7 @@ final class TeamCoordinator {
 
     func unlink(_ a: UUID, _ b: UUID) {
         guard links.remove(JellyLink(a, b)) != nil else { return }
+        DevJournal.log("unlink", [:])
         if let p1 = anchor(a), let p2 = anchor(b) { overlay.linkCut(from: p1, to: p2) }
         save()
         refresh()
@@ -272,6 +274,9 @@ final class TeamCoordinator {
     func jellyDropped(_ c: JellyController, mods: NSEvent.ModifierFlags) {
         jellyDragged(c, mods: mods)
         guard let s = drag, s.id == c.record.id else { refresh(); return }
+        let movedBy = hypot(c.panel.frame.minX - s.start.x, c.panel.frame.minY - s.start.y) / max(1, c.panel.frame.width)
+        DevJournal.log("drop", ["kind": s.cutting ? "cut" : (s.kind.map { "\($0)" } ?? "none"), "group": s.group,
+                                "followers": s.followers.count, "distance": Double(movedBy), "linked": !neighbors(c.record.id).isEmpty])
         drag = nil
         let id = c.record.id
         var movers = [c]
@@ -348,6 +353,7 @@ final class TeamCoordinator {
     /// 少しのあいだ、おもちの足元にヒントを出す
     private var flash: (id: UUID, text: String)?
     func flashHint(on c: JellyController, _ text: String) {
+        DevJournal.log("hint", ["text": text])
         flash = (c.record.id, text)
         refresh()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
@@ -1028,6 +1034,8 @@ final class TeamCoordinator {
             refresh()
         }
         AppLog.write("org: form_team \(genome.key) members=\(members.count) dissolved=\(dissolved.count)")
+        DevJournal.log("form-team", ["formation": genome.key, "members": members.count, "dissolved": dissolved.count,
+                                     "engines": engines.values.map(\.rawValue).sorted()])
         var obj: [String: Any] = ["formation": genome.key, "members": out,
                                   "note": L("wait_for_tasks で結果を受け取ってください。after のある人は、前の人が終わってから始まります。")]
         if !dissolved.isEmpty { obj["dissolved"] = dissolved }
@@ -1448,6 +1456,8 @@ final class TeamCoordinator {
                          after: [String] = [], role: String? = nil, episode: String? = nil) -> TeamTask {
         let tid = "t" + String(UUID().uuidString.prefix(6)).lowercased()
         let t = TeamTask(id: tid, from: from, to: to, text: text)
+        DevJournal.log("team-task", ["after": after.count, "role": role != nil, "episode": episode != nil, "chars": text.count,
+                                     "engine": controller(to).flatMap { manager?.runtime(for: $0)?.effectiveEngine.rawValue } ?? "-"])
         t.after = after
         t.role = role
         t.episode = episode ?? episodeID(for: from)

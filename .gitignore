@@ -4,3 +4,5 @@ dist/
 .swiftpm/
 .DS_Store
 __pycache__/
+# この Mac の開発用ビルドに「使い方の記録」を入れる印（scripts/build.sh）
+/.dev-journal

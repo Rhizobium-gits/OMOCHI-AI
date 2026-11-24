@@ -169,6 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        DevJournal.log("quit", ["mochi": manager?.controllers.count ?? 0])
         manager?.shutdown()
     }
 
@@ -181,6 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         if manager.settings.allHidden {
             manager.setAllHidden(false)
         } else if manager.controllers.isEmpty && !reopened {
+            DevJournal.log("spawn-source", ["via": "reopen"])
             _ = manager.spawn()
         }
         return false

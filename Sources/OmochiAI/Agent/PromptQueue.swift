@@ -129,6 +129,7 @@ final class PromptQueues {
         }
         q.items.append(item)
         queues[owner] = q
+        DevJournal.log("queue-add", ["other": to != nil, "pass": item.passResult, "waiting": q.items.count, "chars": t.count])
         AppLog.write("queue \(owner.uuidString.prefix(8)): add \(item.id.uuidString.prefix(6)) (\(q.items.count) waiting\(q.watching != nil ? ", after the running task" : ""))")
         changed(owner)
         pump()
@@ -149,6 +150,7 @@ final class PromptQueues {
         }
         if let passResult { q.items[i].passResult = passResult }
         queues[owner] = q
+        if text == nil { DevJournal.log("queue-edit", ["target": target != nil, "pass": passResult.map { String($0) } ?? "-"]) }
         // 文の書き換えでは保存だけ（表示は書いている欄そのもの）。送り先などは表示も更新
         if text == nil || target != nil || passResult != nil { changed(owner) } else { save() }
         if text == nil { pump() }
@@ -163,6 +165,7 @@ final class PromptQueues {
 
     func remove(owner: UUID, item id: UUID) {
         guard var q = queues[owner] else { return }
+        DevJournal.log("queue-remove", [:])
         q.items.removeAll { $0.id == id }
         editedAt[id] = nil
         queues[owner] = q
@@ -175,6 +178,7 @@ final class PromptQueues {
         guard var q = queues[owner], let i = q.items.firstIndex(where: { $0.id == id }) else { return }
         let j = i + by
         guard j >= 0, j < q.items.count else { return }
+        DevJournal.log("queue-move", ["by": by])
         q.items.swapAt(i, j)
         queues[owner] = q
         changed(owner)
@@ -193,6 +197,7 @@ final class PromptQueues {
         guard var q = queues[owner], !q.items.isEmpty || q.watching != nil else { return }
         q.pause = .manual
         queues[owner] = q
+        DevJournal.log("queue-pause", [:])
         AppLog.write("queue \(owner.uuidString.prefix(8)): paused (manual)")
         changed(owner)
     }
@@ -200,6 +205,7 @@ final class PromptQueues {
     /// 再開する。いまそのおもちが作業中なら、その作業の終わりを待ってから次の行を送る
     func resume(owner: UUID) {
         guard var q = queues[owner], q.isPaused else { return }
+        DevJournal.log("queue-resume", ["was": q.pause.map { "\($0)" } ?? "-"])
         q.pause = nil
         q.skipNextStop = false
         if q.watching == nil, host?.queueAgentRunning(owner) == true { q.watching = owner }
@@ -212,6 +218,7 @@ final class PromptQueues {
     /// 「止めて次へ」：いま待っている作業を止めて、一時停止せずに次の行へ進む
     func skipCurrent(owner: UUID) {
         guard var q = queues[owner], let w = q.watching, host?.queueAgentRunning(w) == true else { return }
+        DevJournal.log("queue-skip", [:])
         q.skipNextStop = true
         q.pause = nil
         queues[owner] = q
@@ -304,6 +311,7 @@ final class PromptQueues {
                 back.items.insert(item, at: 0)
                 back.pause = .refused(why)
                 queues[o] = back
+                DevJournal.log("queue-refused", ["why": DevJournal.errorKind(why)])
                 AppLog.write("queue \(o.uuidString.prefix(8)): refused (\(why ?? "-"))")
             } else if let f = handoffFrom, f != target {
                 host.queueHandoff(from: f, to: target)

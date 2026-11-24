@@ -108,6 +108,7 @@ extension JellyManager {
     func tearBegan(_ c: JellyController) -> Bool {
         guard tearState == nil else { return false }
         if runtimes[c.record.id]?.isRunning == true {
+            DevJournal.log("tear-refused", ["why": "running"])
             team?.flashHint(on: c, L("作業中のおもちは ちぎれません"))
             NSSound.beep()
             return false
@@ -122,6 +123,7 @@ extension JellyManager {
         clone.avatar.dragBegan()
         c.avatar.dragBegan()
         team?.refresh()
+        DevJournal.log("tear-begin", ["via": "drag", "session": runtimes[c.record.id]?.sessionStarted ?? false])
         return true
     }
 
@@ -137,6 +139,7 @@ extension JellyManager {
         tearState = nil
         c.avatar.dragEnded()
         let d = hypot(clone.anchorPoint.x - c.anchorPoint.x, clone.anchorPoint.y - c.anchorPoint.y)
+        DevJournal.log("tear-end", ["torn": d >= c.panel.frame.width * JellyManager.tearDistance, "distance": Double(d / c.panel.frame.width)])
         if d >= c.panel.frame.width * JellyManager.tearDistance {
             finishTear(c, clone)
         } else {
@@ -181,6 +184,7 @@ extension JellyManager {
         }
         let dest = adjacentOrigin(near: c)
         guard let clone = makeClone(of: c, engine: engine, at: c.panel.frame.origin) else { NSSound.beep(); return }
+        DevJournal.log("tear-begin", ["via": "menu", "engine": engine?.rawValue ?? "same", "session": runtimes[c.record.id]?.sessionStarted ?? false])
         tearState = (c.record.id, clone.record.id)
         clone.show(animated: false)
         clone.avatar.dragBegan()
@@ -213,6 +217,7 @@ extension JellyManager {
             nudgeAside(a, from: b)
             return
         }
+        DevJournal.log("merge-offer", ["hasResult": !(lastResult(of: a) ?? "").isEmpty, "clonePair": a.record.forkOf == b.record.id || b.record.forkOf == a.record.id])
         let m = NSMenu()
         m.autoenablesItems = false
         m.addItem(.header(L("🍡 %@ と %@ をくっつける", a.record.title, b.record.title)))
@@ -253,6 +258,8 @@ extension JellyManager {
         guard keep !== drop, let krt = runtimes[keep.record.id], let drt = runtimes[drop.record.id],
               !krt.isRunning, !drt.isRunning else { return }
         let prompt = combine ? lastResult(of: drop).map { MochiPlay.mergePrompt(fromName: drop.record.title, result: $0) } : nil
+        DevJournal.log("merge", ["combine": combine, "clonePair": keep.record.forkOf == drop.record.id || drop.record.forkOf == keep.record.id,
+                                 "keepTurns": krt.turns.count, "dropTurns": drt.turns.count])
         let kid = keep.record.id, did = drop.record.id
         // つながり
         if let team {
@@ -297,6 +304,7 @@ extension JellyManager {
 
     /// 重ねたけれどくっつかない：相手から少し離す
     func nudgeAside(_ a: JellyController, from b: JellyController) {
+        DevJournal.log("merge-cancel", [:])
         let w = a.panel.frame.width
         let pa = a.anchorPoint, pb = b.anchorPoint
         var ang = atan2(pa.y - pb.y, pa.x - pb.x)
@@ -329,6 +337,7 @@ extension JellyManager {
             guardCount += 1
         }
         bottom.update { $0.leaderID = tid }
+        DevJournal.log("stack", ["subs": subordinates(of: tid).count])
         // 同じ串に刺さっていたら、上に載せたほうを串から抜く（串の通った鏡餅にしない）
         if let i = skewers.firstIndex(where: { $0.members.contains(tid) && $0.members.contains(bid) }),
            let j = skewers[i].members.firstIndex(of: tid) {
@@ -377,6 +386,7 @@ extension JellyManager {
         for s in controllers where s.record.leaderID == c.record.id { s.update { $0.leaderID = nil }; changed = true }
         if c.record.leaderID != nil { c.update { $0.leaderID = nil }; changed = true }
         guard changed else { return }
+        DevJournal.log("unstack", [:])
         AppLog.write("kagami: unstack \(c.record.number)")
         refreshAllLooks()
         team?.refresh()
@@ -438,6 +448,8 @@ extension JellyManager {
             list = Array(list.prefix(MochiPlay.maxAnko))
         }
         rt.anko = list
+        DevJournal.log("anko-add", ["added": urls.count, "folders": urls.filter { $0.hasDirectoryPath }.count, "total": list.count,
+                                    "exts": Array(Set(urls.map { $0.pathExtension.lowercased() })).sorted()])
         c.avatar.absorb()
         refreshLook(c)
         chats[c.record.id]?.refresh()
@@ -446,6 +458,7 @@ extension JellyManager {
 
     func removeAnko(_ path: String, from c: JellyController) {
         guard let rt = runtimes[c.record.id] else { return }
+        DevJournal.log("anko-remove", ["left": rt.anko.count - 1])
         rt.anko.removeAll { $0 == path }
         refreshLook(c)
         chats[c.record.id]?.refresh()
@@ -468,6 +481,7 @@ extension JellyManager {
     func warmUp(_ c: JellyController) {
         guard let rt = runtimes[c.record.id], rt.sessionStarted, !rt.isRunning else { NSSound.beep(); return }
         let minutes = max(1, Int(Date().timeIntervalSince(rt.lastActiveAt ?? Date()) / 60))
+        DevJournal.log("warm", ["minutes": minutes, "hard": MochiPlay.hardness(lastActive: rt.lastActiveAt)])
         if rt.submit(MochiPlay.warmPrompt(minutesSince: minutes)) {
             AppLog.write("warm: agent \(c.record.number) after \(minutes) min")
             refreshLook(c)
@@ -478,6 +492,7 @@ extension JellyManager {
     /// 焦げを落とす：Claude Code の /compact で、会話を要約して軽くする（Claude のおもちだけ）
     func scrapeChar(_ c: JellyController) {
         guard let rt = runtimes[c.record.id], rt.sessionStarted, !rt.isRunning, rt.effectiveEngine == .claude else { NSSound.beep(); return }
+        DevJournal.log("compact", ["ratio": MochiPlay.contextRatio(tokens: rt.contextTokens, window: rt.contextWindow), "tokens": rt.contextTokens ?? 0])
         if rt.submit(MochiPlay.compactCommand) {
             AppLog.write("compact: agent \(c.record.number)")
             chats[c.record.id]?.refresh()
@@ -521,6 +536,7 @@ extension JellyManager {
         let s = Skewer(name: name, members: ids, steps: Array(st.prefix(members.count)), org: org)
         skewers.append(s)
         saveSkewers()
+        DevJournal.log("skewer", ["steps": members.count, "org": org, "named": name != nil])
         arrangeDango(s)
         AppLog.write("dango: skewer \(members.map { String($0.record.number) }.joined(separator: ">")) org=\(org)")
         return s
@@ -578,6 +594,7 @@ extension JellyManager {
                            target: cs[i].record.id, passResult: true)
         }
         AppLog.write("dango: run \(n) steps")
+        DevJournal.log("skewer-run", ["steps": n, "named": s.name != nil, "chars": input.count])
         chats[first.record.id]?.refresh()
         team?.refresh()
         return nil
@@ -587,6 +604,7 @@ extension JellyManager {
     @discardableResult
     func runRecipe(_ r: DangoRecipe, input: String, near: JellyController? = nil) -> String? {
         guard !r.steps.isEmpty else { return L("段がありません") }
+        DevJournal.log("recipe-run", ["builtin": JellyManager.builtinRecipes.contains { $0.id == r.id }, "steps": r.steps.count])
         guard controllers.count + r.steps.count <= TeamCoordinator.maxAgents else { return L("おもちは %ld 体までです", TeamCoordinator.maxAgents) }
         if settings.allHidden { setAllHidden(false) }
         var made: [JellyController] = []
@@ -616,6 +634,7 @@ extension JellyManager {
         if let i = recipes.firstIndex(where: { $0.name == n }) { recipes[i].steps = steps } else { recipes.append(DangoRecipe(name: n, steps: steps)) }
         saveRecipes()
         AppLog.write("dango: recipe saved (\(steps.count) steps)")
+        DevJournal.log("recipe-save", ["steps": steps.count])
     }
 
     func deleteRecipe(_ id: UUID) {
@@ -640,12 +659,14 @@ extension JellyManager {
     }
 
     func showDango(for c: JellyController? = nil, recipe: DangoRecipe? = nil) {
+        DevJournal.log("dango-window", ["from": c != nil, "recipe": recipe != nil])
         let w = dangoWindow ?? DangoWindowController(manager: self)
         dangoWindow = w
         w.show(start: c, recipe: recipe)
     }
 
     func showMaki(from c: JellyController? = nil) {
+        DevJournal.log("maki-window", ["from": c != nil])
         let w = makiWindow ?? MochiMakiWindowController(manager: self)
         makiWindow = w
         w.show(from: c)

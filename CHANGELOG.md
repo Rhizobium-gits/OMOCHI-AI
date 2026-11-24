@@ -4,9 +4,18 @@
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-25
+
+**リポジトリの名前を OMOCHI-AI にそろえた版です。** 2.0.0 を入れた人は、この版を [OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg) から入れ直してください（2.0.0 のアプリは前のリポジトリ名の URL しか受け付けないので、アプリの中の「アップデートする」では上げられません。2.0.1 からは、どちらの名前の URL でも上げられます）。
+
 ### 変更
 
 - **GitHub のリポジトリの名前を jellyfish-ai から OMOCHI-AI に**（`https://github.com/Rhizobium-gits/OMOCHI-AI`）。前の URL（clone・リリース・README のリンク）は GitHub が新しい URL へ転送します。アプリのアップデートと `scripts/update.sh` は、新しい名前と前の名前のどちらの URL のリリースのファイルも受け付け、前の名前で clone したフォルダも「ソースから入れたもの」として扱います。README・.dmg の案内・スクリプトのリンクとバッジも新しい名前に
+- リアルなおもちの絵のキャッシュに鍵をかけた（テストを並列に動かしたとき、まれに違う大きさの絵を返していた。アプリでは絵はメインスレッドだけで描くので、動きは変わらない）
+
+### 開発
+
+- **開発用の「使い方の記録」**（`scripts/build.sh --dev-journal`、またはリポジトリに `.dev-journal` を置いてビルド）：作者の Mac の開発用ビルドだけが、どの機能をどの操作で使ったか・やめた操作・作業の時間と成否・エラーの種類を、データフォルダの `dev-journal/` に日ごとの JSONL で書く（7 日で止まる。メニューの 📓 から延長・一時停止）。どこにも送らず、指示の本文やファイルのパスは書かない。まとめは `scripts/dev/journal-report.py`。**配る版（GitHub のリリース・CI のビルド）には入らない**（`scripts/release.sh` は `--no-dev-journal` で作り、記録の部分が入っていないことを確かめてから出す）
 
 ## [2.0.0] - 2026-11-25
 
@@ -415,6 +424,7 @@ Jellyfish AI 最初是一群在桌面上漂浮的水母智能体。如今它能�
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[2.0.1]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v2.0.0
 [1.3.2]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.3.2
 [1.3.1]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.3.1

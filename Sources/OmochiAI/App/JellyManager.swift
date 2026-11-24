@@ -68,6 +68,9 @@ final class JellyManager {
         }
         startPointerTracking()
         startLookTimer()
+        DevJournal.log("launch", ["version": AppInfo.version, "mochi": controllers.count, "style": settings.avatarStyle.rawValue,
+                                  "engine": settings.engine.rawValue, "team": settings.teamEnabled, "org": settings.orgMode,
+                                  "skewers": skewers.count, "recipes": recipes.count])
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
                                                object: nil, queue: .main) { [weak self] _ in
             self?.ensureOnScreen()
@@ -327,6 +330,7 @@ final class JellyManager {
         c.show(animated: true)
         save()
         onChange?()
+        DevJournal.log("spawn", ["agent": c.record.number, "total": controllers.count, "chat": open])
         // 生成したらすぐ指示を打ち込めるように（activate: false は外からの URL。入力先は奪わない）
         if open { DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self, weak c] in
             guard let self, let c, self.controllers.contains(where: { $0 === c }) else { return }
@@ -726,6 +730,7 @@ final class JellyManager {
     /// チャットウィンドウを開く。quickCapture（⌘L で作った直後）は、最初の指示を送ったら閉じて元の作業に戻す
     func openChat(for c: JellyController, quickCapture: Bool = false, activate: Bool = true) {
         guard let rt = runtimes[c.record.id] else { return }
+        DevJournal.log("chat-open", ["agent": c.record.number, "quick": quickCapture, "engine": rt.effectiveEngine.rawValue])
         let chat: AgentChatController
         if let existing = chats[c.record.id] {
             chat = existing
@@ -924,6 +929,7 @@ final class JellyManager {
     /// モーダルの確認の窓だと、ほかのアプリのフル画面を見ているときなどに見えないスペースに出て、
     /// 答えるまでおもちを押しても何も起きず、アプリの終了もできなくなっていた
     func requestRemove(_ c: JellyController) {
+        DevJournal.log("remove-request", ["agent": c.record.number, "running": runtimes[c.record.id]?.isRunning ?? false])
         guard let rt = runtimes[c.record.id], rt.isRunning else {
             remove(c)
             return
@@ -961,6 +967,9 @@ final class JellyManager {
     /// おもちを削除する。
     /// Phase 2: 実行中タスクがある場合はキャンセルするか継続するかを確認し、勝手にキャンセルしない。
     func remove(_ c: JellyController) {
+        DevJournal.log("remove", ["agent": c.record.number, "running": runtimes[c.record.id]?.isRunning ?? false,
+                                  "turns": runtimes[c.record.id]?.turns.count ?? 0, "org": c.record.orgSpawned ?? false,
+                                  "clone": c.record.forkOf != nil, "total": controllers.count - 1])
         removeBubbles.removeValue(forKey: c.record.id)?.close()
         mochiRemoved(c.record.id)
         team?.removeAgent(c.record.id)
@@ -1053,6 +1062,8 @@ final class JellyManager {
         r.depth = (parent.record.depth ?? 0) + 1
         r.origin = adjacentOrigin(near: parent)
         let c = addController(r)
+        DevJournal.log("spawn-teammate", ["agent": c.record.number, "parent": parent.record.number, "org": orgSpawned,
+                                          "engine": (engine ?? runtimes[parent.record.id]?.effectiveEngine ?? settings.engine).rawValue])
         if let prt = runtimes[parent.record.id], let rt = runtimes[c.record.id] {
             // 仲間は、指定がなければ作った側と同じ AI で動く（AI ごとの得意なことで分担するときは engine を指定）
             rt.changeEngine(engine ?? prt.effectiveEngine)
@@ -1180,6 +1191,7 @@ final class JellyManager {
 
     func setStyle(_ style: AvatarStyle) {
         guard style != settings.avatarStyle else { return }
+        DevJournal.log("style", ["to": style.rawValue])
         settings.avatarStyle = style
         store.save(settings)
         rebuildControllers()
@@ -1290,6 +1302,7 @@ final class JellyManager {
     // MARK: イベント
 
     func jellyClicked(_ c: JellyController) {
+        DevJournal.log("tap", ["agent": c.record.number, "state": c.record.state.rawValue])
         openChat(for: c)
         onChange?()
     }

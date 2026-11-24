@@ -143,6 +143,13 @@ claude -p ... --mcp-config agents/<id>/mcp.json --allowedTools mcp__omochi --app
 - **大福**：`AgentRuntime.anko`（パス。meta.json、12 個まで）。`MochiPlay.ankoNote` を Claude は `--append-system-prompt`、Codex は `developer_instructions`、Gemini は指示の `ankoMarker` の欄に。`ankoDirs` を Claude `--add-dir`・Gemini `--include-directories` に。おもちに落とすと `filesDropped` が「あんこにする / 添付する」を聞く
 - **自動化**（合言葉つきのときだけ）：`omochi://tear|merge|stack|anko|warm|compact|skewer|dango|maki|look`。デモの録画は `scripts/demo/record.sh mochi`（AI を動かさない）
 
+## 2.6.6 開発用の使い方の記録（App/DevJournal.swift。配る版には入らない）
+
+- `DevJournal.log(event, props)` をあちこちから呼ぶ（メニューの項目は `ClosureMenuItem` でまとめて、指示・作業の結果は `AgentRuntime`、予約は `PromptQueues`、ドラッグ・つなぐ・依頼は `TeamCoordinator`、お餅の操作は `MochiActions`、チャットのボタンは `AgentChatController`）。書くのは `-DOMOCHI_DEV_JOURNAL` でビルドしたときだけ（`#if` の中の `DevJournal.Writer`）。そうでなければ何もしない
+- `scripts/build.sh --dev-journal`・`OMOCHI_DEV_JOURNAL=1`・リポジトリの `.dev-journal`（git に入らない）でフラグを付ける。`--no-dev-journal` で必ず外す（`release.sh` はこれで作り、`strings` で記録の部分が入っていないことを確かめる）
+- 書き方は `DevJournal.line`（並べ替えた JSON 1 行。値は文字列（120 字まで）・数・真偽・文字列の配列だけ）。指示は `promptSummary`（長さ・行数・`TaskFeatures` のタグ・種類・添付の有無）、エラーは `errorKind`（種類だけ）。期間は `Period`（7 日、`period.json`）
+- まとめは `scripts/dev/journal-report.py`（Markdown。機能ごとの回数・やめた操作・AI とモデルごとの時間と成否・つまずきの案内・使われていない機能）
+
 ## 2.7 表示の言語（Localization/）
 
 - ソースには日本語をそのまま書き、`L("…")` / `L("…%@…", x)` で包む。`L10n.translate` が今の言語の表（`Strings+en.swift`・`Strings+zh.swift`、日本語 → 訳）を引き、無ければ日本語のまま

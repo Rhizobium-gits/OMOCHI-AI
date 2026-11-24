@@ -22,7 +22,11 @@ if [[ $PUBLISH == 1 ]]; then
 fi
 
 scripts/test.sh
-scripts/build.sh --universal --sign
+# 配る版には、開発用の「使い方の記録」を入れない（.dev-journal があっても外す）
+scripts/build.sh --universal --sign --no-dev-journal
+if /usr/bin/strings "dist/OMOCHI AI.app/Contents/MacOS/OmochiAI" | grep -q "omochi.devjournal"; then
+  echo "配る版に開発用の記録が入っています（build.sh --no-dev-journal を確かめてください）" >&2; exit 1
+fi
 
 APP="dist/OMOCHI AI.app"
 codesign --verify --strict --verbose=2 "$APP"

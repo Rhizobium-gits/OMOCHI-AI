@@ -16,7 +16,10 @@ final class ClosureMenuItem: NSMenuItem {
 
     required init(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    @objc private func fire() { handler() }
+    @objc private func fire() {
+        DevJournal.log("menu", ["item": title])
+        handler()
+    }
 }
 
 extension NSMenuItem {

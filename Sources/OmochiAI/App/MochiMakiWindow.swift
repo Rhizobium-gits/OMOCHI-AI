@@ -242,6 +242,7 @@ final class MochiMakiWindowController: NSObject, NSWindowDelegate {
             }
         }
         AppLog.write("maki: \(targets.count) (\(engines.map(\.rawValue).joined(separator: ",")) + \(existing.count) existing)")
+        DevJournal.log("maki", ["engines": engines.map(\.rawValue), "existing": existing.count, "chars": text.count])
         status.stringValue = L("%ld 体にまきました", targets.count)
         startTimer()
         refreshChoices()
@@ -292,6 +293,11 @@ final class MochiMakiWindowController: NSObject, NSWindowDelegate {
         picked = id
         c.avatar.poke()
         AppLog.write("maki: picked agent \(c.record.number)")
+        let order = catches.sorted { a, b in
+            (m.runtime(for: m.controller(id: a.agent) ?? c)?.turns.last?.endedAt ?? .distantFuture) < (m.runtime(for: m.controller(id: b.agent) ?? c)?.turns.last?.endedAt ?? .distantFuture)
+        }.map(\.agent)
+        DevJournal.log("maki-pick", ["engine": m.runtime(for: c)?.effectiveEngine.rawValue ?? "-", "spawned": catches.first { $0.agent == id }?.spawned ?? false,
+                                     "finishRank": (order.firstIndex(of: id) ?? -1) + 1, "of": catches.count, "cleanup": cleanup.state == .on])
         finishRound(keepAll: cleanup.state != .on)
         update()
         status.stringValue = L("%@ を拾いました。チャットで続きを頼めます", c.record.title)

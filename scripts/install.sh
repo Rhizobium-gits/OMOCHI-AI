@@ -2,6 +2,7 @@
 # この Mac で OMOCHI AI を普通のアプリとして使えるようにする（毎回ターミナルから起動しなくてよくなる）。
 #   scripts/install.sh              ビルドして「アプリケーション」フォルダに入れ、起動する
 #   scripts/install.sh --no-build   いまの dist/OMOCHI AI.app をそのまま入れる
+#   scripts/install.sh --no-open    入れるだけで起動しない
 # scripts/signing.sh で署名用の証明書を作ってあれば、それで署名する（ビルドし直しても macOS の許可が続く）。
 # 入れたあとは Launchpad・Spotlight・Finder の「アプリケーション」から開ける。Dock に置くこともできる。
 # 入れる先は /Applications（書き込めなければ ~/Applications）。dist/ の .app は移すので、同じアプリが 2 つ並ばない。
@@ -10,9 +11,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 BUILD=1
+OPEN=1
 for a in "$@"; do
   case "$a" in
     --no-build) BUILD=0 ;;
+    --no-open) OPEN=0 ;;
     *) echo "unknown argument: $a" >&2; exit 2 ;;
   esac
 done
@@ -70,7 +73,7 @@ if [[ -d "$DATA_DIR" ]]; then
   printf '%s\n' "$ROOT" > "$DATA_DIR/source-checkout"
   chmod 600 "$DATA_DIR/source-checkout"
 fi
-open -g "$DEST"
+if [[ $OPEN == 1 ]]; then open -g "$DEST"; fi
 
 echo "Installed: $DEST  (v$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$DEST/Contents/Info.plist"))"
 echo "  ・Launchpad・Spotlight（⌘Space で「OMOCHI AI」）・Finder の「アプリケーション」から開けます。"

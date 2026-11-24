@@ -5,6 +5,9 @@
 #   scripts/build.sh --universal      Apple シリコン + Intel の両方で動く .app（配布用）
 #   scripts/build.sh --sign           scripts/signing.sh で作った証明書で署名する（無ければアドホック署名）。
 #                                     同じ証明書なら、ビルドし直しても macOS の許可（フォルダ・アクセシビリティ・画面収録）が続く
+#   scripts/build.sh --dev-journal    開発用の「使い方の記録」を入れる（この Mac の開発用だけ。どこにも送らない）。
+#                                     リポジトリに .dev-journal（git に入らない）があるか、OMOCHI_DEV_JOURNAL=1 でも入る。
+#                                     --no-dev-journal で必ず外す（release.sh はこれで作る）
 # バージョンは VERSION ファイル、ビルド番号は git のコミット数から入れる。
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,14 +15,23 @@ cd "$ROOT"
 CONFIG=release
 UNIVERSAL=0
 SIGN=0
+DEV_JOURNAL=0
+[[ "${OMOCHI_DEV_JOURNAL:-}" == 1 || -f "$ROOT/.dev-journal" ]] && DEV_JOURNAL=1
+NO_DEV_JOURNAL=0
 for a in "$@"; do
   case "$a" in
     release|debug) CONFIG="$a" ;;
     --universal) UNIVERSAL=1 ;;
     --sign) SIGN=1 ;;
+    --dev-journal) DEV_JOURNAL=1 ;;
+    --no-dev-journal) NO_DEV_JOURNAL=1 ;;
     *) echo "unknown argument: $a" >&2; exit 2 ;;
   esac
 done
+
+(( NO_DEV_JOURNAL )) && DEV_JOURNAL=0
+SWIFT_FLAGS=()
+(( DEV_JOURNAL )) && SWIFT_FLAGS=(-Xswiftc -DOMOCHI_DEV_JOURNAL)
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
 BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
@@ -31,15 +43,15 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 if [[ $UNIVERSAL == 1 ]]; then
   bins=()
   for arch in arm64 x86_64; do
-    swift build -c "$CONFIG" --arch "$arch"
-    bins+=("$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)/OmochiAI")
+    swift build -c "$CONFIG" --arch "$arch" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"}
+    bins+=("$(swift build -c "$CONFIG" --arch "$arch" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --show-bin-path)/OmochiAI")
   done
   lipo -create "${bins[@]}" -output "$APP/Contents/MacOS/OmochiAI"
   # アイコン描画はこの Mac の CPU 用のバイナリで
-  NATIVE="$(swift build -c "$CONFIG" --arch "$(uname -m)" --show-bin-path)/OmochiAI"
+  NATIVE="$(swift build -c "$CONFIG" --arch "$(uname -m)" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --show-bin-path)/OmochiAI"
 else
-  swift build -c "$CONFIG"
-  NATIVE="$(swift build -c "$CONFIG" --show-bin-path)/OmochiAI"
+  swift build -c "$CONFIG" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"}
+  NATIVE="$(swift build -c "$CONFIG" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --show-bin-path)/OmochiAI"
   cp "$NATIVE" "$APP/Contents/MacOS/OmochiAI"
 fi
 
@@ -92,4 +104,4 @@ elif [[ $SIGN == 1 ]]; then
   echo "署名用の証明書「${IDENTITY}」がありません（scripts/signing.sh create で作れます）。アドホック署名にします" >&2
 fi
 [[ "$SIGNED_WITH" == "ad-hoc" ]] && codesign --force --options runtime --entitlements "$ENTITLEMENTS" --sign - --timestamp=none "$APP" >/dev/null
-echo "Built: $APP  (v$VERSION build $BUILD_NUMBER, $(lipo -archs "$APP/Contents/MacOS/OmochiAI"), signed: $SIGNED_WITH)"
+echo "Built: $APP  (v$VERSION build $BUILD_NUMBER, $(lipo -archs "$APP/Contents/MacOS/OmochiAI"), signed: $SIGNED_WITH$( (( DEV_JOURNAL )) && echo ', with the dev usage journal'))"

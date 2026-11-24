@@ -316,6 +316,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
+        DevJournal.log("menubar-open", [:])
         let s = manager.settings
 
         ClaudeAccount.shared.refreshIfStale(claudeOverride: s.claudePath)
@@ -631,6 +632,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         })
 
         menu.addItem(.separator())
+        #if OMOCHI_DEV_JOURNAL
+        menu.addItem(DevJournal.Writer.shared.menuItem())
+        #endif
         menu.addItem(ClosureMenuItem(L("OMOCHI AI について")) { AppInfo.showAbout() })
         // 自動の確認で新しい版を見つけていれば、そう書く
         let updateTitle = UpdateSchedule.shared.available.map { L("⬆︎ 新しい版 %@ があります…", $0) } ?? L("アップデートを確認…")
