@@ -5,7 +5,7 @@
 <text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">每日下载量</text>
 <text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg・.zip・git clone 合计 · 每天自动更新</text>
 <text x="788" y="32" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">累计</text>
-<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">542</text>
+<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">583</text>
 <path d="M47.2,238.0V222.9Q47.2,219.9 50.2,219.9H64.2Q67.2,219.9 67.2,222.9V238.0Z" fill="#f2f2f2"/>
 <text x="57.2" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
 <text x="57.2" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/11</text>
@@ -45,11 +45,11 @@
 <path d="M652.0,238.0V231.9Q652.0,228.9 655.0,228.9H669.0Q672.0,228.9 672.0,231.9V238.0Z" fill="#f2f2f2"/>
 <text x="662.0" y="221.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">11</text>
 <text x="662.0" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/23</text>
-<path d="M702.4,238.0V207.2Q702.4,204.2 705.4,204.2H719.4Q722.4,204.2 722.4,207.2V238.0Z" fill="#f2f2f2"/>
-<text x="712.4" y="197.2" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">41</text>
+<path d="M702.4,238.0V194.1Q702.4,191.1 705.4,191.1H719.4Q722.4,191.1 722.4,194.1V238.0Z" fill="#f2f2f2"/>
+<text x="712.4" y="184.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">57</text>
 <text x="712.4" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/24</text>
-<path d="M752.8,238.0V230.3Q752.8,227.3 755.8,227.3H769.8Q772.8,227.3 772.8,230.3V238.0Z" fill="#f2f2f2"/>
-<text x="762.8" y="220.3" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">13</text>
+<path d="M752.8,238.0V209.7Q752.8,206.7 755.8,206.7H769.8Q772.8,206.7 772.8,209.7V238.0Z" fill="#f2f2f2"/>
+<text x="762.8" y="199.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">38</text>
 <text x="762.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/25</text>
 <line x1="32" y1="238.5" x2="788" y2="238.5" stroke="#2a2a2a" stroke-width="1"/>
 <text x="32" y="280" font-size="10.5" fill="#555555">更新于 2026-11-25 UTC</text>
