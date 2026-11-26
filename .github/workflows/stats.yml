@@ -25,6 +25,7 @@ jobs:
       - name: Count downloads
         env:
           GH_TOKEN: ${{ github.token }}
+          AURALUNE_STATS_KEY: ${{ secrets.AURALUNE_STATS_KEY }}
           TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
           OMOCHI_REPO: ${{ github.repository }}
         run: |

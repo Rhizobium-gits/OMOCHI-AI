@@ -34,6 +34,7 @@ EDGE = "#1f1f1f"
 WHITE = "#ffffff"
 BAR = "#f2f2f2"
 GRAY = "#8a8a8a"
+GOLD = "#e6c56b"   # auralune.tech
 DIM = "#555555"
 LINE = "#2a2a2a"
 FONT = ("-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', "
@@ -44,6 +45,7 @@ TEXTS = {
         "title": "1 日ごとのダウンロード",
         "sub": ".dmg・.zip・git clone の合計 · 毎日自動で更新",
         "total": "累計",
+        "site": "うち auralune.tech 経由 {n}",
         "note1": "更新 {date} UTC",
         "note2": "※ .dmg・.zip の日ごとの数は推定（GitHub は累計しか出さないので、時間に比例して分けた）",
         "pending": "直近の git clone は GitHub の集計待ち",
@@ -53,6 +55,7 @@ TEXTS = {
         "title": "Downloads per day",
         "sub": ".dmg + .zip + git clone · updated daily",
         "total": "Total",
+        "site": "via auralune.tech {n}",
         "note1": "Updated {date} UTC",
         "note2": "* Daily .dmg/.zip are estimates (GitHub gives only totals; split in proportion to time)",
         "pending": "recent clones not counted yet",
@@ -62,6 +65,7 @@ TEXTS = {
         "title": "每日下载量",
         "sub": ".dmg・.zip・git clone 合计 · 每天自动更新",
         "total": "累计",
+        "site": "其中经由 auralune.tech {n}",
         "note1": "更新于 {date} UTC",
         "note2": "※ .dmg・.zip 的每日数量为估算（GitHub 只提供累计，按时间比例分配）",
         "pending": "最近的 git clone 仍在等待 GitHub 统计",
@@ -171,6 +175,9 @@ def render(stats, lang, today):
     a(f'<text x="{W - PAD}" y="32" font-size="11" fill="{GRAY}" text-anchor="end" letter-spacing="0.6">{escape(t["total"])}</text>')
     a(f'<text x="{W - PAD}" y="74" font-size="40" font-weight="700" fill="{WHITE}" text-anchor="end" letter-spacing="-1">'
       f'{int(stats.get("total", 0)):,}</text>')
+    if "site" in stats:  # presses of the download button on auralune.tech (part of the total, not added to it)
+        a(f'<text x="{W - PAD}" y="96" font-size="12" fill="{GOLD}" text-anchor="end">'
+          f'{escape(t["site"].format(n=format(int(stats["site"]), ",")))}</text>')
 
     if not days:
         a(f'<text x="{W / 2}" y="{(Y0 + Y1) / 2}" font-size="13" fill="{GRAY}" text-anchor="middle">{escape(t["empty"])}</text>')

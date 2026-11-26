@@ -82,7 +82,17 @@ RELEASES="$(gh api "repos/$REPO/releases" --paginate --jq '.[] | select(.draft |
   dmg: ([.assets[] | select(.name | endswith(".dmg")) | .download_count] | add // 0),
   zip: ([.assets[] | select(.name | endswith(".zip")) | .download_count] | add // 0)}' | jq -s 'sort_by(.published)')"
 
-NEW="$(jq -n --argjson old "$OLD" --argjson t "$CLONES" --argjson releases "$RELEASES" --argjson daily "$DAILY" --arg today "$TODAY" --arg now "$NOW" '
+# auralune.tech のダウンロードのボタンが押された数（https://auralune.tech/dl/omochi を通った数）。
+# リリースのファイルへ送るので、上のダウンロード数の内訳（total には足さない）。シークレット AURALUNE_STATS_KEY で読む。
+# 読めないときは貯めてある数のまま
+SITE=null
+if [[ -n "${AURALUNE_STATS_KEY:-}" ]]; then
+  SITE="$(curl -fsS --max-time 30 "https://auralune.tech/api/dl-stats?key=$AURALUNE_STATS_KEY&format=json" |
+    jq --arg ids "${AURALUNE_SITE_IDS:-omochi}" '($ids | split(",")) as $w | [.products[] | select(.id as $i | $w | index($i)) | .total] | add // 0')" || SITE=null
+  [[ "$SITE" =~ ^[0-9]+$ ]] || { echo "auralune.tech の数を読めませんでした。貯めてある数のままにします" >&2; SITE=null; }
+fi
+
+NEW="$(jq -n --argjson site "$SITE" --argjson old "$OLD" --argjson t "$CLONES" --argjson releases "$RELEASES" --argjson daily "$DAILY" --arg today "$TODAY" --arg now "$NOW" '
   ($old.clones // {}) as $kept
   | (reduce ((if $t == null then [] else ($t.clones // []) end)[] | select(.count > 0)) as $d ($kept;
       ($d.timestamp[0:10]) as $day
@@ -96,7 +106,7 @@ NEW="$(jq -n --argjson old "$OLD" --argjson t "$CLONES" --argjson releases "$REL
   | ($daily + {($today): (if ($daily[$today].dmg == $dmg and $daily[$today].zip == $zip) then $daily[$today]
                          else {dmg: $dmg, zip: $zip, at: $now} end)}
      | to_entries | sort_by(.key) | from_entries) as $days
-  | {total: ($dmg + $zip + $clone), dmg: $dmg, zip: $zip, clone: $clone, clones: $clones, daily: $days, releases: $releases}')"
+  | {total: ($dmg + $zip + $clone), dmg: $dmg, zip: $zip, clone: $clone, clones: $clones, daily: $days, releases: $releases, site: (if $site == null then ($old.site // 0) else $site end)}')"
 
 if [[ $DRY == 1 ]]; then
   printf '%s\n' "$NEW" | jq .
