@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-11-26
+
+**Apple の公証を受けた版です。** .dmg を開いて Applications へドラッグし、開くだけで使えます。初回の「このまま開く」（システム設定 › プライバシーとセキュリティ）は要らなくなりました。
+
+### 変更
+
+- **配る .app を Developer ID で署名し、Apple の公証（notarization）を通してホチキス留め（staple）した**。「インターネットからダウンロードされたアプリケーションです」と出たら「開く」を押すだけで使える。.dmg・.zip の中身も、アプリの「アップデートする」・`update.sh` で入る版も同じもの
+- **更新しても macOS の許可が続く**：同じ Developer ID（同じチーム）で署名した版どうしは macOS が同じアプリとみなすので、2.0.2 からの更新では画面収録・アクセシビリティ・フォルダの許可がそのまま効く。2.0.1 以前（仮の署名）から上げたときだけ、一度 🔐 権限 の「まとめて許可する」で許可し直す
+- アプリの「アップデートする」と `update.sh` は、Developer ID の版からは同じ Developer ID（同じチーム）の署名の版にしか入れ替えない（前からの決まりで、証明書で署名した版に効く）。2.0.1 以前の仮の署名の版からは、これまでどおりチェックサム・中身・署名を確かめて入れ替える
+- 固定の署名の鍵がこの Mac に見つからないときの案内を「配布版の署名のまま入れ替えます」に（配布版が仮の署名ではなくなったため）。README・SECURITY.md・.dmg の案内・リリースノートの入れ方も、公証つきの版に合わせた
+
+### 開発
+
+- **`scripts/notarize.sh`**：Swift Package で作った .app を Xcode のアーカイブの形に入れ、`xcodebuild -exportArchive`（method developer-id）で Developer ID に署名し直し（エンタイトルメントと Hardened Runtime はビルドのときのまま）、`notarytool` で公証、staple、`spctl` で「Notarized Developer ID」を確かめる。`scripts/release.sh` は既定でこれを通す（`--ad-hoc` で従来の仮の署名）。公証の認証はリポジトリに書かず、`OMOCHI_NOTARY_PROFILE`（キーチェーンのプロファイル）か `OMOCHI_ASC_KEY_ID`・`OMOCHI_ASC_ISSUER_ID`・`OMOCHI_ASC_KEY_PATH`（App Store Connect の API キー）で渡す
+
 ## [2.0.1] - 2026-11-25
 
 **リポジトリの名前を OMOCHI-AI にそろえた版です。** 2.0.0 を入れた人は、この版を [OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg) から入れ直してください（2.0.0 のアプリは前のリポジトリ名の URL しか受け付けないので、アプリの中の「アップデートする」では上げられません。2.0.1 からは、どちらの名前の URL でも上げられます）。
@@ -424,6 +439,7 @@ Jellyfish AI 最初是一群在桌面上漂浮的水母智能体。如今它能�
 - 長い会話を開いているとき、更新のたびにセッションのファイル全体を読み直していた（増えた分だけ読む）
 - Claude Code をあとから入れても、アプリを再起動するまで見つけられなかった
 
+[2.0.2]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v2.0.0
 [1.3.2]: https://github.com/Rhizobium-gits/OMOCHI-AI/releases/tag/v1.3.2

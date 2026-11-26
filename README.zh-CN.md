@@ -119,8 +119,8 @@
    **[下载 OmochiAI.dmg](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest/download/OmochiAI.dmg)**（始终是最新版本。也可以在 [Releases 的最新版本](https://github.com/Rhizobium-gits/OMOCHI-AI/releases/latest) 页面获取同一文件，另有内容相同的 `.zip`）
 2. **放进应用程序文件夹**
    打开 .dmg，把 **OMOCHI AI** 拖到旁边的 **Applications**（应用程序）
-3. **仅首次需要“仍要打开”**
-   打开应用程序文件夹中的 OMOCHI AI 时，macOS 仅在首次会拦下并提示“无法打开”（因为这是未经 Apple 公证的个人开发作品）。请关闭对话框，在 **系统设置 › 隐私与安全性** 靠下的位置点按“仍要打开”。从第二次起就可以正常打开
+3. **打开**
+   打开应用程序文件夹中的 OMOCHI AI。本应用已使用 Developer ID 签名并经过 Apple 公证，如果提示“这是从互联网下载的应用程序”，点按“打开”即可（自 2.0.2 起。2.0.1 及以前的版本首次需要在 **系统设置 › 隐私与安全性** 中点按“仍要打开”）
 4. **登录 AI**
    首次打开时会出现“账户与 AI”界面。点按要使用的 AI 的“登录…”，终端中就会开始官方登录，只需在浏览器中登录即可。尚未安装的 AI 可以点按“安装并登录…”，会先显示要执行的命令并征得你的允许，然后再安装
 
@@ -440,7 +440,7 @@ flowchart LR
 ```
 
 > [!NOTE]
-> **系统设置中的开关明明打开却仍提示“请允许”、电脑操控不工作、每次启动或更新都询问文件夹权限**，是因为替换了临时签名（ad-hoc）的版本。macOS 按签名内容（cdhash）识别应用，更新后授予旧版本的权限就不再生效（开关仍保持打开）。请用“全部允许”清除并重新授予。
+> **系统设置中的开关明明打开却仍提示“请允许”、电脑操控不工作、每次启动或更新都询问文件夹权限**，是因为替换了临时签名（ad-hoc）的版本（2.0.1 及以前的发布版，或未使用固定签名的源代码构建）。macOS 按签名内容（cdhash）识别临时签名的应用，更新后授予旧版本的权限就不再生效（开关仍保持打开）。请用“全部允许”清除并重新授予。自 2.0.2 起的发布版使用 Developer ID 签名，更新到相同签名的版本后权限会保留（只有从 2.0.1 及以前升级时需要重新授予一次）。
 
 ## 收听（转写、翻译、会议纪要）
 
@@ -489,7 +489,7 @@ Claude Code 中配置的 MCP 服务器（位于 `~/.claude.json` 或项目的 `.
   - 有新版本时，可见的年糕会用对话气泡提醒 **“新版本 … 发布了”**（不会抢占输入焦点）。点“看看”确认改动内容，只有点“更新”时才会替换。“不再提醒此版本”只跳过该版本，点 ✕ 则下次检查时再提醒
   - 发现新版本期间，菜单中的“检查更新…”会变成“⬆︎ 有新版本 …”。上次检查的时间也显示在这个菜单中
 - 如果有新版本，点按 **“更新”** 后，会从 GitHub 的发布下载新版本（.zip），确认 `SHA256SUMS.txt` 的校验和、内容（是否为该版本的 OMOCHI AI）和代码签名后替换应用并重新打开（设置、年糕和对话都会保留）。不点按就什么都不做
-  - 如果是用**固定签名**（[让每次更新后不再请求权限](#让每次更新后不再请求权限)）安装的，会先用这台 Mac 的固定签名重新签名新版本再替换，因此 macOS 的权限会保留。过程中 macOS 会询问“codesign 想要使用密钥”，请选择“允许”。如果钥匙串中没有该密钥，则保持发布版的临时签名进行替换
+  - 如果是用**固定签名**（[让每次更新后不再请求权限](#让每次更新后不再请求权限)）安装的，会先用这台 Mac 的固定签名重新签名新版本再替换，因此 macOS 的权限会保留。过程中 macOS 会询问“codesign 想要使用密钥”，请选择“允许”。如果钥匙串中没有该密钥，则保持发布版自身的签名进行替换
   - 有年糕正在工作时不会替换。如果应用是从无法修改的位置（如 .dmg 内）打开的，或者 macOS 阻止了替换（系统设置 › 隐私与安全性 › App 管理），会引导你前往下载页面
 - 在同一界面中点按 **“在终端中更新”**，会在终端中运行要执行的命令（显示在界面上）来更新。如果你是从源代码用 `scripts/install.sh` 安装的，则会执行 `git pull` → 构建 → 替换（保持你自己的签名）
 - 如果要手动替换，下载 .dmg，按照与 [安装](#下载与安装) 相同的方式拖到应用程序文件夹中
@@ -526,7 +526,7 @@ scripts/install.sh
 
 - `scripts/signing.sh create` 会在登录钥匙串中创建 OMOCHI AI 专用的签名证书（自签名），`scripts/install.sh` 会用它签名并安装。macOS 会把“用同一个证书签名的 OMOCHI AI”视为同一个应用，因此文件夹、屏幕录制和辅助功能的权限在之后的更新中也会保留
 - 只有在第一次切换到证书时，才会再请求一次权限（用“全部允许”授予）
-- 之后的更新请用 `scripts/update.sh --source` 安装（.dmg 和 .zip 版本是 ad-hoc 签名，替换后会再次请求权限）
+- 之后的更新请用 `scripts/update.sh --source` 安装（.dmg 和 .zip 版本使用 Developer ID 签名，与这台 Mac 的固定签名不同，替换后会再次请求权限）
 - 用 `scripts/signing.sh status` 查看，用 `scripts/signing.sh delete` 停止使用
 
 ## 权限与安全
@@ -546,7 +546,7 @@ scripts/install.sh
 
 - ⌘L 是全局使用的，因此会与浏览器跳转到地址栏的快捷键冲突。当 `settings.json` 的 `hotKeyPassthroughApps` 中写入了 bundle ID 的应用位于前台时，⌘L 会交还给该应用。如果其他应用已先占用 ⌘L，则改用 ⌃⌥L
 - 退出应用后，正在运行的智能体会被中断（下次启动时会以“中断”保留下来）
-- 发布的 .app 是 ad-hoc 签名，换成新版本后 macOS 会把它视为另一个应用，并再次请求权限。请用 **🔐 权限** 中的“全部允许”清除旧权限并重新授予
+- 自 2.0.2 起，发布的 .app 使用 Developer ID 签名并经过 Apple 公证。只有从 2.0.1 及以前（临时签名）升级时，macOS 才会把它视为另一个应用并再次请求权限，请用 **🔐 权限** 中的“全部允许”清除旧权限并重新授予。自 2.0.2 起，更新到相同签名的版本后权限会保留
 - ChatGPT、Gemini 年糕的工作文件夹如果保持默认的主目录，Codex 沙盒的可写范围、Gemini 自动批准编辑的范围就会是整个主目录。请用聊天中的 📁 选择要工作的项目文件夹
 
 ## 从源码构建
@@ -563,7 +563,7 @@ scripts/install.sh          # 构建后放入应用程序文件夹并启动
 - 先用 `scripts/signing.sh create` 创建签名证书，替换后 macOS 的权限也会保留（[让每次更新后不再请求权限](#让每次更新后不再请求权限)）
 - 更新用 `scripts/update.sh --source`。只构建用 `scripts/build.sh`（→ `dist/OMOCHI AI.app`，适用于这台 Mac 的 CPU），测试用 `scripts/test.sh`（swift test）
 - 应用图标由 `Resources/AppIcon.png`（1024px 的正方形）放入 macOS 图标的圆角框中生成
-- 分发包用 `scripts/release.sh` 生成到 `dist/release/`（universal 的 `OmochiAI.dmg`、`OmochiAI-<版本>.zip`、`SHA256SUMS.txt`）。更新 `VERSION` 和 `CHANGELOG.md` 并提交、push 后，用 `scripts/release.sh --publish` 发布到 GitHub Releases
+- 分发包用 `scripts/release.sh` 生成到 `dist/release/`（universal 的 `OmochiAI.dmg`、`OmochiAI-<版本>.zip`、`SHA256SUMS.txt`）。应用会用 Developer ID 重新签名、经过 Apple 公证并装订（`scripts/notarize.sh`，需要 Xcode、Apple Developer Program 账户和公证凭据 `OMOCHI_NOTARY_PROFILE` 或 `OMOCHI_ASC_KEY_ID`、`OMOCHI_ASC_ISSUER_ID`、`OMOCHI_ASC_KEY_PATH`。没有时可用 `--ad-hoc` 以临时签名构建）。更新 `VERSION` 和 `CHANGELOG.md` 并提交、push 后，用 `scripts/release.sh --publish` 发布到 GitHub Releases
 - **下载次数**：`scripts/downloads.sh` 从 GitHub 读取每个发布的下载次数（`.dmg` = 下载并安装的次数，`.zip` = 应用内“更新”和手动下载 .zip 的次数；`--traffic` 显示最近 14 天的浏览量和 clone 次数，`--json` 输出 JSON）。README 顶部的图表（每日下载量）由 `scripts/download-chart.py` 生成。git clone 是 GitHub 按天统计的人数；.dmg、.zip 为估算（GitHub 只提供累计数，因此把 `stats.json` 中每日记录 `daily`（当时的累计）之间增加的数量，以及开始记录之前按版本的数量 `releases`（该版本为最新版的期间），按时间比例分配到各天）。右上角是累计（与徽章的数字相同）。图表以 `downloads-ja.svg`、`downloads-en.svg`、`downloads-zh.svg` 放在同一个 `stats` 分支上。徽章是 `.dmg`、`.zip` 的下载次数与 git clone 次数（GitHub 统计的每天 clone 人数之和，包括机器人和镜像的 clone；本仓库的 CI 以归档而非 git 获取源代码，因此不计入）的总和。`scripts/download-stats.sh` 重新统计后写入 `stats` 分支的 `stats.json`（明细也在这里），GitHub Actions（`.github/workflows/stats.yml`）每天运行一次。GitHub 只保留最近 14 天的 clone 次数，因此按天累积。要在 Actions 中读取 clone 次数，需要密钥 `TRAFFIC_TOKEN`（仅限本仓库、仅有 Administration 只读权限的 fine-grained 令牌）。没有它时只重新统计发布的下载次数，clone 会在本地运行 `scripts/release.sh --publish` 或 `scripts/download-stats.sh` 时加上。若要在本机每天重新统计，运行 `scripts/download-stats-daily.sh install`（launchd，每天 10:00 和登录时运行；用登录 gh 的账户读取 clone 次数；仅在 Mac 开机的日子运行。用 `uninstall` 停止，用 `status` 查看状态）。每个版本的 .dmg 都使用同一个名称，因此 `releases/latest/download/OmochiAI.dmg` 始终指向最新版本
 
 ## 数据存储位置

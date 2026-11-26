@@ -1,14 +1,23 @@
 #!/bin/bash
 # 配布物を作る：dist/release/ に .dmg・.zip・SHA256SUMS.txt・リリースノート
-#   scripts/release.sh             作るだけ
+#   scripts/release.sh             作るだけ（Developer ID で署名し、Apple の公証を通す：scripts/notarize.sh）
 #   scripts/release.sh --publish   作ったうえで GitHub Releases に v<VERSION> として公開する（gh が必要）
+#   --ad-hoc                       公証をせず、仮の署名（ad-hoc）のまま作る（フォークなど、Developer ID が無いとき）
+# 公証の認証は scripts/notarize.sh の説明のとおり（OMOCHI_NOTARY_PROFILE か OMOCHI_ASC_KEY_ID など。リポジトリには書かない）
 #
 # 手順：VERSION と CHANGELOG.md の「## [x.y.z]」を更新 → コミット → push → scripts/release.sh --publish
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 PUBLISH=0
-[[ "${1:-}" == "--publish" ]] && PUBLISH=1
+ADHOC=0
+for a in "$@"; do
+  case "$a" in
+    --publish) PUBLISH=1 ;;
+    --ad-hoc) ADHOC=1 ;;
+    *) echo "知らない引数です: $a" >&2; exit 2 ;;
+  esac
+done
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
 TAG="v$VERSION"
@@ -29,6 +38,10 @@ if /usr/bin/strings "dist/OMOCHI AI.app/Contents/MacOS/OmochiAI" | grep -q "omoc
 fi
 
 APP="dist/OMOCHI AI.app"
+# Developer ID で署名し直して Apple の公証を通し、staple する（初回の「このまま開く」が要らず、同じ署名の版への更新で macOS の許可が続く）
+if (( ! ADHOC )); then
+  scripts/notarize.sh "$APP"
+fi
 codesign --verify --strict --verbose=2 "$APP"
 # grep -q に直接つなぐと、pipefail のもとで codesign が SIGPIPE で失敗扱いになることがあるので、いったん変数に受ける
 SIG="$(codesign -d --verbose=2 "$APP" 2>&1)"
@@ -66,6 +79,17 @@ awk -v v="$VERSION" '
   on && /^\[[0-9.]+\]: / { next }
   on { print }
 ' CHANGELOG.md > "$NOTES"
+if (( ADHOC )); then
+  OPEN_JA='初回だけ macOS が起動を止めます（Apple の公証を受けていないため）。ダイアログを閉じ、**システム設定 › プライバシーとセキュリティ** の「このまま開く」で許可してください'
+  OPEN_EN='macOS blocks the first launch because the app is not notarized. Close the dialog and click **Open Anyway** in **System Settings › Privacy & Security**'
+  OPEN_ZH='由于没有经过 Apple 公证，首次打开会被 macOS 阻止。关闭对话框后，在 **系统设置 › 隐私与安全性** 中点击 **仍要打开**'
+  PERM_JA='新しい版に入れ替えたときは、画面収録・アクセシビリティの許可をもう一度求められることがあります。'
+else
+  OPEN_JA='開きます。Developer ID で署名し Apple の公証を受けているので、「インターネットからダウンロードされたアプリケーションです」と出たら「開く」を押すだけです'
+  OPEN_EN='Open it. The app is signed with a Developer ID and notarized by Apple, so if macOS says it was downloaded from the internet, just click **Open**'
+  OPEN_ZH='打开即可。本应用已使用 Developer ID 签名并经过 Apple 公证，如果提示“这是从互联网下载的应用程序”，点按“打开”即可'
+  PERM_JA='2.0.1 以前（仮の署名）から上げたときだけ、画面収録・アクセシビリティの許可をもう一度求められることがあります。2.0.2 からは、同じ署名の版への更新で許可が続きます。'
+fi
 cat >> "$NOTES" <<NOTE
 
 ---
@@ -73,17 +97,17 @@ cat >> "$NOTES" <<NOTE
 ### インストール
 
 1. \`OmochiAI.dmg\` を開き、OMOCHI AI を Applications へドラッグ
-2. 初回だけ macOS が起動を止めます（Apple の公証を受けていないため）。ダイアログを閉じ、**システム設定 › プライバシーとセキュリティ** の「このまま開く」で許可してください
+2. ${OPEN_JA}
 3. 使う AI（Claude Code・Codex CLI・Gemini CLI のどれか）にログインします。初めて開いたときの「アカウントと AI」の画面から、入っていないものは許可すれば入れてそのままログインできます
 
-エージェントは確認なしでファイルの作成・編集やコマンドの実行を行い（Claude Code の Auto モード）、あなたの Claude Code の使用量を消費します。新しい版に入れ替えたときは、画面収録・アクセシビリティの許可をもう一度求められることがあります。
+エージェントは確認なしでファイルの作成・編集やコマンドの実行を行い（Claude Code の Auto モード）、あなたの Claude Code の使用量を消費します。${PERM_JA}
 
 macOS 14 以降・Apple シリコン / Intel 両対応（universal）。チェックサムは SHA256SUMS.txt。
 
 ### Install (English)
 
 1. Open \`OmochiAI.dmg\` and drag OMOCHI AI to Applications
-2. macOS blocks the first launch because the app is not notarized. Close the dialog and click **Open Anyway** in **System Settings › Privacy & Security**
+2. ${OPEN_EN}
 3. Sign in to the AI you use (Claude Code, Codex CLI or Gemini CLI). The “Accounts & AI” screen shown at first launch can also install a missing one, once you allow it, and start its sign-in
 
 Agents edit files and run commands without asking (Claude Code Auto mode) and use your Claude Code usage. Switch the display language from the menu bar omochi › 🌐 Language. See [README.en.md](https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.en.md).
@@ -91,7 +115,7 @@ Agents edit files and run commands without asking (Claude Code Auto mode) and us
 ### 安装（简体中文）
 
 1. 打开 \`OmochiAI.dmg\`，把 OMOCHI AI 拖到“应用程序”
-2. 由于没有经过 Apple 公证，首次打开会被 macOS 阻止。关闭对话框后，在 **系统设置 › 隐私与安全性** 中点击 **仍要打开**
+2. ${OPEN_ZH}
 3. 登录要使用的 AI（Claude Code、Codex CLI 或 Gemini CLI 之一）。首次打开时的“账户与 AI”界面中，未安装的也可以在你允许后安装并直接登录
 
 智能体会在不经确认的情况下编辑文件、执行命令（Claude Code 的 Auto 模式），并消耗你的 Claude Code 用量。可以在菜单栏的年糕 › 🌐 语言 中切换显示语言。详见 [README.zh-CN.md](https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.zh-CN.md)。

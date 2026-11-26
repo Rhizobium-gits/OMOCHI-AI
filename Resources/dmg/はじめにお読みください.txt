@@ -4,16 +4,9 @@ OMOCHI AI のインストール
 1. 「OMOCHI AI」を右の「Applications」フォルダへドラッグします。
 2. アプリケーションフォルダの OMOCHI AI を開きます。
 
-初回だけ「開けません」「Apple は検証できませんでした」と表示されます。
-OMOCHI AI は Apple の開発者署名・公証を受けていない個人の開発物のためです。
-内容を確認したうえで開く場合は、次の手順で許可してください（macOS の正規の手順です）。
-
-  1. 表示されたダイアログは「完了」で閉じる
-  2. システム設定 › プライバシーとセキュリティ を開く
-  3. 下の方にある OMOCHI AI がブロックされたという表示の横の
-     「このまま開く」を押し、パスワード（または Touch ID）で確認する
-
-2 回目以降は普通に開けます。
+OMOCHI AI は Developer ID で署名し、Apple の公証を受けています。
+初回に「インターネットからダウンロードされたアプリケーションです」と
+表示されたら「開く」を押してください。
 
 必要なもの
 - macOS 14 以降（システムの音の文字起こしは macOS 26 以降）
@@ -26,10 +19,9 @@ https://github.com/Rhizobium-gits/OMOCHI-AI
 
 Installing OMOCHI AI
 -----------------------
-Drag "OMOCHI AI" to "Applications" and open it. Because the app is not
-notarized by Apple, macOS blocks the first launch. To allow it, close the
-dialog, open System Settings > Privacy & Security, and click "Open Anyway"
-next to the message about OMOCHI AI. Requires macOS 14+ and Claude Code
+Drag "OMOCHI AI" to "Applications" and open it. The app is signed with a
+Developer ID and notarized by Apple; if macOS says it was downloaded from
+the internet, click "Open". Requires macOS 14+ and Claude Code
 (the `claude` CLI) installed and signed in.
 Switch the display language from the menu bar omochi > Language.
 Details: https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.en.md
@@ -37,8 +29,8 @@ Details: https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.en.md
 
 安装 OMOCHI AI
 -----------------
-把“OMOCHI AI”拖到“Applications”（应用程序）后打开。由于没有经过 Apple 公证，
-首次打开会被 macOS 阻止。请关闭对话框，打开 系统设置 > 隐私与安全性，
-在关于 OMOCHI AI 的提示旁点击“仍要打开”。需要 macOS 14 及以上，并已安装、
+把“OMOCHI AI”拖到“Applications”（应用程序）后打开。本应用已使用 Developer ID
+签名并经过 Apple 公证，如果提示“这是从互联网下载的应用程序”，点击“打开”即可。
+需要 macOS 14 及以上，并已安装、
 登录 Claude Code（claude 命令）。可以在菜单栏的年糕 > 语言 中切换显示语言。
 详情：https://github.com/Rhizobium-gits/OMOCHI-AI/blob/main/README.zh-CN.md
