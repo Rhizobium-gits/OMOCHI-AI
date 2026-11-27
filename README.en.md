@@ -83,7 +83,7 @@ Omochi behave like mochi (since 2.0).
 |---|---|---|
 | **✂️ Tear off** | **⌘-drag** an omochi (or right-click › ✂️ Tear off) | A mochi string stretches and necks down, then snaps: you get a **clone with the same conversation**. Ask the clone for a different approach and try both in parallel. The clone can use another AI too (ChatGPT and Gemini clones start with the conversation handed to them) |
 | **🍡 Stick together** | **Put one omochi on top of another, wait a moment (0.4 s) until the ring turns white, then drop it** (or right-click › 🍡 Stick together) | Choose “combine into one (take in the other's result)”, “keep this one” or “keep that one”. One melts away and the other absorbs it; links, subordinates, anko and skewer position carry over |
-| **Stretch** | Link two omochi | Links are pulled mochi strings: thinner the farther apart, sagging when idle and **pulled taut** while work flows or waits. Requests and results travel as **mochi lumps** inside the string |
+| **Stretch** | Bring two omochi together until they touch | Links are pulled mochi strings: thinner the farther apart, sagging when idle and **pulled taut** while work flows or waits. Requests and results travel as **mochi lumps** inside the string |
 | **🍡 Dango skewer** | Menu bar or right-click › 🍡 Dango skewer | Choose which omochi does what at each step and put them on a skewer; the result of each step flows to the next (e.g. research → summarize → check). **Save it as a recipe** to run it again with fresh omochi (“Mitarashi” and “Three-color dango” are built in). The first omochi's chat also gets “🍡 Run down the skewer”. Moving any omochi on a skewer moves the whole skewer (hold ⌥ when releasing to pull it off) |
 | **🍊 Kagami mochi** | **Put an omochi on another's head, wait a moment (0.4 s), then drop it** | The top one becomes the leader (with a daidai orange), the one below a subordinate. The leader hands out work; subordinates report back. Moving the leader moves the stack. Autonomous organization lays out its teams as a skewer (pipelines) or a kagami mochi (everything else) |
 | **🫓 Puff up · 🔥 Char** | (automatic) | The more the conversation (context) grows, the more the omochi puffs up; near the limit it chars (Claude omochi). **🧽 Scrape off the char** compacts the conversation (Claude Code's `/compact`) |
@@ -208,7 +208,7 @@ The chat window that opens when you tap an omochi is a normal Mac window (minimi
 | **Tap** | Open the chat window (Enter to send — queues while working / ⇧Enter for a new line / ⌘. to stop the task / Esc to close) |
 | **↑ / ↓** (input field) | Recall instructions sent earlier in that session (↑ on the first line, ↓ on the last line; includes instructions typed in VS Code or Terminal) |
 | **Long-press** | Remove that omochi (if it's working, asks you to choose “Keep Working, Remove Only the Omochi” or “Cancel Work and Remove”) |
-| **Drag** | Move it anywhere (the position is saved). Drop it near another omochi to link them (even overlapping, a quick drop links) · **wait a moment on top before dropping to stick together** · **wait a moment on another's head before dropping for a kagami mochi** |
+| **Drag** | Move it anywhere (the position is saved). Bring it until it touches or overlaps another omochi and drop it to link them (a quick drop links even when overlapping; apart, nothing happens) · **wait a moment on top before dropping to stick together** · **wait a moment on another's head before dropping for a kagami mochi** |
 | **⌘-drag** | **Tear off** a clone that shares the conversation |
 | **Drop files** | Choose **make it anko** (daifuku: always-referenced material) or attach to the next prompt |
 | **⇧-drag** | Move the whole team connected by lines |
@@ -287,7 +287,7 @@ You can choose which AI runs your agents: **Claude (Claude Code), ChatGPT (Codex
   <img src="docs/media/demo-link.gif" width="820" alt="Bringing an omochi close so the other lights up and they connect with a line, moving the whole team with ⇧, detaching with ⌥, and also cutting the link with the ✂ on the line">
 </p>
 
-1. Drag an omochi **close to** another one, and the other glows with a dotted ring and shows “Release to link with X”. Release it, and they link. A connected cluster is one team
+1. Drag an omochi **until it touches** another one, and the other glows with a dotted ring and shows “Release to link with X”. Release it, and they link. A connected cluster is one team
    - You can also link omochi that are far apart with right-click › Connect. Hold ⇧ while dragging to move the whole team
    - “👥 Team with X” appears at the top of the chat window, so you can see whom you can hand work to
 2. Ask any of them something like “create teammates and split the work” or “have a reviewer check it”. The agent uses OMOCHI AI's tools:

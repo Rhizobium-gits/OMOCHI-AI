@@ -185,7 +185,8 @@ final class JellyManager {
     private func handleWatchFinding(_ f: WatchFinding, target: JellyController? = nil) {
         guard watchBubble == nil, let c = target ?? watchingControllers.first, let rt = runtimes[c.record.id] else { return }
         let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
-        let url = rt.dir.appendingPathComponent("attachments", isDirectory: true).appendingPathComponent("watch-\(stamp).png")
+        // 送るまでは「watch-pending-」（押されないままアプリが終わっても、次の起動と定期の片付けで消える）
+        let url = rt.dir.appendingPathComponent("attachments", isDirectory: true).appendingPathComponent("watch-pending-\(stamp).png")
         guard ScreenWatcher.savePNG(f.image, to: url) else { return }
         // 押されなければ 10 分で消す
         watchImages[url] = Timer.scheduledTimer(withTimeInterval: 600, repeats: false) { [weak self] _ in self?.discardWatchImage(url) }
@@ -197,8 +198,10 @@ final class JellyManager {
                 guard let c else { self.discardWatchImage(url); return }
                 self.watchImages[url]?.invalidate()
                 self.watchImages[url] = nil     // 送ったものは添付として残す（画面の画像と同じく 7 日で片付く）
+                let sent = url.deletingLastPathComponent().appendingPathComponent("watch-\(stamp).png")
+                let image = (try? FileManager.default.moveItem(at: url, to: sent)) != nil ? sent : url
                 self.openChat(for: c)
-                self.chats[c.record.id]?.sendWatchFinding(image: url, appName: f.appName, windowTitle: f.windowTitle)
+                self.chats[c.record.id]?.sendWatchFinding(image: image, appName: f.appName, windowTitle: f.windowTitle)
                 AppLog.write("watch: sent to agent \(c.record.number)")
             },
             onDismiss: { [weak self] in
@@ -1655,7 +1658,8 @@ extension JellyManager: PromptQueueHost {
     func debugQueueLines() -> [String] {
         var out = queues.debugLines()
         for c in controllers {
-            if let t = chats[c.record.id]?.shownQueueTexts, !t.isEmpty { out.append("queue-view \(c.record.number): \(t.joined(separator: " | "))") }
+            // 指示の文はログに書かない（AppLog の決まり）。数と長さだけ
+            if let t = chats[c.record.id]?.shownQueueTexts, !t.isEmpty { out.append("queue-view \(c.record.number): \(t.count) rows, chars \(t.map(\.count))") }
         }
         return out
     }

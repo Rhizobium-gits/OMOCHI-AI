@@ -28,11 +28,27 @@ enum ChatMedia {
         // Web のページ（先に見つけて、その中のパスはファイルとして拾わない）
         let urlRe = try! NSRegularExpression(pattern: #"https?://[^\s<>()\[\]"'`]+"#, options: [.caseInsensitive])
         let urlMatches = urlRe.matches(in: text, range: NSRange(location: 0, length: ns.length))
-        // ファイルのパス（/ か ~ で始まり、画像・PDF の拡張子で終わる。Markdown の ( ) やバッククォートの中も）
-        let pathRe = try! NSRegularExpression(pattern: #"(?:~|/)[^\s"'`<>()\[\]]*?\.(?:png|jpe?g|gif|heic|heif|webp|tiff?|bmp|pdf)\b"#, options: [.caseInsensitive])
-        for m in pathRe.matches(in: text, range: NSRange(location: 0, length: ns.length))
-        where !urlMatches.contains(where: { NSIntersectionRange($0.range, m.range).length > 0 }) {
-            var p = ns.substring(with: m.range)
+        // ファイルのパス（/ か ~ で始まり、画像・PDF の拡張子で終わる。Markdown の ( ) やバッククォートの中も）。
+        // 拡張子を先に見つけ、そこから区切り（空白・引用符・括弧）まで最大 1024 文字だけ戻ってパスの始まりを探す。
+        // （前は「/ から拡張子まで」を正規表現で探していて、/ の多い長い文〈base64 など〉では時間が長さの 2 乗になり、
+        //   返答の長いチャットを開いているあいだ、アプリ全体が何秒も固まっていた）
+        let extRe = try! NSRegularExpression(pattern: #"\.(?:png|jpe?g|gif|heic|heif|webp|tiff?|bmp|pdf)\b"#, options: [.caseInsensitive])
+        let stops = CharacterSet(charactersIn: "\"'`<>()[]").union(.whitespacesAndNewlines)
+        var prevEnd = 0
+        for e in extRe.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            if out.count >= limit { break }
+            let end = NSMaxRange(e.range)
+            var i = e.range.location
+            let floor = max(prevEnd, i - 1024)
+            while i > floor, let u = UnicodeScalar(ns.character(at: i - 1)), !stops.contains(u) { i -= 1 }
+            // その区切りのあとの、最初の / か ~ から
+            var startAt: Int?
+            for j in i..<e.range.location where ns.character(at: j) == 0x2F || ns.character(at: j) == 0x7E { startAt = j; break }
+            guard let s0 = startAt else { continue }
+            let range = NSRange(location: s0, length: end - s0)
+            prevEnd = end
+            if urlMatches.contains(where: { NSIntersectionRange($0.range, range).length > 0 }) { continue }
+            var p = ns.substring(with: range)
             if p.hasPrefix("~") { p = home + p.dropFirst() }
             guard p.hasPrefix("/"), fileExists(p) else { continue }
             // リンク（シンボリックリンク）は行き先で扱う（「report.png」という名前で実はスクリプト、を開かない）
@@ -163,6 +179,18 @@ final class ChatMediaCache {
         var host: String?
     }
 
+    /// 自分の打った URL でも、自動で読みに行くのは https で、? の付かない、外のサイトのページだけ。
+    /// ログイン・パスワードの再設定・「承認する」などの使い捨てのリンク（たいてい ? の後ろに合言葉が付く）や、
+    /// この Mac・家や会社の中のネットワークの管理画面を、プレビューのために開いて使ってしまわないように（押せば読む）
+    static func safeToFetchAutomatically(_ u: URL) -> Bool {
+        guard u.scheme?.lowercased() == "https", u.query == nil, u.user == nil, u.password == nil,
+              let host = u.host?.lowercased(), host.contains("."), !host.hasSuffix(".local"), !host.hasSuffix(".internal"),
+              !host.hasSuffix(".lan"), !host.hasSuffix(".home.arpa"), !host.hasSuffix(".localhost") else { return false }
+        // IP アドレスで書いたものは読まない（外のサイトは名前で書かれる）
+        if host.range(of: #"^[0-9.]+$"#, options: .regularExpression) != nil || host.contains(":") { return false }
+        return true
+    }
+
     /// autoWeb：Web のページを自動で読みに行ってよいか（ユーザー自身が打った URL だけ true）
     func preview(_ r: ChatMedia.Ref, webPreviews: Bool, autoWeb: Bool = true) -> Preview? {
         switch r.kind {
@@ -179,7 +207,7 @@ final class ChatMediaCache {
             guard webPreviews else { return nil }
             let host = r.url.host ?? r.url.absoluteString
             lock.lock()
-            let allowed = autoWeb || allowedWeb.contains(r.url) || links[r.url] != nil
+            let allowed = (autoWeb && ChatMediaCache.safeToFetchAutomatically(r.url)) || allowedWeb.contains(r.url) || links[r.url] != nil
             lock.unlock()
             guard allowed else {
                 // 押したときだけ読みに行く

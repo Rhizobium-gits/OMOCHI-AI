@@ -25,7 +25,10 @@ enum ScreenIntent {
     /// 「一覧を表示して」「ポートが開いているか」「このコードを直して」（コードを貼った場合）のような普通の指示で
     /// 画面全体を撮って送らないよう、画面・ウィンドウ・ページをはっきり指すものだけにしている
     static let phrases: [String] = [
-        "この画面", "今の画面", "いまの画面", "画面の", "画面に", "画面上", "画面を見", "画面で",
+        // 「ログイン画面のバリデーション」「設定画面に項目を足す」のような作る画面の話では撮らないよう、
+        // 「画面の」「画面に」「画面で」だけでは数えない（2.0.3）
+        "この画面", "今の画面", "いまの画面", "画面上", "画面を見", "画面に出て", "画面に表示", "画面に映", "画面に写",
+        "画面で見", "画面の右", "画面の左", "画面の真ん中", "画面の隅",
         "表示されて", "表示中の", "映って", "写って", "今開いて", "いま開いて", "見えている", "見えてる",
         "このウィンドウ", "このページ", "このサイト", "このタブ", "このスライド", "スクショ", "スクリーンショット",
         "this screen", "my screen", "on screen", "on the screen", "screenshot", "currently open",
@@ -77,7 +80,10 @@ struct ScreenContext {
         ctx.windowTitle = win?.title
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            let me = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
+            // OMOCHI AI 自身と、パスワード・鍵のアプリ（見守りと同じ。WatchMatcher.excludedBundleIDs）は写さない
+            let me = content.applications.filter {
+                $0.processID == ProcessInfo.processInfo.processIdentifier || WatchMatcher.excludedBundleIDs.contains($0.bundleIdentifier)
+            }
             var displays = content.displays
             if target == .activeDisplay {
                 let id = win.flatMap { displayID(containing: $0.bounds) } ?? displayUnderMouse() ?? CGMainDisplayID()

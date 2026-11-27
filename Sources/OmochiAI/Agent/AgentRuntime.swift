@@ -632,6 +632,8 @@ final class AgentRuntime {
         for name in AgentRuntime.scratchNames { try? fm.removeItem(at: dir.appendingPathComponent(name)) }
     }
 
-    /// おもちを消したときに消すもの（生イベント・画面の画像・ターミナルで開く用のスクリプト）
-    static let scratchNames = ["events.jsonl", "events.1.jsonl", "attachments", "screens", "open-in-claude.command"]
+    /// おもちを消したときに消すもの（生イベント・画面の画像・ターミナルで開く用のスクリプト・分身に渡す元の会話・
+    /// チームの案内と MCP の設定）。履歴（history.json）と設定（meta.json）は残す
+    static let scratchNames = ["events.jsonl", "events.1.jsonl", "attachments", "screens", "open-in-claude.command",
+                               "fork-context.md", "system-prompt.md", "mcp.json", "gemini-system-defaults.json"]
 }

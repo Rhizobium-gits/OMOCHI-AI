@@ -38,7 +38,7 @@ import Testing
         let app = FileManager.default.temporaryDirectory.appendingPathComponent("jf-sig-\(UUID().uuidString)/OMOCHI AI.app")
         try FileManager.default.createDirectory(at: app.appendingPathComponent("Contents"), withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
-        #expect(AppUpdater.signingStep(new: app, current: app).isRefuse)
+        #expect(AppUpdater.signingStep(new: app, current: app, release: nil).isRefuse)
         #expect(!AppUpdater.satisfiesCurrent(new: app, current: app))
     }
 
@@ -63,7 +63,9 @@ import Testing
 
         // 仮の署名どうし：そのまま
         #expect(AppUpdater.currentSigning(current) == .adhoc)
-        #expect(AppUpdater.signingStep(new: release, current: current) == .keep)
+        #expect(AppUpdater.signingStep(new: release, current: current, release: nil) == .keep)
+        // ただし配布版の署名（Developer ID・公証）でなければ、いまの版が仮の署名でも入れ替えない（2.0.3）
+        #expect(AppUpdater.signingStep(new: release, current: current).isRefuse)
 
         // いまの版を固定の署名にする（scripts/build.sh --sign と同じ形）
         try run("/usr/bin/codesign", AppUpdater.resignArguments(current, sha1: sha1))
@@ -75,14 +77,14 @@ import Testing
         // 1.2.1 まではここで止まっていた（配布版はいまの版の署名の決まりを満たさない）
         #expect(!AppUpdater.satisfiesCurrent(new: release, current: current))
         // 鍵があれば署名し直す・無ければ配布版の署名のまま
-        #expect(AppUpdater.signingStep(new: release, current: current) == .resign(sha1: sha1))
-        #expect(AppUpdater.signingStep(new: release, current: current, hasKey: { _ in false }) == .releaseSignature)
+        #expect(AppUpdater.signingStep(new: release, current: current, release: nil) == .resign(sha1: sha1))
+        #expect(AppUpdater.signingStep(new: release, current: current, hasKey: { _ in false }, release: nil) == .releaseSignature)
 
         // 署名し直すと、いまの版と同じ証明書の署名になり（macOS の許可が続く）、エンタイトルメントと Hardened Runtime も残る
         let entitlementsBefore = try signingInfo(release)[kSecCodeInfoEntitlementsDict as String] as? [String: Any]
         try run("/usr/bin/codesign", AppUpdater.resignArguments(release, sha1: sha1))
         #expect(AppUpdater.satisfiesCurrent(new: release, current: current))
-        #expect(AppUpdater.signingStep(new: release, current: current) == .keep)
+        #expect(AppUpdater.signingStep(new: release, current: current, release: nil) == .keep)
         let info = try signingInfo(release)
         let flags = (info[kSecCodeInfoFlags as String] as? NSNumber)?.uint32Value ?? 0
         #expect(flags & SecCodeSignatureFlags.runtime.rawValue != 0)
@@ -95,7 +97,7 @@ import Testing
         let tampered = try copy("tampered")
         try run("/usr/bin/codesign", AppUpdater.resignArguments(tampered, sha1: sha1))
         try Data("x".utf8).write(to: tampered.appendingPathComponent("Contents/Resources/update.sh"))
-        #expect(AppUpdater.signingStep(new: tampered, current: current).isRefuse)
+        #expect(AppUpdater.signingStep(new: tampered, current: current, release: nil).isRefuse)
         #expect(!AppUpdater.satisfiesCurrent(new: tampered, current: current))
 
         // 認証局の証明書（Developer ID など）で署名された版からは、別の署名の版に入れ替えない
@@ -105,8 +107,8 @@ import Testing
             #expect(AppUpdater.selfSignedCertificate(byCA) == nil)
             #expect(AppUpdater.currentSigning(byCA) == .issued)
             let fresh = try copy("fresh")
-            #expect(AppUpdater.signingStep(new: fresh, current: byCA).isRefuse)
-            #expect(AppUpdater.signingStep(new: release, current: byCA).isRefuse)
+            #expect(AppUpdater.signingStep(new: fresh, current: byCA, release: nil).isRefuse)
+            #expect(AppUpdater.signingStep(new: release, current: byCA, release: nil).isRefuse)
         }
     }
 
@@ -126,5 +128,14 @@ import Testing
         try p.run()
         p.waitUntilExit()
         #expect(p.terminationStatus == 0, "\(path) \(args.joined(separator: " "))")
+    }
+
+    /// 配布版の署名の決まりは読める形で、scripts/update.sh と同じ
+    @Test func releaseRequirementParsesAndMatchesTheScript() throws {
+        var req: SecRequirement?
+        #expect(SecRequirementCreateWithString(AppUpdater.releaseRequirementText as CFString, [], &req) == errSecSuccess)
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let script = try String(contentsOf: root.appendingPathComponent("scripts/update.sh"), encoding: .utf8)
+        #expect(script.contains("RELEASE_REQ='" + AppUpdater.releaseRequirementText + "'"))
     }
 }

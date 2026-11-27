@@ -16,8 +16,11 @@ final class ClosureMenuItem: NSMenuItem {
 
     required init(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
+    /// 開発用の使い方の記録に、項目の名前を残してよいか（会話の題名など、指示の文から作った項目は false）
+    var journalTitle = true
+
     @objc private func fire() {
-        DevJournal.log("menu", ["item": title])
+        DevJournal.log("menu", ["item": journalTitle ? title : "(conversation)"])
         handler()
     }
 }

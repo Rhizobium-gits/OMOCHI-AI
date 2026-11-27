@@ -11,6 +11,11 @@
     const s = String(h || "").trim();
     return /^(https?:\/\/|mailto:)/i.test(s) ? s : null;
   };
+  // 見えない文字（向きを変える制御文字・幅 0 の文字）。コードの中では印にして見せ、写すときは外す
+  // （見えているコマンドと、写して貼ったときのコマンドが違う、をさせない。絵文字をつなぐ U+200D は除く）
+  const HIDDEN = /[\u200B\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
+  const stripHidden = (s) => String(s).replace(HIDDEN, "");
+  const showHidden = (s) => String(s).replace(HIDDEN, (c) => "⟦U+" + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0") + "⟧");
 
   function tex(src, display) {
     if (typeof katex === "undefined") return '<code class="math-error">' + esc(src) + "</code>";
@@ -55,7 +60,7 @@
     // 生の HTML は文字として
     html(token) { return esc(token.text || token.raw || ""); },
     code(token) {
-      const text = token.text || "";
+      const text = showHidden(token.text || "");
       const l = langOf(token.lang);
       if (l === "mermaid") {
         // 図の元の文はコードの中に置く（属性に入れると、「-->」を含む値を DOMPurify が消してしまう）
@@ -74,7 +79,9 @@
       const inner = this.parser.parseInline(token.tokens || []);
       const href = safeHref(token.href);
       if (!href) return inner;
-      return '<a href="' + esc(href) + '"' + (token.title ? ' title="' + esc(token.title) + '"' : "") + ">" + inner + "</a>";
+      // 行き先はいつもポインタを載せると見える（文字が別の URL に見せかけていても分かるように）
+      const title = token.title ? token.title + " — " + href : href;
+      return '<a href="' + esc(href) + '" title="' + esc(title) + '">' + inner + "</a>";
     },
     // 画像は読みに行かない（リンクにする。手元の画像・PDF のファイルは、アプリが文の下にサムネイルで出す）
     image(token) {
@@ -99,5 +106,5 @@
     return html;
   }
 
-  root.JFRender = { markdown, escape: esc, safeHref };
+  root.JFRender = { markdown, escape: esc, safeHref, stripHidden, showHidden };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -48,6 +48,8 @@ final class ChatTranscriptView: NSView, WKNavigationDelegate {
         web.navigationDelegate = self
         web.allowsBackForwardNavigationGestures = false
         web.allowsMagnification = false
+        // 強めのクリックでのリンクのプレビューは、ページをその場で読み込んでしまう（openLink の確認を通らない）ので出さない
+        web.allowsLinkPreview = false
         // 窓のすりガラスの上に重ねるので、WebKit の白い背景を描かない（無い版では何もしない）
         if web.responds(to: Selector(("_setDrawsBackground:"))) { web.setValue(false, forKey: "drawsBackground") }
         web.underPageBackgroundColor = .clear

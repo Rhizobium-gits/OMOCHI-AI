@@ -160,11 +160,12 @@ enum MochiPlay {
         return linkSpecial ? (sp.target, .link, sp.kind, started) : (nil, nil, sp.kind, started)
     }
 
-    /// 動かしているおもちの中心と、相手の中心のずれ（pt）・体の幅（pt）から、置いたら何が起きるか。
-    /// 真上に重なる → くっつく、相手の頭の上 → 上に載る（鏡餅）、近く → つながる
+    /// 動かしているおもちの中心と、相手の中心のずれ（pt）・窓の幅（pt）から、置いたら何が起きるか。
+    /// 真上に重なる → くっつく、相手の頭の上 → 上に載る（鏡餅）、体がふれる・重なるくらい → つながる。
+    /// 頭の上の範囲は、つながる範囲（linkReach）の中に収める（2.0.3）
     static func dropKind(dx: CGFloat, dy: CGFloat, width w: CGFloat) -> DropKind? {
         let d = hypot(dx, dy)
-        if abs(dx) <= w * 0.34, dy >= w * 0.2, dy <= w * 0.78 { return .stack }
+        if abs(dx) <= w * 0.28, dy >= w * 0.2, dy <= w * 0.64 { return .stack }
         if d <= w * 0.3 { return .merge }
         if d <= w * TeamCoordinator.linkReach { return .link }
         return nil

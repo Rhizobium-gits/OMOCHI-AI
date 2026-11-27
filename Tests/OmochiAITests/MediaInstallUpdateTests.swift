@@ -210,7 +210,7 @@ import Testing
         #expect(AppUpdater.bundleProblem(app, version: "1.0.6", bundleID: "ai.omochi.desktop.orgtest") != nil)
         #expect(AppUpdater.bundleProblem(app, version: "1.0.6", bundleID: nil) != nil)
         // 署名の無いものは通さない
-        #expect(AppUpdater.signingStep(new: app, current: app).isRefuse)
+        #expect(AppUpdater.signingStep(new: app, current: app, release: nil).isRefuse)
     }
 
     /// 実際のリリースで、ダウンロード → チェックサム → 展開 → 中身と署名の確認までを通す（ネットにつなぐので OMOCHI_LIVE_UPDATE_TEST=1 のときだけ）
@@ -236,10 +236,10 @@ import Testing
         d.waitUntilExit()
         let app = dir.appendingPathComponent("new/OMOCHI AI.app")
         #expect(AppUpdater.bundleProblem(app, version: r.version, bundleID: "ai.omochi.desktop") == nil)
-        #expect(AppUpdater.signingStep(new: app, current: app) == .keep)
+        #expect(AppUpdater.signingStep(new: app, current: app, release: nil) == .keep)
         if FileManager.default.fileExists(atPath: "/Applications/OMOCHI AI.app") {
             print("live: installed adhoc=\(AppUpdater.isAdhoc(URL(fileURLWithPath: "/Applications/OMOCHI AI.app"))) release adhoc=\(AppUpdater.isAdhoc(app))",
-                  "vs installed:", AppUpdater.signingStep(new: app, current: URL(fileURLWithPath: "/Applications/OMOCHI AI.app")))
+                  "vs installed:", AppUpdater.signingStep(new: app, current: URL(fileURLWithPath: "/Applications/OMOCHI AI.app"), release: nil))
         }
     }
 
@@ -444,6 +444,8 @@ final class RecordingBackend: AgentBackend {
         var env = ProcessInfo.processInfo.environment
         env["OMOCHI_RELEASE_JSON"] = json.path
         env["OMOCHI_UPDATE_TEST"] = "1"
+        // 偽のアプリは手元で署名したものなので、配布版の署名の決まりは外す
+        env["OMOCHI_RELEASE_REQ"] = ""
         p.environment = env
         let out = Pipe()
         p.standardOutput = out
@@ -770,7 +772,7 @@ import JavaScriptCore
         #expect(h.contains("&lt;script&gt;"))
         let l = md("[押す](javascript:alert(1)) と [ok](https://example.com)")
         #expect(!l.contains("javascript:") || !l.contains("href=\"javascript"))
-        #expect(l.contains("<a href=\"https://example.com\">ok</a>"))
+        #expect(l.contains("<a href=\"https://example.com\" title=\"https://example.com\">ok</a>"))
         // 画像は読みに行かない（リンクにする）
         let i = md("![グラフ](https://example.com/chart.png)")
         #expect(!i.contains("<img"))

@@ -18,6 +18,9 @@
         startOnLoad: false, securityLevel: "strict", htmlLabels: false,
         flowchart: { htmlLabels: false }, theme: dark() ? "dark" : "default",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif",
+        // 図の中の %%{init}%% で変えられないもの（themeCSS で図をチャット全体に重ねる、などをさせない）
+        secure: ["secure", "securityLevel", "startOnLoad", "maxTextSize", "suppressErrorRendering", "maxEdges",
+                 "themeCSS", "themeVariables", "theme", "darkMode", "fontFamily", "altFontFamily", "htmlLabels", "flowchart"],
       });
     } catch (e) {}
   }
@@ -75,7 +78,8 @@
       b.addEventListener("click", (e) => {
         e.preventDefault();
         const code = pre.querySelector("code");
-        post({ type: "copy", text: code ? code.textContent : pre.textContent });
+        // 見えない向きの制御文字・幅 0 の文字は写さない（見えているコマンドと違うものを写させない）
+        post({ type: "copy", text: JFRender.stripHidden(code ? code.textContent : pre.textContent) });
         b.textContent = window.JF_COPIED_LABEL || "Copied";
         setTimeout(() => { b.textContent = window.JF_COPY_LABEL || "Copy"; }, 1400);
       });

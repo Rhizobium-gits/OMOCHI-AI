@@ -237,14 +237,16 @@ import Testing
 
 @Suite struct ScreenIntentTests {
     @Test func explicitScreenReferencesTrigger() {
-        for t in ["この画面のエラーを直して", "表示されているボタンの意味は？", "スクショを見て", "what's on my screen?", "このページを要約して"] {
+        for t in ["この画面のエラーを直して", "表示されているボタンの意味は？", "スクショを見て", "what's on my screen?", "このページを要約して",
+                  "画面に出ているエラーを直して", "画面の右のボタンは何？"] {
             #expect(ScreenIntent.refersToScreen(t), "\(t)")
         }
     }
 
     @Test func ordinaryInstructionsDoNotTrigger() {
         for t in ["ファイル一覧を表示して", "3000 番ポートが開いているか確認して", "このコードを直して\n```swift\nlet a = 1\n```",
-                  "ログを見てる時間を減らしたい", "このエラーの原因は？ TypeError: x is undefined", "README を直して"] {
+                  "ログを見てる時間を減らしたい", "このエラーの原因は？ TypeError: x is undefined", "README を直して",
+                  "ログイン画面のバリデーションを直して", "設定画面に項目を追加して", "スマホ画面でのレイアウトを整えて"] {
             #expect(!ScreenIntent.refersToScreen(t), "\(t)")
         }
     }

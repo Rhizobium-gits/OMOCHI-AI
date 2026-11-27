@@ -36,11 +36,13 @@ enum LogRotation {
     }
 }
 
-/// 起動時の片付け：エージェントに渡した画面の画像は 7 日で消す（会話の中身は Claude Code のセッションに残る）
+/// 片付け（起動時と、動いている間 6 時間ごと）：エージェントに渡した画面の画像（screen-・見守りの watch-）は 7 日で、
+/// 見守りの吹き出しで送らなかった画像（watch-pending-）は 10 分で消す（会話の中身は Claude Code のセッションに残る）
 enum DataJanitor {
-    static func cleanUp(dataDir: URL, olderThan days: Double = 7) {
+    static func cleanUp(dataDir: URL, olderThan days: Double = 7, now: Date = Date()) {
         let fm = FileManager.default
-        let cutoff = Date().addingTimeInterval(-days * 86_400)
+        let cutoff = now.addingTimeInterval(-days * 86_400)
+        let pendingCutoff = now.addingTimeInterval(-600)
         let agents = dataDir.appendingPathComponent("agents", isDirectory: true)
         guard let ids = try? fm.contentsOfDirectory(at: agents, includingPropertiesForKeys: nil) else { return }
         var removed = 0
@@ -48,9 +50,14 @@ enum DataJanitor {
             for sub in ["attachments", "screens"] {
                 let dir = a.appendingPathComponent(sub, isDirectory: true)
                 guard let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey]) else { continue }
-                for f in files where f.lastPathComponent.hasPrefix("screen") && ["png", "jpg"].contains(f.pathExtension.lowercased()) {
-                    let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
-                    if m < cutoff, (try? fm.removeItem(at: f)) != nil { removed += 1 }
+                for f in files where ["png", "jpg"].contains(f.pathExtension.lowercased()) {
+                    let name = f.lastPathComponent
+                    let limit: Date
+                    if name.hasPrefix("watch-pending-") { limit = pendingCutoff }
+                    else if name.hasPrefix("screen") || name.hasPrefix("watch-") { limit = cutoff }
+                    else { continue }
+                    let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? now
+                    if m < limit, (try? fm.removeItem(at: f)) != nil { removed += 1 }
                 }
             }
         }

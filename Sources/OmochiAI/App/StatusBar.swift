@@ -361,6 +361,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             let when = rel.localizedString(for: info.modified, relativeTo: Date())
             let mine = manager.agentNumber(forSession: info.id).map { "  🍡Agent \($0)" } ?? ""
             let it = ClosureMenuItem("\(title)\(mine)") { [weak self] in self?.manager.resumeSession(info) }
+            it.journalTitle = false
             it.toolTip = "\(folder)  ·  \(when)"
             // 2 行目にフォルダと日時
             let attr = NSMutableAttributedString(string: "\(title)\(mine)\n", attributes: [.font: NSFont.menuFont(ofSize: 13)])
@@ -387,8 +388,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             for info in archivedInfos {
                 var t = info.title
                 if t.count > 34 { t = String(t.prefix(34)) + "…" }
-                am.addItem(ClosureMenuItem("↩︎ \(t)") { [weak self] in self?.manager.setArchived(info.id, false) })
+                let back = ClosureMenuItem("↩︎ \(t)") { [weak self] in self?.manager.setArchived(info.id, false) }
+                back.journalTitle = false
+                am.addItem(back)
                 let open = ClosureMenuItem(L("開く: %@", t)) { [weak self] in self?.manager.resumeSession(info) }
+                open.journalTitle = false
                 open.isAlternate = true
                 open.keyEquivalentModifierMask = [.option]
                 am.addItem(open)

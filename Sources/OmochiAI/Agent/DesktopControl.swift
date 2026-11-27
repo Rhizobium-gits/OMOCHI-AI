@@ -180,6 +180,9 @@ final class DesktopControl {
             }
         }
         lastAction = Date()
+        // OMOCHI AI 自身（チャット・確認の吹き出し・設定の窓）は操作させない：エージェントが自分のコネクタの確認を押す・
+        // ほかのおもちの PC 操作をオンにする・ほかのおもちのチャットに打ち込んで「ユーザーの指示」にする、をさせない
+        if let why = DesktopControl.ownAppRefusal(tool, a) { reply(why, true); return }
         switch tool {
         case "screen_capture":
             guard DesktopControl.hasScreenRecording else {
@@ -241,7 +244,8 @@ final class DesktopControl {
     private static func capture(_ which: String, into dir: URL) async -> (String, Bool) {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            let me = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
+            // OMOCHI AI 自身と、パスワード・鍵のアプリは写さない
+            let me = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier || WatchMatcher.excludedBundleIDs.contains($0.bundleIdentifier) }
             var displays = content.displays.sorted { $0.frame.minX < $1.frame.minX }
             if which == "main" {
                 displays = displays.filter { $0.displayID == CGMainDisplayID() }
@@ -286,6 +290,41 @@ final class DesktopControl {
             return ["app": w[kCGWindowOwnerName as String] as? String ?? "", "title": w[kCGWindowName as String] as? String ?? "",
                     "x": Int(b["X"] ?? 0), "y": Int(b["Y"] ?? 0), "width": Int(b["Width"] ?? 0), "height": Int(b["Height"] ?? 0)]
         }
+    }
+
+    // MARK: - OMOCHI AI 自身は操作させない
+
+    static func ownAppRefusal(_ tool: String, _ a: [String: Any]) -> String? {
+        let why = L("OMOCHI AI 自身の窓（チャット・確認・設定）は操作できません。ほかのアプリを操作してください。")
+        func num(_ k: String) -> CGFloat? { (a[k] as? NSNumber).map { CGFloat($0.doubleValue) } }
+        switch tool {
+        case "mouse_click", "scroll":
+            if let x = num("x"), let y = num("y"), isOwnWindow(at: CGPoint(x: x, y: y)) { return why }
+        case "mouse_drag":
+            for (kx, ky) in [("from_x", "from_y"), ("to_x", "to_y")] {
+                if let x = num(kx), let y = num(ky), isOwnWindow(at: CGPoint(x: x, y: y)) { return why }
+            }
+        case "type_text", "press_keys":
+            // キーは前面のアプリに届く。OMOCHI AI が前面（チャットなど）なら打たない
+            if NSApp.isActive { return why }
+        case "ui_elements":
+            let me = NSRunningApplication.current
+            if let n = a["app"] as? String {
+                if n.lowercased() == (me.localizedName ?? "").lowercased() || n == me.bundleIdentifier { return why }
+            } else if NSApp.isActive {
+                return why
+            }
+        default: break
+        }
+        return nil
+    }
+
+    /// スクリーン座標（左上が原点、CGEvent と同じ）のその点に、クリックを受ける OMOCHI AI の窓があるか
+    /// （糸の重ね窓・ふだんのおもちのようにクリックを素通しする窓は除く）
+    static func isOwnWindow(at p: CGPoint) -> Bool {
+        let top = NSScreen.screens.first?.frame.maxY ?? 0
+        let q = NSPoint(x: p.x, y: top - p.y)
+        return NSApp.windows.contains { $0.isVisible && !$0.ignoresMouseEvents && $0.frame.contains(q) }
     }
 
     // MARK: - アクセシビリティで部品を読む

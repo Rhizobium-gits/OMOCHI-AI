@@ -21,6 +21,8 @@ if SnapshotTool.handles(args) {
     exit(SnapshotTool.run(args))
 }
 
+// エージェントの標準入力に指示を書いている途中で相手が終わっても、アプリごと落ちないように
+signal(SIGPIPE, SIG_IGN)
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

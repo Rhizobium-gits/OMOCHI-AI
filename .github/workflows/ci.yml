@@ -34,7 +34,7 @@ jobs:
       - name: Translations
         run: python3 scripts/l10n.py check
       - name: Build (universal)
-        run: scripts/build.sh --universal
+        run: scripts/build.sh --universal --no-dev-journal
       - name: Verify bundle
         run: |
           codesign --verify --strict --verbose=2 "dist/OMOCHI AI.app"

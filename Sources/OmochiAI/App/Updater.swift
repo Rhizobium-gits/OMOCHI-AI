@@ -101,6 +101,24 @@ enum AppUpdater {
 
     static let validityFlags = SecCSFlags(rawValue: UInt32(kSecCSStrictValidate) | UInt32(kSecCSCheckAllArchitectures) | UInt32(kSecCSCheckNestedCode))
 
+    /// 配布版の署名の決まり：このアプリの ID・Apple の Developer ID（チーム 793HF34NYX）・Apple の公証。
+    /// 取ってきた版がこれを満たすときだけ入れ替える。いまの版が仮の署名（2.0.1 まで・ソースから作ったもの）や
+    /// この Mac の固定の署名でも同じ（前は「GitHub のこのリポジトリのリリースから来た」ことしか確かめていなかったので、
+    /// リリースに別の人の署名の版が置かれると、その版が入り、固定の署名で署名し直すと macOS の許可まで受け継いでいた）。
+    /// フォークはここを自分の決まりに変える。scripts/update.sh の RELEASE_REQ と同じ
+    static let releaseRequirementText = #"identifier "ai.omochi.desktop" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] exists and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = "793HF34NYX" and notarized"#
+
+    /// 取ってきた版が配布版の署名の決まりを満たすか（満たさなければ理由）
+    static func releaseProblem(_ code: SecStaticCode, requirement text: String) -> String? {
+        var req: SecRequirement?
+        guard SecRequirementCreateWithString(text as CFString, [], &req) == errSecSuccess, let req else {
+            return L("配布版の署名の決まりを読めません。")
+        }
+        let st = SecStaticCodeCheckValidity(code, validityFlags, req)
+        return st == errSecSuccess ? nil
+            : L("配布版の署名（Developer ID・Apple の公証）ではありません（%ld）。入れ替えません。ダウンロードページから入れ直してください。", Int(st))
+    }
+
     static func designatedRequirement(_ url: URL) -> SecRequirement? {
         guard let code = staticCode(url) else { return nil }
         var r: SecRequirement?
@@ -184,10 +202,14 @@ enum AppUpdater {
 
     /// 署名が正しいか（中身が書き換えられていないか）を確かめ、入れ替える前にすることを決める。
     /// 認証局の証明書（Developer ID など）で署名された版からは、同じ人の署名の版にしか入れ替えない
-    static func signingStep(new: URL, current: URL, hasKey: (String) -> Bool = { hasSigningIdentity(sha1: $0) }) -> SigningStep {
+    /// release：取ってきた版が満たすべき配布版の署名の決まり（テストで、手元で署名したアプリを使うときだけ nil）
+    static func signingStep(new: URL, current: URL, hasKey: (String) -> Bool = { hasSigningIdentity(sha1: $0) },
+                            release: String? = releaseRequirementText) -> SigningStep {
         guard let code = staticCode(new) else { return .refuse(L("署名を読めません。")) }
         let own = SecStaticCodeCheckValidity(code, validityFlags, nil)
         guard own == errSecSuccess else { return .refuse(L("署名が正しくありません（%ld）。", Int(own))) }
+        // 署名し直す・いまの版の署名と比べるより先に、配布版の署名であることを確かめる
+        if let release, let why = releaseProblem(code, requirement: release) { return .refuse(why) }
         if isAdhoc(current) { return .keep }
         guard let req = designatedRequirement(current) else { return .refuse(L("いまの版の署名を読めません。")) }
         let st = SecStaticCodeCheckValidity(code, validityFlags, req)

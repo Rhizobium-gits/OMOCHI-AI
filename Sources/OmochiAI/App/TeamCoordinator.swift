@@ -188,8 +188,9 @@ final class TeamCoordinator {
 
     // MARK: - ドラッグ（近づけてつなぐ・⇧ でチームごと移動・⌥ で切り離す）
 
-    /// 中心どうしが体の幅の何倍まで近づいたらつながるか
-    static let linkReach: CGFloat = 1.5
+    /// 中心どうしが窓の幅の何倍まで近づいたらつながるか。体（窓の幅の約 0.65 倍）どうしがふれる・重なるくらいまで
+    /// （2.0.2 までは 1.5 倍で、体 1 つ半ぶん離れていてもつながり、当たり判定が大きすぎた）
+    static let linkReach: CGFloat = 0.7
     /// つないだあと、線が見えるように落ち着かせる距離（体の幅の倍数）
     static let settleDistance: CGFloat = 1.6
     /// 重ねる（くっつく）・頭に載せる（鏡餅）は、その場所にこの秒数とどめてから有効になる。
@@ -587,7 +588,7 @@ final class TeamCoordinator {
             } else if s.candidate == nil, m.settings.teamEnabled,
                       m.controllers.contains(where: { $0 !== c && $0.isVisible }) {
                 // まだ慣れていない人向けの案内
-                pills.append(.init(id: "hint", text: links.isEmpty ? L("近くで離すと つながる · 重ねて待つと くっつく") : L("重ねて待つと くっつく · 頭に載せて待つと 鏡餅"), at: at, color: color))
+                pills.append(.init(id: "hint", text: links.isEmpty ? L("ふれるまで寄せて離すと つながる · 重ねて待つと くっつく") : L("重ねて待つと くっつく · 頭に載せて待つと 鏡餅"), at: at, color: color))
             }
         }
         let bodyW = m.controllers.first?.panel.frame.width ?? m.windowSize.width
@@ -788,11 +789,26 @@ final class TeamCoordinator {
     /// サンドボックスの Codex やシェルの使えない Gemini が、別の AI を通して自分にできないことをさせないように）。
     /// ユーザーが直接頼んだターンなら、どの AI の仲間でも作れる・頼める。違えば理由
     func crossEngineDenied(caller: UUID, target: AgentEngine) -> String? {
-        guard running[caller] != nil, let c = controller(caller), let mine = manager?.runtime(for: c)?.effectiveEngine, mine != target else { return nil }
+        guard let c = controller(caller), let rt = manager?.runtime(for: c), !userTurn(caller, rt) else { return nil }
+        let mine = rt.effectiveEngine
+        guard mine != target else { return nil }
         return L("仲間からの依頼で動いているときは、自分と違う AI（%@）の仲間を作ったり頼んだりできません。ユーザーが直接頼んだときだけです。同じ AI（%@）の仲間を使うか、そのまま結果を返してください。", target.displayName, mine.displayName)
     }
 
-    func usesPCTools(_ id: UUID, _ rt: AgentRuntime) -> Bool { rt.pcControl && running[id] == nil && rt.effectiveEngine.supportsOmochiTools }
+    /// ほかのおもちが書いた文（予約で渡された前の手順の結果・くっついた相手の結果・ちぎった元の会話）の目印
+    static let agentTextMarkers = [PromptQueues.resultMarker, MochiPlay.mergeMarker, MochiPlay.forkMarker]
+
+    /// ユーザーが自分で頼んだターンか：仲間からの依頼でも、ほかのおもちの書いた文を運んできた指示（予約の受け渡し・
+    /// 串だんごの 2 段目から・くっついてまとめる・AI 違いの分身の最初の指示）でもない。
+    /// そうでないターンには、PC 操作・コネクタ（メールなど）・別の AI の仲間を渡さない（ほかのおもちが読んだ Web ページなどに
+    /// 仕込まれた指示が、それらの権限を持つおもちに「ユーザーの指示」として届かないように）
+    func userTurn(_ id: UUID, _ rt: AgentRuntime) -> Bool {
+        guard running[id] == nil else { return false }
+        let prompt = rt.lastTurn?.prompt ?? ""
+        return !TeamCoordinator.agentTextMarkers.contains { prompt.contains($0) }
+    }
+
+    func usesPCTools(_ id: UUID, _ rt: AgentRuntime) -> Bool { rt.pcControl && userTurn(id, rt) && rt.effectiveEngine.supportsOmochiTools }
 
     // MARK: - コネクタ（この Mac のカレンダー・リマインダー・メール）
 
@@ -802,7 +818,9 @@ final class TeamCoordinator {
 
     /// このおもちにいま渡すコネクタのツール（設定の AI・モデル・範囲と、PC 操作の有無で決まる）
     func connectorTools(_ id: UUID, _ rt: AgentRuntime) -> [ConnectorTool] {
-        guard let m = manager, m.settings.connectors.anyEnabled else { return [] }
+        // 仲間からの依頼・ほかのおもちの文を運んできた指示のターンには渡さない（依頼した側の AI・モデルの制限を、
+        // 仲間を作って回り込めないように。たとえばメールを読めない AI が、読める AI の仲間に読ませて結果を受け取る）
+        guard let m = manager, m.settings.connectors.anyEnabled, userTurn(id, rt) else { return [] }
         return ConnectorPolicy.tools(m.settings.connectors, connectorContext(id, rt))
     }
 
@@ -810,6 +828,11 @@ final class TeamCoordinator {
     private func callConnector(_ t: ConnectorTool, _ args: [String: Any], caller: UUID, me: JellyController, rt: AgentRuntime,
                                reply: @escaping (String, Bool) -> Void) {
         guard let m = manager else { reply(L("呼び出し元が見つかりません"), true); return }
+        guard userTurn(caller, rt) else {
+            AppLog.write("connector refused: \(t.name) agent=\(me.record.number) (not a turn the user asked for)")
+            reply(L("コネクタ（カレンダー・リマインダー・メール）は、ユーザーが直接頼んだときだけ使えます。仲間からの依頼や、ほかのおもちの結果を受け取った指示では使えません。"), true)
+            return
+        }
         let ctx = connectorContext(caller, rt)
         if let why = ConnectorPolicy.denial(t, m.settings.connectors, ctx) {
             AppLog.write("connector refused: \(t.name) agent=\(me.record.number) engine=\(ctx.engine.rawValue) model=\(ctx.model ?? "-")")
@@ -1276,9 +1299,13 @@ final class TeamCoordinator {
             // 1 回の実行（claude 1 プロセス）につき 1 本だけ。claude は起動してすぐ MCP のブリッジをつなぐので、
             // あとから claude の子孫（エージェントが実行したコマンドなど）が名乗っても受け付けない
             let id = (msg["agent"] as? String).flatMap(UUID.init(uuidString:))
+            // Claude Code は 1 回の実行で MCP を 1 度だけつなぐので、同じ claude からは 2 本目を受け付けない
+            // （エージェントのコマンドがブリッジを止めて自分でつなぎ直し、Claude Code の安全判定を通さずに PC 操作ツールを呼ぶ、をさせない）。
+            // Codex・Gemini は MCP をつなぎ直すことがあるので、前の 1 本が閉じていれば受け付ける
+            let engine = id.flatMap(controller).flatMap { manager?.runtime(for: $0)?.effectiveEngine }
             if let id, let c = controller(id), let pid = manager?.runtime(for: c)?.processID,
                ProcessTree.isDescendant(conn.peerPID, of: pid),
-               !(authed[id].map { !$0.conn.isClosed && $0.pid == pid } ?? false) {
+               !(authed[id].map { $0.pid == pid && (engine == .claude || !$0.conn.isClosed) } ?? false) {
                 conn.agentID = id
                 authed[id] = (conn, pid)
             } else {
@@ -1476,7 +1503,8 @@ final class TeamCoordinator {
             if ids.isEmpty {
                 ids = tasks.values.filter { $0.from == caller && !$0.delivered }.sorted { $0.createdAt < $1.createdAt }.map(\.id)
             }
-            ids = ids.filter { tasks[$0] != nil }
+            // 自分が出した依頼だけ（ほかのおもちの依頼の結果を読んだり、受け取ったことにしたりできない）
+            ids = ids.filter { tasks[$0]?.from == caller }
             guard !ids.isEmpty else { ok(["tasks": [], "note": L("待つ依頼がありません")]); return }
             let timeout = min(max((args["timeout_seconds"] as? Double) ?? 600, 5), 1800)
             let w = Waiter(caller: caller, taskIDs: ids, reply: reply)

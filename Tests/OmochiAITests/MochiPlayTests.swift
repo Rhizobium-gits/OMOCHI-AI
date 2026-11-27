@@ -15,16 +15,32 @@ import Testing
 
     @Test func onTheHeadStacks() {
         #expect(MochiPlay.dropKind(dx: 0, dy: w * 0.45, width: w) == .stack)
-        #expect(MochiPlay.dropKind(dx: w * 0.3, dy: w * 0.6, width: w) == .stack)
-        // 横にずれすぎ・高すぎは鏡餅にならない
-        #expect(MochiPlay.dropKind(dx: w * 0.5, dy: w * 0.45, width: w) == .link)
-        #expect(MochiPlay.dropKind(dx: 0, dy: w * 0.9, width: w) == .link)
+        #expect(MochiPlay.dropKind(dx: w * 0.25, dy: w * 0.55, width: w) == .stack)
+        // 横にずれすぎ・高すぎは鏡餅にならない（つながる範囲の中ならつながる）
+        #expect(MochiPlay.dropKind(dx: w * 0.4, dy: w * 0.45, width: w) == .link)
+        #expect(MochiPlay.dropKind(dx: 0, dy: w * 0.68, width: w) == .link)
     }
 
-    @Test func nearbyLinksAndFarDoesNothing() {
-        #expect(MochiPlay.dropKind(dx: w * 1.2, dy: 0, width: w) == .link)
-        #expect(MochiPlay.dropKind(dx: 0, dy: -w * 0.6, width: w) == .link)
-        #expect(MochiPlay.dropKind(dx: w * 1.6, dy: 0, width: w) == nil)
+    /// つながるのは体がふれる・重なるくらいまで近づけたときだけ（2.0.3。2.0.2 までは体 1 つ半ぶん離れていてもつながった）
+    @Test func touchingLinksAndApartDoesNothing() {
+        #expect(MochiPlay.dropKind(dx: w * 0.66, dy: 0, width: w) == .link)
+        #expect(MochiPlay.dropKind(dx: w * 0.5, dy: 0, width: w) == .link)
+        #expect(MochiPlay.dropKind(dx: 0, dy: -w * 0.5, width: w) == .link)
+        #expect(MochiPlay.dropKind(dx: w * 0.75, dy: 0, width: w) == nil)
+        #expect(MochiPlay.dropKind(dx: w * 1.2, dy: 0, width: w) == nil)
+    }
+
+    /// 頭の上の範囲は、つながる範囲の中に収まる（とどまる前に離せば、その相手とつながる）
+    @Test func headZoneIsInsideTheLinkReach() {
+        var dx = -w * 0.3
+        while dx <= w * 0.3 {
+            var dy = w * 0.1
+            while dy <= w * 0.8 {
+                if MochiPlay.dropKind(dx: dx, dy: dy, width: w) == .stack { #expect(hypot(dx, dy) <= w * TeamCoordinator.linkReach) }
+                dy += 1
+            }
+            dx += 1
+        }
     }
 
     @Test func kagamiPutsSubordinatesBelowAndCentered() {

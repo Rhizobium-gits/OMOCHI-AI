@@ -45,6 +45,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
         ShellEnvironment.shared.prefetch()
         DispatchQueue.global(qos: .utility).async { DataJanitor.cleanUp(dataDir: AppPaths.dataDir) }
+        // 何週間も動かしたままでも、7 日・10 分の約束どおりに片付くよう、動いている間も 6 時間ごとに
+        let janitor = Timer(timeInterval: 6 * 3600, repeats: true) { _ in
+            DispatchQueue.global(qos: .utility).async { DataJanitor.cleanUp(dataDir: AppPaths.dataDir) }
+        }
+        RunLoop.main.add(janitor, forMode: .common)
         let store = Store()
         // 表示の言語は、メニューやウィンドウを作る前に決める
         L10n.setting = store.loadSettings().language

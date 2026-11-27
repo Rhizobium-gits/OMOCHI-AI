@@ -19,8 +19,12 @@ set -euo pipefail
 REPO=Rhizobium-gits/OMOCHI-AI
 # 前のリポジトリ名（2.0.0 まで）。GitHub が新しい名前へ転送するので、前の名前の URL のファイルも受け付ける
 OLD_REPO=Rhizobium-gits/jellyfish-ai
+# 配布版の署名の決まり：このアプリの ID・Apple の Developer ID（チーム 793HF34NYX）・Apple の公証。
+# 取ってきた版がこれを満たすときだけ入れ替える（いまの版が仮の署名・この Mac の固定の署名でも。フォークはここを変える）
+RELEASE_REQ='identifier "ai.omochi.desktop" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] exists and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = "793HF34NYX" and notarized'
 # テストのときだけ（OMOCHI_UPDATE_TEST=1）、取り込み元とリリースの情報を差し替えられる。ふだんは使わない
 if [[ "${OMOCHI_UPDATE_TEST:-}" == 1 ]]; then REPO="${OMOCHI_REPO:-$REPO}"; else unset OMOCHI_RELEASE_JSON; fi
+if [[ "${OMOCHI_UPDATE_TEST:-}" == 1 && -n "${OMOCHI_RELEASE_REQ+set}" ]]; then RELEASE_REQ="$OMOCHI_RELEASE_REQ"; fi
 BUNDLE_ID=ai.omochi.desktop
 CHECK=0 SOURCE=0 YES=0 OPEN=1 APP=""
 while [[ $# -gt 0 ]]; do
@@ -189,6 +193,10 @@ NEW="$WORK/new/OMOCHI AI.app"
 [[ "$(plist_value "$NEW/Contents/Info.plist" CFBundleIdentifier)" == "$BUNDLE_ID" ]] || fail "中身が OMOCHI AI ではありません"
 [[ "$(plist_value "$NEW/Contents/Info.plist" CFBundleShortVersionString)" == "$VERSION" ]] || fail "中身の版がリリースと合いません"
 codesign --verify --strict "$NEW" 2>/dev/null || fail "署名が正しくありません"
+if [[ -n "$RELEASE_REQ" ]]; then
+  codesign --verify --strict --deep -R="$RELEASE_REQ" "$NEW" 2>/dev/null \
+    || fail "配布版の署名（Developer ID・Apple の公証）ではないので入れ替えません。https://github.com/$REPO/releases から入れ直してください"
+fi
 if [[ -d "$APP" ]]; then
   SIG="$(codesign -d --verbose=2 "$APP" 2>&1 || true)"
   if [[ "$SIG" == *$'\nAuthority='* ]]; then

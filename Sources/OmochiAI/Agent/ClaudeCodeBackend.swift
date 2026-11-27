@@ -83,15 +83,20 @@ final class ClaudeCodeBackend: AgentBackend {
             }
         }
         if let sp = options.appendSystemPrompt, !sp.isEmpty, install.supportsAppendSystemPrompt {
-            args += ["--append-system-prompt", sp]
+            // チームの案内は、使える版ならファイルで渡す（コマンドの引数は同じ Mac のほかのユーザーからも ps で見える）
+            if install.supportsAppendSystemPromptFile, let f = ClaudeCodeBackend.writePrivate(sp, to: logDir.appendingPathComponent("system-prompt.md")) {
+                args += ["--append-system-prompt-file", f.path]
+            } else {
+                args += ["--append-system-prompt", sp]
+            }
         }
-        // 指示は最後に「--」のあとで渡す。「- README を直して」のように - で始まる指示がオプションと
-        // 間違われない（claude 2.1.322 で確認：-p の直後に置くと unknown option になる）
-        args += ["--", prompt]
+        // 指示は標準入力で渡す（コマンドの引数に載せると、同じ Mac のほかのユーザーからも ps で読める。
+        // 2.0.2 までは「--」のあとの引数だった。- で始まる指示もそのまま届く：claude 2.1.332 で確認）
         p.arguments = args
         p.currentDirectoryURL = cwd
         p.environment = ShellEnvironment.shared.agentEnvironment().merging(options.env) { _, new in new }
-        p.standardInput = FileHandle.nullDevice
+        let input = Pipe()
+        p.standardInput = input
 
         let out = Pipe(), err = Pipe()
         p.standardOutput = out
@@ -136,7 +141,23 @@ final class ClaudeCodeBackend: AgentBackend {
             DispatchQueue.main.async { onExit(status, tail) }
         }
         try p.run()
+        // 書き終えたら閉じる（claude はそこまでを指示として読む）。大きな指示でも待たないよう、メインスレッドの外で
+        let w = input.fileHandleForWriting
+        let data = Data(prompt.utf8)
+        DispatchQueue.global(qos: .userInitiated).async {
+            try? w.write(contentsOf: data)
+            try? w.close()
+        }
         return handle
+    }
+
+    /// 本人だけが読めるファイル（0600）に書く
+    static func writePrivate(_ text: String, to url: URL) -> URL? {
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        guard FileManager.default.createFile(atPath: url.path, contents: Data(text.utf8), attributes: [.posixPermissions: 0o600]) else { return nil }
+        // 前からあったファイルは createFile が権限を変えないことがあるので、そろえる
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        return url
     }
 }
 

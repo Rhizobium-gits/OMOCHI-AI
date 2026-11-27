@@ -27,8 +27,9 @@ final class ShellEnvironment {
         if let login = Self.loginShellEnvironment() {
             env.merge(login) { _, new in new }
         }
-        // 入れ子の Claude Code 判定に使われる変数は渡さない
-        for k in env.keys where k == "CLAUDECODE" || k.hasPrefix("CLAUDE_CODE_") { env.removeValue(forKey: k) }
+        // 入れ子の Claude Code 判定に使われる変数は渡さない。このアプリの自動化・データの場所・開発用の設定（OMOCHI_*）も
+        // エージェントには渡さない（自動化の合言葉のある場所をエージェントが知って omochi:// を使う、などをさせない）
+        for k in env.keys where k == "CLAUDECODE" || k.hasPrefix("CLAUDE_CODE_") || k.hasPrefix("OMOCHI_") { env.removeValue(forKey: k) }
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let extra = ["\(home)/.local/bin", "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"]
         var parts = (env["PATH"] ?? "").split(separator: ":").map(String.init)
@@ -79,6 +80,8 @@ struct ClaudeInstall {
     /// チーム機能に使う `--mcp-config` / `--append-system-prompt` / `--allowedTools` があるか
     var supportsMCPConfig = false
     var supportsAppendSystemPrompt = false
+    /// `--append-system-prompt-file`（チームの案内をファイルで渡す。コマンドの引数に載せない）があるか
+    var supportsAppendSystemPromptFile = false
     var supportsAllowedTools = false
     /// `--strict-mcp-config`（--mcp-config 以外の MCP サーバーを読み込まない）があるか
     var supportsStrictMCPConfig = false
@@ -195,6 +198,7 @@ enum ClaudeLocator {
                              supportsEffort: help.contains("--effort"),
                              supportsMCPConfig: help.contains("--mcp-config"),
                              supportsAppendSystemPrompt: help.contains("--append-system-prompt"),
+                             supportsAppendSystemPromptFile: help.contains("--append-system-prompt-file") || help.contains("--append-system-prompt[-file]"),
                              supportsAllowedTools: help.contains("--allowedTools"),
                              supportsStrictMCPConfig: help.contains("--strict-mcp-config"),
                              supportsAuthCommand: help.range(of: #"(?m)^\s+auth\s"#, options: .regularExpression) != nil,

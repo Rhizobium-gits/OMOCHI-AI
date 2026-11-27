@@ -11,9 +11,10 @@ import Testing
 @Suite struct DropDwellTests {
     let a = UUID(), b = UUID()
 
-    /// 初期の並び（縦一列・互い違い）の上のおもちを少し下へ寄せると、頭の上の範囲に入る
-    @Test func nudgingTheUpperNeighborEntersTheHeadZone() {
-        #expect(MochiPlay.dropKind(dx: -29, dy: 70, width: 102) == .stack)
+    /// 初期の並び（縦一列・互い違い）のとなりどうしは、つながる範囲の外（重なるくらいまで寄せたらつながる）
+    @Test func defaultNeighborsAreOutOfReach() {
+        #expect(MochiPlay.dropKind(dx: -39, dy: 80, width: 102) == nil)
+        #expect(MochiPlay.dropKind(dx: -29, dy: 70, width: 102) == nil)
     }
 
     @Test func quickDropOnTheHeadLinks() {
