@@ -44,3 +44,14 @@ enum ActiveSpace {
         return a.runModal()
     }
 }
+
+/// 窓が本当に画面に出ているかを WindowServer に聞く（NSWindow.isVisible は「出したつもり」なので、
+/// 別のスペースに取り残された窓でも true のことがある）
+enum WindowProbe {
+    static func isOnScreen(_ w: NSWindow) -> Bool {
+        guard w.windowNumber > 0,
+              let info = CGWindowListCopyWindowInfo([.optionIncludingWindow], CGWindowID(w.windowNumber)) as? [[String: Any]],
+              let first = info.first else { return false }
+        return (first[kCGWindowIsOnscreen as String] as? Bool) ?? false
+    }
+}

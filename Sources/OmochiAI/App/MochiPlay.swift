@@ -135,6 +135,31 @@ enum MochiPlay {
 
     enum DropKind: Equatable { case link, merge, stack }
 
+    /// 重ねた・頭に載せた場所に入った相手・種類・時刻
+    struct DropPending: Equatable { var target: UUID; var kind: DropKind; var since: Double }
+
+    /// ドラッグ中に、いま離したら何が起きるか。
+    /// - 重なり・頭の上（special）は、同じ相手・同じ種類のまま delay 秒とどまってから。とどまり中は waiting を返し、
+    ///   離せばその相手とつながる（linkSpecial が false ＝もうつながっている・チームが無効なら何も起きない）
+    /// - それ以外は、届く範囲でいちばん近い相手とつながる（link）
+    /// - Returns: 相手と種類（nil は何も起きない）・とどまり中の種類・いまとどまり始めたか（判定し直しのタイマーを掛ける）
+    static func decideDrop(special: (target: UUID, kind: DropKind)?, link: UUID?, linkSpecial: Bool,
+                           pending: inout DropPending?, now: Double, delay: Double)
+        -> (target: UUID?, kind: DropKind?, waiting: DropKind?, started: Bool) {
+        guard let sp = special else {
+            pending = nil
+            return (link, link == nil ? nil : .link, nil, false)
+        }
+        var started = false
+        if let p = pending, p.target == sp.target, p.kind == sp.kind {
+            if now - p.since >= delay { return (sp.target, sp.kind, nil, false) }
+        } else {
+            pending = DropPending(target: sp.target, kind: sp.kind, since: now)
+            started = true
+        }
+        return linkSpecial ? (sp.target, .link, sp.kind, started) : (nil, nil, sp.kind, started)
+    }
+
     /// 動かしているおもちの中心と、相手の中心のずれ（pt）・体の幅（pt）から、置いたら何が起きるか。
     /// 真上に重なる → くっつく、相手の頭の上 → 上に載る（鏡餅）、近く → つながる
     static func dropKind(dx: CGFloat, dy: CGFloat, width w: CGFloat) -> DropKind? {

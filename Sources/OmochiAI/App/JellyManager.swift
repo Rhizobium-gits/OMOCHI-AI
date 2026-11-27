@@ -45,6 +45,11 @@ final class JellyManager {
 
     private var lastPointer = NSPoint(x: -1, y: -1)
     private var pointerIdleTicks = 0
+    /// 窓の見張り（pollPointer の回数で、約 2 秒ごと）
+    private var windowCheckTicks = 0
+    private var lastWindowFixLog: Date = .distantPast
+    /// 前に確かめたとき画面に出ていなかったおもち（出し直しても出ないまま＝消灯中のディスプレイなど。2 回目からは数えない）
+    private var lostMochi: Set<UUID> = []
     private var saveScheduled = false
 
     var layout: AvatarLayout { AvatarFactory.layout(settings.avatarStyle, scale: settings.jellyScale) }
@@ -75,6 +80,17 @@ final class JellyManager {
                                                object: nil, queue: .main) { [weak self] _ in
             self?.ensureOnScreen()
             self?.team?.refresh()
+            self?.reassertWindowsSoon("screens")
+        }
+        // スペース（デスクトップ・ほかのアプリのフル画面）を切り替えた・スリープから戻った・画面がついた：
+        // おもちと糸がいまのスペースに出ているかを確かめ直す（切り替えの動きが終わってから）
+        let ws = NSWorkspace.shared.notificationCenter
+        for (name, reason) in [(NSWorkspace.activeSpaceDidChangeNotification, "space"), (NSWorkspace.didWakeNotification, "wake"),
+                               (NSWorkspace.screensDidWakeNotification, "screens-wake"), (NSWorkspace.sessionDidBecomeActiveNotification, "session")] {
+            ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in self?.reassertWindowsSoon(reason) }
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.didUnhideNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.reassertWindowsSoon("unhide")
         }
         save()
         team = TeamCoordinator(manager: self, store: store)
@@ -1111,7 +1127,8 @@ final class JellyManager {
     }
 
     /// デモ録画用：ドラッグと同じ経路で動かして、最後に置く（隣ならつながる）。mods で ⇧ / ⌥ を押した扱いにできる
-    func demoDrag(_ c: JellyController, by d: CGVector, duration: Double = 0.8, mods: NSEvent.ModifierFlags = []) {
+    /// hold は置く前に止める秒数（重ねる・頭に載せるは TeamCoordinator.armDelay より長く止めると、くっつく・載る）
+    func demoDrag(_ c: JellyController, by d: CGVector, duration: Double = 0.8, mods: NSEvent.ModifierFlags = [], hold: Double = 0.5) {
         let start = c.panel.frame.origin
         let steps = 24
         c.avatar.dragBegan()
@@ -1125,7 +1142,7 @@ final class JellyManager {
                 self.jellyDragged(c, mods: mods)
                 if i == steps {
                     // 置く前に一瞬止めて「離すとつながる」を見せる
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self, weak c] in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + max(0, hold)) { [weak self, weak c] in
                         guard let self, let c else { return }
                         c.avatar.dragEnded()
                         c.update { $0.origin = c.panel.frame.origin }
@@ -1277,6 +1294,12 @@ final class JellyManager {
     }
 
     private func pollPointer() {
+        // 約 2 秒ごとに、おもちと糸がちゃんと画面に出ているかを確かめる（出ていなければ出し直す）
+        windowCheckTicks += 1
+        if windowCheckTicks >= 60 {
+            windowCheckTicks = 0
+            reassertWindows("watch")
+        }
         // ドラッグ中に ⇧ / ⌥ を押した・離したら、マウスが止まっていても表示を切り替える
         if let d = controllers.first(where: { $0.isBeingDragged }) {
             let mods = NSEvent.modifierFlags.intersection([.shift, .option])
@@ -1297,6 +1320,51 @@ final class JellyManager {
             if c.updatePointer(p, allowed: hovered == nil) { hovered = c }
         }
         team?.pointerMoved(p, over: hovered)
+    }
+
+    // MARK: 窓の見張り（おもちと糸が、いつ・どのスペースでも出ているように）
+
+    /// 切り替えの動きが終わるのを待ってから確かめる（すぐと、少しあとの 2 回）
+    func reassertWindowsSoon(_ reason: String) {
+        for delay in [0.35, 1.2] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in self?.reassertWindows(reason) }
+        }
+    }
+
+    /// 出ているはずのおもち・糸の窓が画面に出ていなければ、前に出し直して描き直す。
+    /// 画面がロック中・スリープ中・ミッションコントロール中などは、どの窓も画面に出ていないので何もしない
+    /// （出ているおもちが 1 体もいなければ、比べる基準が無いので待つ）
+    @discardableResult
+    func reassertWindows(_ reason: String, onScreen: (NSWindow) -> Bool = WindowProbe.isOnScreen) -> [String] {
+        guard !settings.allHidden else { return [] }
+        let shown = controllers.filter { $0.isVisible }
+        guard !shown.isEmpty else { return [] }
+        let states = shown.map { ($0, $0.panel.isVisible && onScreen($0.panel)) }
+        // ほかのおもちも出ていないなら、画面そのものが見えていない（ロック・スリープ・切り替えの途中）
+        guard states.contains(where: { $0.1 }) else { return [] }
+        var fixed: [String] = []
+        let lost = Set(states.filter { !$0.1 }.map(\.0.record.id))
+        defer { lostMochi = lost }
+        for (c, ok) in states where !ok {
+            c.panel.orderFrontRegardless()
+            if !lostMochi.contains(c.record.id) { fixed.append("mochi \(c.record.number)") }
+        }
+        // 鏡餅は上の段が手前
+        if !lost.isEmpty {
+            for c in controllers where controllers.contains(where: { $0.record.leaderID == c.record.id }) && c.isVisible {
+                c.panel.orderFrontRegardless()
+            }
+        }
+        if let n = team?.overlay.reassert(onScreen: onScreen), n > 0 {
+            fixed.append("strings ×\(n)")
+            team?.refresh()
+        }
+        if !fixed.isEmpty, Date().timeIntervalSince(lastWindowFixLog) > 10 {
+            lastWindowFixLog = Date()
+            AppLog.write("windows re-shown (\(reason)): \(fixed.joined(separator: ", "))")
+            DevJournal.log("windows-reshown", ["reason": reason, "count": fixed.count])
+        }
+        return fixed
     }
 
     // MARK: イベント

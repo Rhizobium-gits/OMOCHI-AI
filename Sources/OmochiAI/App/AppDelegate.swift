@@ -198,7 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     ///   omochi://press?agent=2             長押しと同じ動作（デモ録画用）
     ///   omochi://rename?agent=2&name=調査係  名前を変える（空で Agent N に戻す）
     ///   omochi://link?a=2&b=3 | unlink     2 体をつなぐ / 切る
-    ///   omochi://move?agent=2&dx=-120&dy=40[&mods=shift|option&t=0.8]  ドラッグして置く（デモ録画用）
+    ///   omochi://move?agent=2&dx=-120&dy=40[&mods=shift|option&t=0.8&hold=0.5]  ドラッグして置く（デモ録画用。hold は置く前に止める秒数）
     ///   omochi://toggle | show | hide      全体の表示切替
     ///   omochi://arrange                   右端に並べ直す
     ///   omochi://renumber                  番号を 1 から振り直す
@@ -273,7 +273,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
                 if m.contains("shift") { mods.insert(.shift) }
                 if m.contains("option") { mods.insert(.option) }
                 manager.demoDrag(c, by: CGVector(dx: param("dx").flatMap(Double.init) ?? 0, dy: param("dy").flatMap(Double.init) ?? 0),
-                                 duration: param("t").flatMap(Double.init) ?? 0.8, mods: mods)
+                                 duration: param("t").flatMap(Double.init) ?? 0.8, mods: mods,
+                                 hold: param("hold").flatMap(Double.init) ?? 0.5)
             }
         case "toggle": manager.toggleAllHidden()
         case "show": manager.setAllHidden(false)
@@ -381,6 +382,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             for line in manager.debugChatLines() { AppLog.write(line) }
             for line in manager.debugQueueLines() { AppLog.write(line) }
             for line in manager.debugMochiLines() { AppLog.write(line) }
+            // おもちと糸の窓が画面に出ているか（debug?lose=strings / lose=2 は、出ていない状態をわざと作る。見張りが戻すかの試験用）
+            for c in manager.controllers {
+                AppLog.write("window mochi \(c.record.number) visible=\(c.panel.isVisible) onScreen=\(WindowProbe.isOnScreen(c.panel)) activeSpace=\(c.panel.isOnActiveSpace)")
+            }
+            for line in manager.team?.overlay.debugLines(onScreen: WindowProbe.isOnScreen) ?? [] { AppLog.write(line) }
+            if automation, let lose = param("lose") {
+                if lose == "strings" { manager.team?.overlay.debugLose() }
+                else if let n = Int(lose), let c = manager.controller(number: n) { c.panel.orderOut(nil) }
+                AppLog.write("debug: lost \(lose)")
+            }
         // お餅の性質（自動化のときだけ。デモの録画とテスト用）
         case "tear":
             // omochi://tear?agent=1[&engine=codex]：ちぎって分身を作る（メニューと同じ動き）

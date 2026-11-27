@@ -14,6 +14,8 @@ final class JellyPanel: NSPanel {
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         hidesOnDeactivate = false
+        // アプリを隠しても（チャットで ⌘H・ほかのアプリで「ほかを隠す」）、おもちは残す（隠すのは ⌥⌘L）
+        canHide = false
         isReleasedWhenClosed = false
         isMovable = false
         ignoresMouseEvents = true

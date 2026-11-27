@@ -192,6 +192,11 @@ final class TeamCoordinator {
     static let linkReach: CGFloat = 1.5
     /// つないだあと、線が見えるように落ち着かせる距離（体の幅の倍数）
     static let settleDistance: CGFloat = 1.6
+    /// 重ねる（くっつく）・頭に載せる（鏡餅）は、その場所にこの秒数とどめてから有効になる。
+    /// それまでに離せば「近くで離すと つながる」：近づけただけで合体のメニューや鏡餅にならないように
+    /// （2.0.0〜2.0.2 は重なり・上側に入った瞬間に切り替わり、縦に並んだおもちを少し寄せただけで鏡餅になって、
+    ///   つながらない・糸が体に隠れて見えない、になっていた）
+    static let armDelay: CFTimeInterval = 0.4
 
     /// ドラッグ 1 回ぶんの状態
     private struct DragSession {
@@ -206,8 +211,16 @@ final class TeamCoordinator {
         var candidate: UUID?
         /// 置いたら何が起きるか（つながる・くっつく・上に載る）
         var kind: MochiPlay.DropKind?
+        /// 重ねた・頭に載せた相手と種類と、その場所に入った時刻（armDelay とどまると kind がそれになる）
+        var pending: MochiPlay.DropPending?
+        /// まだとどまり中（このまま離すと、つながる）の種類
+        var waiting: MochiPlay.DropKind?
+        /// 最後に受け取った修飾キー（とどまったあとの判定し直しに使う）
+        var mods: NSEvent.ModifierFlags = []
     }
     private var drag: DragSession?
+    /// とどまったら判定し直す一回きりのタイマー（マウスを止めていてもくっつく・載るに切り替わるように）
+    private var armTimer: Timer?
     /// 置いたあと滑らせている間も「つながる先」の表示を残す
     private var pendingLink: (UUID, UUID)?
     private var glideTimer: Timer?
@@ -221,17 +234,25 @@ final class TeamCoordinator {
 
     func jellyDragBegan(_ c: JellyController, origin: NSPoint) {
         finishGlide()
+        armTimer?.invalidate()
+        armTimer = nil
         let id = c.record.id
         var mates: [UUID: NSPoint] = [:]
         for m in team(of: id) where m != id {
             if let mc = controller(m), mc.isVisible { mates[m] = mc.panel.frame.origin }
+            // 仲間が串に刺さっていれば、その串も一緒に（串が曲がらないように）
+            for x in manager?.skewerMates(of: m) ?? [] where x.record.id != id && x.isVisible && mates[x.record.id] == nil {
+                mates[x.record.id] = x.panel.frame.origin
+            }
         }
         drag = DragSession(id: id, start: origin, mates: mates)
-        // 鏡餅：リーダーを動かすと、下の段（とその下）も一緒に動く
+        // 鏡餅：リーダーを動かすと、下の段（とその下）も一緒に動く。
+        // 串だんご：どのおもちを動かしても串ごと動く（1 体だけ動かすと、串が画面を横切る長い棒になっていた）
         var followers: [UUID: NSPoint] = [:]
         var stack = [id]
         while let x = stack.popLast() {
-            for sub in manager?.subordinates(of: x) ?? [] where followers[sub.record.id] == nil && sub.record.id != id && sub.isVisible {
+            let next = (manager?.subordinates(of: x) ?? []) + (manager?.skewerMates(of: x) ?? [])
+            for sub in next where followers[sub.record.id] == nil && sub.record.id != id && sub.isVisible {
                 followers[sub.record.id] = sub.panel.frame.origin
                 stack.append(sub.record.id)
             }
@@ -255,19 +276,46 @@ final class TeamCoordinator {
             }
         }
         s.group = group
-        // ⌥：離すとこのおもちのつながり（と鏡餅の上下）を全部切る
-        s.cutting = mods.contains(.option) && (!neighbors(id).isEmpty || c.record.leaderID != nil || !s.followers.isEmpty)
+        // ⌥：離すとこのおもちのつながり（と鏡餅の上下・串）を全部切る
+        s.cutting = mods.contains(.option) && (!neighbors(id).isEmpty || c.record.leaderID != nil || !s.followers.isEmpty
+                                               || manager?.skewer(containing: id) != nil)
         // 鏡餅の下の段はいつも一緒に動く（⌥ で切り離すときは置いていく）
         for (m, p) in s.followers where !(group && s.mates[m] != nil) {
             controller(m)?.panel.setFrameOrigin(s.cutting ? p : NSPoint(x: p.x + dx, y: p.y + dy))
         }
         let skip = (group ? Set(s.mates.keys) : []).union(s.cutting ? [] : Set(s.followers.keys))
-        let found = s.cutting ? nil : dropCandidate(for: c, excluding: skip, group: group)
+        s.mods = mods
+        let found = s.cutting ? nil : resolveDrop(for: c, session: &s, excluding: skip, group: group, now: CACurrentMediaTime())
         if let cand = found?.0, cand.record.id != s.candidate || found?.1 != s.kind { cand.avatar.poke() }
         s.candidate = found?.0.record.id
         s.kind = found?.1
+        if s.cutting { s.pending = nil; s.waiting = nil }
         drag = s
         refresh()
+    }
+
+    /// 置いたら何が起きるかを決める。重なり・頭の上は armDelay とどまってから（それまでは、つながる）
+    private func resolveDrop(for c: JellyController, session s: inout DragSession, excluding: Set<UUID>, group: Bool,
+                             now: CFTimeInterval) -> (JellyController, MochiPlay.DropKind)? {
+        let found = dropCandidates(for: c, excluding: excluding, group: group)
+        let sid = found.special?.0.record.id
+        let d = MochiPlay.decideDrop(special: found.special.map { ($0.0.record.id, $0.1) }, link: found.link?.record.id,
+                                     linkSpecial: manager?.settings.teamEnabled == true && sid.map { !isLinked($0, c.record.id) } == true,
+                                     pending: &s.pending, now: now, delay: TeamCoordinator.armDelay)
+        s.waiting = d.waiting
+        if d.started { scheduleArm(c) }
+        guard let tid = d.target, let kind = d.kind, let t = controller(tid) else { return nil }
+        return (t, kind)
+    }
+
+    private func scheduleArm(_ c: JellyController) {
+        armTimer?.invalidate()
+        let t = Timer(timeInterval: TeamCoordinator.armDelay + 0.03, repeats: false) { [weak self, weak c] _ in
+            guard let self, let c, let s = self.drag, s.id == c.record.id, s.pending != nil else { return }
+            self.jellyDragged(c, mods: s.mods)
+        }
+        RunLoop.main.add(t, forMode: .common)
+        armTimer = t
     }
 
     /// 置いたとき
@@ -275,7 +323,10 @@ final class TeamCoordinator {
         jellyDragged(c, mods: mods)
         guard let s = drag, s.id == c.record.id else { refresh(); return }
         let movedBy = hypot(c.panel.frame.minX - s.start.x, c.panel.frame.minY - s.start.y) / max(1, c.panel.frame.width)
+        armTimer?.invalidate()
+        armTimer = nil
         DevJournal.log("drop", ["kind": s.cutting ? "cut" : (s.kind.map { "\($0)" } ?? "none"), "group": s.group,
+                                "waiting": s.waiting.map { "\($0)" } ?? "-",
                                 "followers": s.followers.count, "distance": Double(movedBy), "linked": !neighbors(c.record.id).isEmpty])
         drag = nil
         let id = c.record.id
@@ -290,9 +341,16 @@ final class TeamCoordinator {
         for m in s.followers.keys where !(s.group && s.mates[m] != nil) {
             if let mc = controller(m) { mc.moveTo(mc.panel.frame.origin, persist: true); movers.append(mc) }
         }
+        // 串の一部だけが動いていたら（⇧ でチームごとなど）、置き終わってから串をまっすぐに並べ直す
+        let moved = Set(movers.map(\.record.id))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            guard self?.drag == nil else { return }
+            self?.manager?.straightenSkewers(touching: moved)
+        }
         if s.cutting {
             unlinkAll(id)
             manager?.unstack(c)
+            manager?.pullFromSkewer(c)
             refresh()
             return
         }
@@ -307,6 +365,8 @@ final class TeamCoordinator {
         guard let tid = s.candidate, let t = controller(tid), canLink(id, tid) else {
             if let tid = s.candidate { AppLog.write("link refused: \(name(id)) — \(name(tid))") }
             refresh()
+            // 重ねたまま（とどまる前に）離したけれど、つながる先も無い：重なったままにせず少し離す
+            if s.waiting != nil, let pid = s.pending?.target, let t = controller(pid) { manager?.nudgeAside(c, from: t) }
             return
         }
         // 近すぎると線が体に隠れて ✂︎ も出せないので、線が見える距離まで滑らせてからつなぐ
@@ -329,25 +389,28 @@ final class TeamCoordinator {
         }
     }
 
-    /// 置いたら何が起きるかと、その相手：真上に重なる → くっつく、相手の頭の上 → 上に載る（鏡餅）、近く → つながる。
+    /// 置いた場所の相手：special＝真上に重なる → くっつく・相手の頭の上 → 上に載る（鏡餅）、
+    /// link＝届く範囲でいちばん近い、まだつながっていない相手（重なっている相手も含む）。
     /// ⇧ でチームごと動かしているときは、つながるだけ
-    private func dropCandidate(for c: JellyController, excluding: Set<UUID>, group: Bool) -> (JellyController, MochiPlay.DropKind)? {
-        guard let m = manager else { return nil }
+    private func dropCandidates(for c: JellyController, excluding: Set<UUID>, group: Bool)
+        -> (special: (JellyController, MochiPlay.DropKind)?, link: JellyController?) {
+        guard let m = manager else { return (nil, nil) }
         let p = c.anchorPoint
         let w = c.panel.frame.width
-        var best: (JellyController, MochiPlay.DropKind, CGFloat)?
+        var special: (JellyController, MochiPlay.DropKind, CGFloat)?
+        var link: (JellyController, CGFloat)?
         let rank: [MochiPlay.DropKind: Int] = [.merge: 0, .stack: 1, .link: 2]
         for o in m.controllers where o !== c && o.isVisible && !excluding.contains(o.record.id) {
             let dx = p.x - o.anchorPoint.x, dy = p.y - o.anchorPoint.y
-            guard var k = MochiPlay.dropKind(dx: dx, dy: dy, width: w) else { continue }
-            if group && k != .link { k = .link }
-            if k == .link && (!m.settings.teamEnabled || isLinked(o.record.id, c.record.id)) { continue }
-            if k == .stack && o.record.leaderID == c.record.id && hypot(dx, dy) < w { continue }
+            guard let k = MochiPlay.dropKind(dx: dx, dy: dy, width: w) else { continue }
             let d = hypot(dx, dy)
-            if let b = best, (rank[b.1]!, b.2) <= (rank[k]!, d) { continue }
-            best = (o, k, d)
+            if m.settings.teamEnabled, !isLinked(o.record.id, c.record.id), d < (link?.1 ?? .infinity) { link = (o, d) }
+            guard !group, k != .link else { continue }
+            if k == .stack && o.record.leaderID == c.record.id && d < w { continue }
+            if let b = special, (rank[b.1]!, b.2) <= (rank[k]!, d) { continue }
+            special = (o, k, d)
         }
-        return best.map { ($0.0, $0.1) }
+        return (special.map { ($0.0, $0.1) }, link?.0)
     }
 
     /// 少しのあいだ、おもちの足元にヒントを出す
@@ -511,14 +574,20 @@ final class TeamCoordinator {
             if s.cutting {
                 warn = Set(links.filter { $0.contains(s.id) })
                 pills.append(.init(id: "hint", text: L("✂ 離すと つながりを切る"), at: at, color: LinkOverlay.warnColor))
+            } else if let w = s.waiting {
+                // 重ねた・頭に載せたところ：少しとどめると くっつく・載る
+                pills.append(.init(id: "hint", text: w == .merge ? L("そのまま少し待つと くっつく") : L("そのまま少し待つと 頭に載る（鏡餅）"),
+                                   at: at, color: color))
             } else if s.group {
                 pills.append(.init(id: "hint", text: L("👥 チームごと移動中"), at: at, color: color))
             } else if !neighbors(s.id).isEmpty {
                 pills.append(.init(id: "hint", text: L("⇧ チームごと移動 · ⌥ 切り離す"), at: at, color: color))
+            } else if m.skewer(containing: s.id) != nil {
+                pills.append(.init(id: "hint", text: L("🍡 串ごと移動 · ⌥ 串から抜く"), at: at, color: color))
             } else if s.candidate == nil, m.settings.teamEnabled,
                       m.controllers.contains(where: { $0 !== c && $0.isVisible }) {
                 // まだ慣れていない人向けの案内
-                pills.append(.init(id: "hint", text: links.isEmpty ? L("近くで離すと つながる · 重ねると くっつく") : L("重ねると くっつく · 頭に載せると 鏡餅"), at: at, color: color))
+                pills.append(.init(id: "hint", text: links.isEmpty ? L("近くで離すと つながる · 重ねて待つと くっつく") : L("重ねて待つと くっつく · 頭に載せて待つと 鏡餅"), at: at, color: color))
             }
         }
         let bodyW = m.controllers.first?.panel.frame.width ?? m.windowSize.width

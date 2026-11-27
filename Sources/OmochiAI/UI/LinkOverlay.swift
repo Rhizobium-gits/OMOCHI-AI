@@ -49,6 +49,17 @@ final class LinkOverlay {
     /// 体の幅（pt）。糸の太さの目安
     private var bodyWidth: CGFloat = 100
 
+    /// 最後に描いた内容（スクリーン座標）。ディスプレイが変わって窓を作り直したときや、
+    /// 表示を確かめ直すときに、次の update を待たずにそのまま描き直す
+    private struct Content {
+        var labels: [Label] = []
+        var preview: Preview?
+        var pills: [Pill] = []
+        var sticks: [Stick] = []
+        var tear: Tear?
+    }
+    private var content = Content()
+
     init() {
         scissors.onClick = { [weak self] in
             guard let self, let l = self.scissorsLink else { return }
@@ -145,24 +156,32 @@ final class LinkOverlay {
         geometry = g
         order = segments.map(\.0)
         self.warn = warn
-        syncWindows()
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        for w in windows {
-            let o = w.frame.origin
-            w.setSticks(sticks.map { Stick(id: $0.id, points: $0.points.map(w.local)) }, bodyWidth: bodyWidth)
-            w.setStrings(order.compactMap { l in geometry[l].map { (l, $0.moved(by: o)) } },
-                         styler: { [weak self] l, layer in self?.style(layer, l) })
-            w.setLabels(labels.map { Label(id: $0.id, text: $0.text, at: w.local($0.at), color: $0.color) })
-            w.setPreview(preview.map { Preview(from: w.local($0.from), to: w.local($0.to), color: $0.color, ok: $0.ok, radius: $0.radius, kind: $0.kind) },
-                         bodyWidth: bodyWidth)
-            w.setPills(pills.map { Pill(id: $0.id, text: $0.text, at: w.local($0.at), color: $0.color) })
-            w.setTear(tear.map { Tear(from: w.local($0.from), to: w.local($0.to), color: $0.color, ready: $0.ready) }, bodyWidth: bodyWidth)
-        }
-        CATransaction.commit()
+        content = Content(labels: labels, preview: preview, pills: pills, sticks: sticks, tear: tear)
         hasContent = !segments.isEmpty || !labels.isEmpty || preview != nil || !pills.isEmpty || !sticks.isEmpty || tear != nil
+        // 窓を作り直したときは syncWindows の中で描き直している
+        if !syncWindows() { draw(windows) }
         updateVisibility()
         if let l = scissorsLink, geometry[l] == nil { hideScissors() }
+    }
+
+    /// いまの内容（糸・名前・串・ヒントなど）を窓に描く
+    private func draw(_ targets: [OverlayWindow]) {
+        guard !targets.isEmpty else { return }
+        let c = content
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for w in targets {
+            let o = w.frame.origin
+            w.setSticks(c.sticks.map { Stick(id: $0.id, points: $0.points.map(w.local)) }, bodyWidth: bodyWidth)
+            w.setStrings(order.compactMap { l in geometry[l].map { (l, $0.moved(by: o)) } },
+                         styler: { [weak self] l, layer in self?.style(layer, l) })
+            w.setLabels(c.labels.map { Label(id: $0.id, text: $0.text, at: w.local($0.at), color: $0.color) })
+            w.setPreview(c.preview.map { Preview(from: w.local($0.from), to: w.local($0.to), color: $0.color, ok: $0.ok, radius: $0.radius, kind: $0.kind) },
+                         bodyWidth: bodyWidth)
+            w.setPills(c.pills.map { Pill(id: $0.id, text: $0.text, at: w.local($0.at), color: $0.color) })
+            w.setTear(c.tear.map { Tear(from: w.local($0.from), to: w.local($0.to), color: $0.color, ready: $0.ready) }, bodyWidth: bodyWidth)
+        }
+        CATransaction.commit()
     }
 
     private func style(_ layer: StringLayer, _ l: JellyLink) {
@@ -335,21 +354,92 @@ final class LinkOverlay {
 
     // MARK: - 窓（ディスプレイごと）
 
-    private func syncWindows() {
-        let frames = NSScreen.screens.map(\.frame)
-        if windows.map(\.frame) != frames {
-            windows.forEach { $0.orderOut(nil) }
-            windows = NSScreen.screens.map { OverlayWindow(screen: $0) }
-            restyle()
+    /// ディスプレイ 1 枚に重ね窓 1 枚をそろえる。窓はできるだけ使い回し（大きさ・位置・倍率だけ合わせる）、
+    /// 足りなければ作り、余れば片付ける。変えた窓には最後の内容をすぐ描き直す。
+    /// （前は枠が少しでも違うと全部作り直し、描き直しは次の update まで待っていたので、
+    ///   その間に塊を流す・ちぎるなどが先に来ると、糸も名前も無い窓が前に出たままになっていた）
+    /// - Returns: 窓を変えたか
+    @discardableResult
+    private func syncWindows() -> Bool {
+        let screens = NSScreen.screens
+        var touched: [OverlayWindow] = []
+        while windows.count > screens.count {
+            let w = windows.removeLast()
+            w.orderOut(nil)
+            w.close()
         }
+        for (i, s) in screens.enumerated() {
+            if i < windows.count {
+                let w = windows[i]
+                if w.scale != s.backingScaleFactor {
+                    // 倍率が変わった（Retina と普通の画面の入れ替えなど）：文字や線をその倍率で描き直すため作り直す
+                    w.orderOut(nil)
+                    w.close()
+                    windows[i] = OverlayWindow.make(for: s)
+                    touched.append(windows[i])
+                } else if !w.frame.isAbout(s.frame) {
+                    w.fit(to: s.frame)
+                    touched.append(w)
+                }
+            } else {
+                windows.append(OverlayWindow.make(for: s))
+                touched.append(windows[windows.count - 1])
+            }
+        }
+        guard !touched.isEmpty else { return false }
+        draw(touched)
+        updateVisibility()
+        return true
     }
 
+    private var shouldShow: Bool { hasContent || packetsInFlight > 0 }
+
     private func updateVisibility() {
-        let show = hasContent || packetsInFlight > 0
+        let show = shouldShow
         for w in windows {
             if show && !w.isVisible { w.orderFrontRegardless() }
             if !show && w.isVisible { w.orderOut(nil) }
         }
+    }
+
+    /// 表示を確かめ直す（スペースの切り替え・スリープ明け・ディスプレイの変化のあとと、ときどき）。
+    /// 描くものがあるのに画面に出ていない窓（onScreen が false を返すもの）は、前に出し直して描き直す。
+    /// - Parameter onScreen: その窓がいま画面に出ているか（WindowServer に聞く。テストでは差し替える）
+    /// - Returns: 新しく出し直した窓の数（消灯中のディスプレイなど、出し直しても出ないままの窓は 2 回目から数えない）
+    @discardableResult
+    func reassert(onScreen: (NSWindow) -> Bool) -> Int {
+        syncWindows()
+        guard shouldShow else {
+            for w in windows where w.isVisible { w.orderOut(nil) }
+            lostBefore = []
+            return 0
+        }
+        let lost = windows.filter { !$0.isVisible || !onScreen($0) }
+        let ids = Set(lost.map(ObjectIdentifier.init))
+        defer { lostBefore = ids }
+        guard !lost.isEmpty else { return 0 }
+        for w in lost { w.orderFrontRegardless() }
+        draw(lost)
+        return ids.subtracting(lostBefore).count
+    }
+    private var lostBefore: Set<ObjectIdentifier> = []
+
+    /// 試験用（omochi://debug?lose=strings）：糸の窓を、知らせずに画面から下ろす（見張りが戻すかを確かめる）
+    func debugLose() { windows.forEach { $0.orderOut(nil) } }
+
+    /// omochi://debug 用：重ね窓の状態
+    func debugLines(onScreen: (NSWindow) -> Bool) -> [String] {
+        ["overlay content=\(hasContent) packets=\(packetsInFlight) strings=\(order.count) windows=\(windows.count) preview=\(content.preview.map { "\($0.kind)" } ?? "-") pills=\(content.pills.map(\.text).joined(separator: " / "))"]
+            + windows.enumerated().map { i, w in
+                "overlay window \(i) frame=\(w.frame) visible=\(w.isVisible) onScreen=\(onScreen(w)) activeSpace=\(w.isOnActiveSpace) strings=\(w.stringCount)"
+            }
+    }
+}
+
+private extension CGRect {
+    /// 窓の枠はピクセルに丸められることがあるので、1pt 未満の違いは同じとみなす
+    func isAbout(_ o: CGRect) -> Bool {
+        abs(minX - o.minX) < 1 && abs(minY - o.minY) < 1 && abs(width - o.width) < 1 && abs(height - o.height) < 1
     }
 }
 
@@ -384,6 +474,11 @@ final class StringLayer: CALayer {
     }
     override init(layer: Any) { super.init(layer: layer) }
     required init?(coder: NSCoder) { fatalError() }
+
+    /// 中の形も同じ倍率で描く（Retina でにじまないように）
+    override var contentsScale: CGFloat {
+        didSet { for s in [body, shine, lump] { s.contentsScale = contentsScale } }
+    }
 
     func setShape(_ s: LinkOverlay.StringShape) {
         let changed = shape.map { $0.a.distance(to: s.a) > 0.5 || $0.b.distance(to: s.b) > 0.5 || abs($0.sag - s.sag) > 0.5 } ?? true
@@ -446,7 +541,12 @@ private final class OverlayWindow: NSPanel {
     private let previewLayer = StringLayer()
     private let ringLayer = CAShapeLayer()
     private let tearLayer = StringLayer()
-    private let scale: CGFloat
+    let scale: CGFloat
+
+    /// 作る（canJoinAllSpaces の窓は、チャットを開いていて普通のアプリのときに作っても、
+    /// ほかのアプリのフル画面のスペースに出られることを確かめてある。入力中のチャットからフォーカスを奪わないよう、
+    /// ActiveSpace.make のようにアプリの種類を切り替えることはしない）
+    static func make(for screen: NSScreen) -> OverlayWindow { OverlayWindow(screen: screen) }
 
     init(screen: NSScreen) {
         scale = screen.backingScaleFactor
@@ -460,17 +560,22 @@ private final class OverlayWindow: NSPanel {
         level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue - 1)
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         hidesOnDeactivate = false
+        // アプリを隠しても（チャットで ⌘H・ほかのアプリで「ほかを隠す」）、おもちと糸は残す
+        canHide = false
         isReleasedWhenClosed = false
         animationBehavior = .none
         isExcludedFromWindowsMenu = true
+        // レイヤーをこちらで持つ（layer-hosting：layer を先に入れてから wantsLayer）。
+        // AppKit が描き直しのたびにレイヤーの中身や大きさに手を出さないように
         let v = NSView(frame: NSRect(origin: .zero, size: screen.frame.size))
-        v.wantsLayer = true
         v.layer = root
+        v.wantsLayer = true
         root.frame = v.bounds
+        root.actions = ["bounds": NSNull(), "position": NSNull()]
         contentView = v
         for l in [stickRoot, stringRoot] {
             l.frame = root.bounds
-            l.actions = ["sublayers": NSNull()]
+            l.actions = ["sublayers": NSNull(), "bounds": NSNull(), "position": NSNull()]
             root.addSublayer(l)
         }
         ringLayer.fillColor = nil
@@ -486,6 +591,19 @@ private final class OverlayWindow: NSPanel {
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+
+    /// ディスプレイの枠が変わった（並べ替え・解像度）：窓とレイヤーの大きさを合わせる（描いたものは呼んだ側が描き直す）
+    func fit(to f: CGRect) {
+        setFrame(f, display: false)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        contentView?.frame = NSRect(origin: .zero, size: f.size)
+        root.frame = CGRect(origin: .zero, size: f.size)
+        for l in [stickRoot, stringRoot] { l.frame = root.bounds }
+        CATransaction.commit()
+    }
+
+    var stringCount: Int { lines.count }
 
     func local(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x - frame.minX, y: p.y - frame.minY) }
 
@@ -661,7 +779,10 @@ private final class OverlayWindow: NSPanel {
         let pad = round(h * 0.38)
         let w = ceil(ts.width) + pad * 2
         pill.bounds = CGRect(x: 0, y: 0, width: w, height: h)
-        pill.position = CGPoint(x: round(at.x), y: round(at.y - h / 2))
+        // 画面の端で切れないよう、窓（ディスプレイ）の内側に収める
+        let x = min(max(at.x, w / 2 + 4), max(w / 2 + 4, frame.width - w / 2 - 4))
+        let y = min(max(at.y - h / 2, h / 2 + 2), max(h / 2 + 2, frame.height - h / 2 - 2))
+        pill.position = CGPoint(x: round(x), y: round(y))
         pill.backgroundColor = color.blended(withFraction: 0.35, of: .black)?.withAlphaComponent(0.9).cgColor
         if let t = pill.sublayers?.first as? CATextLayer {
             t.string = str
@@ -797,6 +918,7 @@ private final class ScissorsPanel: NSPanel {
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         hidesOnDeactivate = false
+        canHide = false
         isReleasedWhenClosed = false
         animationBehavior = .none
         let v = ScissorsView(frame: NSRect(x: 0, y: 0, width: 26, height: 26))

@@ -311,7 +311,10 @@ extension JellyManager {
         if hypot(pa.x - pb.x, pa.y - pb.y) < 2 { ang = .pi }
         let o = a.panel.frame.origin
         let to = NSPoint(x: pb.x + cos(ang) * w * 1.1 - (pa.x - o.x), y: pb.y + sin(ang) * w * 0.6 - (pa.y - o.y))
-        slide([(a, to)], duration: 0.22) { a.avatar.dragEnded() }
+        slide([(a, to)], duration: 0.22) { [weak self] in
+            a.avatar.dragEnded()
+            self?.straightenSkewers(touching: [a.record.id])
+        }
     }
 
     // MARK: - 鏡餅（上に載せる＝リーダー）
@@ -557,6 +560,39 @@ extension JellyManager {
         slide(zip(cs, offs).map { ($0, NSPoint(x: o.x + $1.x, y: o.y + $1.y)) }, duration: animated ? 0.3 : 0)
     }
 
+    /// 串の仲間（自分は除く）。串のおもちは、どれを動かしても串ごと動く
+    func skewerMates(of id: UUID) -> [JellyController] {
+        guard let s = skewer(containing: id) else { return [] }
+        return s.members.filter { $0 != id }.compactMap { controller(id: $0) }
+    }
+
+    /// 串から抜く（残りが 1 体になったら串をはずす）
+    func pullFromSkewer(_ c: JellyController) {
+        let id = c.record.id
+        guard var cur = skewer(containing: id), let i = cur.members.firstIndex(of: id) else { return }
+        cur.members.remove(at: i)
+        if i < cur.steps.count { cur.steps.remove(at: i) }
+        DevJournal.log("skewer-pull", ["left": cur.members.count])
+        AppLog.write("dango: pull \(c.record.number) from skewer")
+        if cur.members.count < (cur.org ? 1 : 2) { removeSkewer(cur.id) } else { updateSkewer(cur); arrangeDango(cur) }
+    }
+
+    /// 串のおもちが串の並び（横一列）からずれていたら並べ直す（⇧ でチームごと動かした・押しのけたなどで、
+    /// 串の一部だけが動いて串が曲がった・のびたとき）
+    func straightenSkewers(touching ids: Set<UUID>) {
+        let P = CGFloat(MochiAvatar.cell(scale: settings.jellyScale))
+        for s in skewers where s.members.contains(where: ids.contains) {
+            let cs = s.members.compactMap { controller(id: $0) }.filter { !$0.record.hidden }
+            guard let first = cs.first, cs.count >= 2 else { continue }
+            let offs = MochiPlay.dangoOffsets(count: cs.count, cell: P)
+            let o = first.panel.frame.origin
+            let bent = zip(cs, offs).contains { c, off in
+                hypot(c.panel.frame.minX - (o.x + off.x), c.panel.frame.minY - (o.y + off.y)) > 2
+            }
+            if bent { arrangeDango(s) }
+        }
+    }
+
     func removeSkewer(_ id: UUID) {
         skewers.removeAll { $0.id == id }
         saveSkewers()
@@ -746,11 +782,9 @@ extension JellyManager {
                 dm.addItem(ClosureMenuItem(L("▶ 串に流す…")) { [weak self, weak c] in self?.showDango(for: c) })
                 dm.addItem(ClosureMenuItem(L("並べ直す")) { [weak self] in self?.arrangeDango(s) })
             }
-            dm.addItem(ClosureMenuItem(L("串から抜く")) { [weak self] in
-                guard let self, var cur = self.skewer(containing: id), let i = cur.members.firstIndex(of: id) else { return }
-                cur.members.remove(at: i)
-                if i < cur.steps.count { cur.steps.remove(at: i) }
-                if cur.members.count < 2 { self.removeSkewer(cur.id) } else { self.updateSkewer(cur) }
+            dm.addItem(ClosureMenuItem(L("串から抜く")) { [weak self, weak c] in
+                guard let self, let c else { return }
+                self.pullFromSkewer(c)
             })
             dm.addItem(ClosureMenuItem(L("串をはずす（おもちはそのまま）")) { [weak self] in self?.removeSkewer(s.id) })
         } else {
