@@ -5,7 +5,7 @@
 <text x="32" y="50" font-size="19" font-weight="600" fill="#ffffff" letter-spacing="-0.2">1 日ごとのダウンロード</text>
 <text x="32" y="74" font-size="12" fill="#8a8a8a">.dmg・.zip・git clone の合計 · 毎日自動で更新</text>
 <text x="788" y="32" font-size="11" fill="#8a8a8a" text-anchor="end" letter-spacing="0.6">累計</text>
-<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">619</text>
+<text x="788" y="74" font-size="40" font-weight="700" fill="#ffffff" text-anchor="end" letter-spacing="-1">652</text>
 <text x="788" y="96" font-size="12" fill="#e6c56b" text-anchor="end">うち auralune.tech 経由 0</text>
 <path d="M44.2,238.0V222.9Q44.2,219.9 47.2,219.9H61.2Q64.2,219.9 64.2,222.9V238.0Z" fill="#f2f2f2"/>
 <text x="54.2" y="212.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">22</text>
@@ -22,8 +22,8 @@
 <text x="232.1" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/15</text>
 <path d="M266.6,238.0V231.1Q266.6,228.1 269.6,228.1H283.6Q286.6,228.1 286.6,231.1V238.0Z" fill="#f2f2f2"/>
 <text x="276.6" y="221.1" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">12</text>
-<path d="M311.1,238.0V180.9Q311.1,177.9 314.1,177.9H328.1Q331.1,177.9 331.1,180.9V238.0Z" fill="#f2f2f2"/>
-<text x="321.1" y="170.9" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">73</text>
+<path d="M311.1,238.0V181.7Q311.1,178.7 314.1,178.7H328.1Q331.1,178.7 331.1,181.7V238.0Z" fill="#f2f2f2"/>
+<text x="321.1" y="171.7" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">72</text>
 <text x="321.1" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/17</text>
 <path d="M355.5,238.0V219.6Q355.5,216.6 358.5,216.6H372.5Q375.5,216.6 375.5,219.6V238.0Z" fill="#f2f2f2"/>
 <text x="365.5" y="209.6" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">26</text>
@@ -45,9 +45,10 @@
 <path d="M666.8,238.0V182.5Q666.8,179.5 669.8,179.5H683.8Q686.8,179.5 686.8,182.5V238.0Z" fill="#f2f2f2"/>
 <text x="676.8" y="172.5" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">71</text>
 <text x="676.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/25</text>
-<path d="M711.3,238.0V238.0Q711.3,235.5 713.8,235.5H728.8Q731.3,235.5 731.3,238.0V238.0Z" fill="#f2f2f2"/>
-<text x="721.3" y="228.5" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">3</text>
-<text x="765.8" y="231.0" font-size="11" font-weight="600" fill="#555555" text-anchor="middle">0</text>
+<path d="M711.3,238.0V213.0Q711.3,210.0 714.3,210.0H728.3Q731.3,210.0 731.3,213.0V238.0Z" fill="#f2f2f2"/>
+<text x="721.3" y="203.0" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">34</text>
+<path d="M755.8,238.0V238.0Q755.8,235.5 758.2,235.5H773.3Q775.8,235.5 775.8,238.0V238.0Z" fill="#f2f2f2"/>
+<text x="765.8" y="228.5" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">3</text>
 <text x="765.8" y="258" font-size="11" fill="#8a8a8a" text-anchor="middle">11/27</text>
 <line x1="32" y1="238.5" x2="788" y2="238.5" stroke="#2a2a2a" stroke-width="1"/>
 <text x="32" y="280" font-size="10.5" fill="#555555">更新 2026-11-27 UTC</text>
