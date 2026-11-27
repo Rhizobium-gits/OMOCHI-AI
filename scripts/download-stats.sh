@@ -87,7 +87,8 @@ RELEASES="$(gh api "repos/$REPO/releases" --paginate --jq '.[] | select(.draft |
 # 読めないときは貯めてある数のまま
 SITE=null
 if [[ -n "${AURALUNE_STATS_KEY:-}" ]]; then
-  SITE="$(curl -fsS --max-time 30 "https://auralune.tech/api/dl-stats?key=$AURALUNE_STATS_KEY&format=json" |
+  # 鍵は URL に載せずヘッダーで送る（URL はサーバーや途中の記録に残ることがあるため）
+  SITE="$(curl -fsS --max-time 30 -H "X-Stats-Key: $AURALUNE_STATS_KEY" "https://auralune.tech/api/dl-stats?format=json" |
     jq --arg ids "${AURALUNE_SITE_IDS:-omochi}" '($ids | split(",")) as $w | [.products[] | select(.id as $i | $w | index($i)) | .total] | add // 0')" || SITE=null
   [[ "$SITE" =~ ^[0-9]+$ ]] || { echo "auralune.tech の数を読めませんでした。貯めてある数のままにします" >&2; SITE=null; }
 fi
